@@ -3,7 +3,7 @@ AWSTemplateFormatVersion: 2010-09-09
 # File format follows https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/template-anatomy.html
 
 Description: >-
-  Senzing aws-cloudformation-ecs/senzing-demo-hosted-zone/spike-https Version: 0.1.0
+  Senzing aws-cloudformation-ecs/senzing-demo-hosted-zone/spike-self-signed-certificate Version: 0.1.0
   For more information see https://github.com/Senzing/aws-cloudformation-ecs
 
 # -----------------------------------------------------------------------------
@@ -19,12 +19,9 @@ Metadata:
           default: Security
         Parameters:
           - CidrInbound
-          - Route53HostedZoneId
     ParameterLabels:
       CidrInbound:
         default: 'Required: Allowed inbound connections using CIDR notation.'
-      Route53HostedZoneId:
-        default: 'Optional: Specifing a hosted zone enables HTTPS.'
 
 # -----------------------------------------------------------------------------
 # Parameters
@@ -40,10 +37,6 @@ Parameters:
     Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#cidrinbound'
     Type: String
 
-  Route53HostedZoneId:
-    Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#route53hostedzoneid'
-    Type: AWS::Route53::HostedZone::Id
-
 # -----------------------------------------------------------------------------
 # Mappings
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/mappings-section-structure.html
@@ -53,7 +46,7 @@ Mappings:
 
   Constants:
     Stack:
-      Name: spike-https
+      Name: spike-ss-cert
 
   VpcCidrs:
     vpc:
@@ -78,7 +71,7 @@ Resources:
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-iam-role.html
 
-  IamRoleLambda:
+  IamRoleRootCa:
     Properties:
       AssumeRolePolicyDocument:
         Statement:
@@ -89,14 +82,12 @@ Resources:
             Principal:
               Service:
                 - ecs-tasks.amazonaws.com
-                - lambda.amazonaws.com
-                - route53.amazonaws.com
-                - sqs.amazonaws.com
+                - acm-pca.amazonaws.com
         Version: '2012-10-17'
-      Description: !Sub "${AWS::StackName}-iam-role-lambda"
+      Description: !Sub "${AWS::StackName}-iam-role-root-ca"
       Tags:
         - Key: Name
-          Value: !Sub "${AWS::StackName}-iam-role-lambda"
+          Value: !Sub "${AWS::StackName}-iam-role-root-ca"
     Type: AWS::IAM::Role
 
 
@@ -111,7 +102,6 @@ Resources:
             Principal:
               Service:
                 - ecs-tasks.amazonaws.com
-                - route53.amazonaws.com
         Version: '2012-10-17'
       Description: !Sub "${AWS::StackName}-iam-role-swagger"
       Tags:
@@ -135,7 +125,6 @@ Resources:
               - '*'
         Version: '2012-10-17'
       Roles:
-       - !Ref IamRoleLambda
        - !Ref IamRoleSwagger
     Type: AWS::IAM::Policy
 
@@ -154,45 +143,76 @@ Resources:
               - '*'
         Version: '2012-10-17'
       Roles:
-       - !Ref IamRoleLambda
        - !Ref IamRoleSwagger
     Type: AWS::IAM::Policy
 
 
-  IamPolicyRoute53:
+  IamPolicyRootCa:
     Properties:
-      PolicyName: !Sub "${AWS::StackName}-iam-policy-route53"
+      PolicyName: !Sub "${AWS::StackName}-iam-policy-root-ca"
       PolicyDocument:
         Statement:
           -
             Action:
-              - route53:GetHostedZone
+              - acm-pca:CreateCertificateAuthority
             Effect: Allow
             Resource:
               - '*'
         Version: '2012-10-17'
       Roles:
-       - !Ref IamRoleLambda
-       - !Ref IamRoleSwagger
+       - !Ref IamRoleRootCa
     Type: AWS::IAM::Policy
 
+# -- Self-signed certificate --------------------------------------------------
 
-  IamPolicyCertificateManager:
+# https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-acmpca-certificateauthority.html
+
+  InternalRootCA:
     Properties:
-      PolicyName: !Sub "${AWS::StackName}-iam-policy-certificate-manager"
-      PolicyDocument:
-        Statement:
-          -
-            Action:
-              - acm:ListCertificates
-            Effect: Allow
-            Resource:
-              - '*'
-        Version: '2012-10-17'
-      Roles:
-       - !Ref IamRoleLambda
-       - !Ref IamRoleSwagger
-    Type: AWS::IAM::Policy
+      KeyAlgorithm: RSA_2048
+      RevocationConfiguration:
+        CrlConfiguration:
+          Enabled: false
+      SigningAlgorithm: SHA256WITHRSA
+      Subject:
+        CommonName: My own Root CA
+        Country: US
+        Locality: San Francisco
+        Organization: MyOrganization
+        OrganizationalUnit: MyOrganizationalUnit
+        SerialNumber: '12345678'
+        State: California
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-internal-root-ca"
+      Type: ROOT
+    Type: 'AWS::ACMPCA::CertificateAuthority'
+
+# https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-acmpca-certificate.html
+
+  InternalRootCACertificate:
+    Properties:
+      CertificateAuthorityArn: !Ref InternalRootCA
+      CertificateSigningRequest: !GetAtt
+        - InternalRootCA
+        - CertificateSigningRequest
+      SigningAlgorithm: SHA256WITHRSA
+      TemplateArn: 'arn:aws:acm-pca:::template/RootCACertificate/V1'
+      Validity:
+        Type: YEARS
+        Value: 5
+    Type: 'AWS::ACMPCA::Certificate'
+
+# https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-acmpca-certificateauthorityactivation.html
+
+  InternalRootCAActivation:
+    Properties:
+      Certificate: !GetAtt
+        - InternalRootCACertificate
+        - Certificate
+      CertificateAuthorityArn: !Ref InternalRootCA
+      Status: ACTIVE
+    Type: 'AWS::ACMPCA::CertificateAuthorityActivation'
 
 # -- Logging ------------------------------------------------------------------
 
@@ -203,12 +223,6 @@ Resources:
       LogGroupName: !Sub
         - "/senzing/${StackName}/${AWS::StackName}"
         - StackName: !FindInMap [Constants, Stack, Name]
-    Type: AWS::Logs::LogGroup
-
-
-  LogsLogGroupLambdaFindDomainName:
-    Properties:
-      LogGroupName: !Sub "/aws/lambda/${AWS::StackName}-lambda-find-domain-name"
     Type: AWS::Logs::LogGroup
 
 # -- Cloud, subnets, routing --------------------------------------------------
@@ -356,110 +370,6 @@ Resources:
           Value: !Sub "${AWS::StackName}-ecs-cluster"
     Type: AWS::ECS::Cluster
 
-# -- LambdaFunction -----------------------------------------------------------
-
-# https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-lambda-function.html
-
-  LambdaFunctionFindDomainName:
-    DependsOn:
-     - IamPolicyRoute53
-    Properties:
-      Code:
-        ZipFile: |
-          #!/usr/bin/env python3
-
-          import boto3
-          import cfnresponse
-          import datetime
-          import json
-          import logging
-          import traceback
-          from json import JSONEncoder
-
-          logger = logging.getLogger()
-          logger.setLevel(logging.INFO)
-
-          class DateTimeEncoder(JSONEncoder):
-              def default(self, obj):
-                  if isinstance(obj, (datetime.date, datetime.datetime)):
-                      return obj.isoformat()
-
-          def find_certificate_arn(certificate_domain_name, certificate_list):
-              certificate_summary_list = certificate_list.get('CertificateSummaryList', [])
-              for certificate_summary in certificate_summary_list:
-                  if certificate_summary.get('DomainName') == certificate_domain_name:
-                     return certificate_summary.get('CertificateArn')
-              return ""
-
-          def handler(event, context):
-              result = cfnresponse.SUCCESS
-              response = {}
-              try:
-                  logger.info("Event: {0}".format(json.dumps(event)))
-                  if event['RequestType'] in ['Create', 'Update']:
-                      properties = event.get('ResourceProperties', {})
-                      hosted_zone_id = properties.get('HostedZoneId', {})
-
-                      # Find domain in AWS Route53
-                      # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/route53.html
-
-                      route53 = boto3.client('route53')
-                      hosted_zone_dict = route53.get_hosted_zone(Id=hosted_zone_id)
-                      name = hosted_zone_dict.get("HostedZone", {}).get("Name", " ")
-                      response["Name"] = name
-                      response["DomainName"] = name[:-1]
-
-                      # Find Certificate in AWS Certificate Manager
-                      # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/acm.html
-
-                      certificate_domain_name = "*.{0}".format(response["DomainName"])
-                      logger.info("domain_name = {0}".format(certificate_domain_name))
-
-                      acm_client = boto3.client('acm')
-                      certificate_list = acm_client.list_certificates()
-                      certificate_arn = find_certificate_arn(certificate_domain_name, certificate_list)
-                      response["CertificateArn"] = certificate_arn
-                      logger.info("certificate_arn = {0}".format(certificate_arn))
-
-                      if not certificate_arn:
-                          logger.warning("Cannot find certificate for '{0}'".format(certificate_domain_name))
-                          result = cfnresponse.FAILED
-
-                  logger.info("Response: {0}".format(json.dumps(response, cls=DateTimeEncoder)))
-
-              except Exception as e:
-                  logger.error(e)
-                  traceback.print_exc()
-                  result = cfnresponse.FAILED
-              finally:
-                  cfnresponse.send(event, context, result, response)
-
-      Description: Gets Route53 hosted zone information.
-      FunctionName: !Sub "${AWS::StackName}-lambda-find-domain-name"
-      Handler: index.handler
-      Role: !GetAtt IamRoleLambda.Arn
-      Runtime: python3.8
-      Tags:
-        - Key: Name
-          Value: !Sub "${AWS::StackName}-lambda-find-domain-name"
-      Timeout: 30
-    Type: AWS::Lambda::Function
-
-# -- Run ECS tasks-------------------------------------------------------------
-
-# https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/template-custom-resources.html
-# https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-cfn-customresource.html
-
-  LambdaRunnerFindDomainName:
-    Properties:
-      ClusterId: !Ref EcsCluster
-      HostedZoneId: !Ref Route53HostedZoneId
-      ServiceToken: !GetAtt LambdaFunctionFindDomainName.Arn
-      Tags:
-        - Key: Name
-          Value: !Sub "${AWS::StackName}-lambda-runner-find-domain-name"
-    Type: Custom::LambdaRunnerFindDomainName
-
 # -- Load balancing -----------------------------------------------------------
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-elasticloadbalancingv2-loadbalancer.html
@@ -518,9 +428,10 @@ Resources:
 
 
   ListenerSwaggerHttps:
+    DependsOn: InternalRootCAActivation
     Properties:
       Certificates:
-        - CertificateArn: !GetAtt LambdaRunnerFindDomainName.CertificateArn
+        - CertificateArn: !Ref InternalRootCA
       DefaultActions:
         - TargetGroupArn: !Ref TargetGroupSwagger
           Type: forward
@@ -528,27 +439,6 @@ Resources:
       Port: 8081
       Protocol: HTTPS
     Type: AWS::ElasticLoadBalancingV2::Listener
-
-# -- Route53RecordSet ---------------------------------------------------------
-
-# https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-route53-recordset.html
-
-  Route53RecordSet:
-    Properties:
-      AliasTarget:
-        DNSName: !Sub
-          - "dualstack.${LoadBalancerPublicDNSName}"
-          - LoadBalancerPublicDNSName: !GetAtt LoadBalancerPublic.DNSName
-        EvaluateTargetHealth: true
-        HostedZoneId: !GetAtt LoadBalancerPublic.CanonicalHostedZoneID
-      Comment: !Sub "${AWS::StackName} RecordSet"
-      HostedZoneId: !Ref Route53HostedZoneId
-      Name: !Sub
-        - "${StackName}.${DomainName}"
-        - StackName: !Ref AWS::StackName
-          DomainName: !GetAtt LambdaRunnerFindDomainName.Name
-      Type: A
-    Type: AWS::Route53::RecordSet
 
 # -- EcsTaskDefinition --------------------------------------------------------
 
@@ -638,7 +528,7 @@ Outputs:
 
   CertificateArn:
     Description: 'ARN of the SSL certificate. Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#certificatearn'
-    Value: !GetAtt LambdaRunnerFindDomainName.CertificateArn
+    Value: !Ref InternalRootCA
 
   Ec2Vpc:
     Description: 'The ID of the VPC. Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#ec2vpc'
@@ -664,18 +554,10 @@ Outputs:
       Name: !Sub "${AWS::StackName}-subnet-public-2"
     Value: !Ref Ec2SubnetPublic2
 
-  UrlSwagger:
+  UrlSwaggerHttp:
     Description: 'URL for Swagger. Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#urlswagger'
     Value: !Sub "http://${LoadBalancerPublic.DNSName}:8080"
 
-  UrlSwaggerHttp:
-    Description: 'HTTP URL for Swagger. Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#urlswaggerhttp'
-    Value: !Sub
-      - "http://${AWS::StackName}.${DomainName}:8080"
-      - DomainName: !GetAtt LambdaRunnerFindDomainName.DomainName
-
   UrlSwaggerHttps:
-    Description: 'HTTPS URL for Swagger. Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#urlswaggerhttps'
-    Value: !Sub
-      - "https://${AWS::StackName}.${DomainName}:8081"
-      - DomainName: !GetAtt LambdaRunnerFindDomainName.DomainName
+    Description: 'URL for Swagger. Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#urlswagger'
+    Value: !Sub "https//${LoadBalancerPublic.DNSName}:8081"
