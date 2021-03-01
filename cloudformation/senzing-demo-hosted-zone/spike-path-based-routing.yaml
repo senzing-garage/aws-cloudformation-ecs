@@ -554,6 +554,7 @@ Resources:
       TargetGroupAttributes:
       - Key: deregistration_delay.timeout_seconds
         Value: '60'
+      TargetType: ip
       UnhealthyThresholdCount: 5
       VpcId: !Ref Ec2Vpc
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
@@ -589,6 +590,7 @@ Resources:
       -
         Key: stickiness.lb_cookie.duration_seconds
         Value: '86400'
+      TargetType: ip
       UnhealthyThresholdCount: 5
       VpcId: !Ref Ec2Vpc
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
@@ -766,6 +768,12 @@ Resources:
       DesiredCount: 1
       EnableECSManagedTags: true
       LaunchType: FARGATE
+      LoadBalancers:
+        -
+          ContainerName: swagger
+          ContainerPort: 8080
+#         LoadBalancerName: !GetAtt LoadBalancerPublic.LoadBalancerName
+          TargetGroupArn: !Ref TargetGroupSwagger
       NetworkConfiguration:
         AwsvpcConfiguration:
           AssignPublicIp: ENABLED
@@ -792,6 +800,12 @@ Resources:
       DesiredCount: 1
       EnableECSManagedTags: true
       LaunchType: FARGATE
+      LoadBalancers:
+        -
+          ContainerName: xterm
+          ContainerPort: 5000
+#         LoadBalancerName: !GetAtt LoadBalancerPublic.LoadBalancerName
+          TargetGroupArn: !Ref TargetGroupXterm
       NetworkConfiguration:
         AwsvpcConfiguration:
           AssignPublicIp: ENABLED
