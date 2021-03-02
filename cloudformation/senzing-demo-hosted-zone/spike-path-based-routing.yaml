@@ -339,6 +339,29 @@ Resources:
       ToPort: 443
     Type: AWS::EC2::SecurityGroupIngress
 
+
+  Ec2SecurityGroupIngresSwagger:
+    Properties:
+      CidrIp: !Ref CidrInbound
+      Description: Swagger UI
+      FromPort: 8080
+      GroupId: !Ref Ec2SecurityGroupLoadBalancerPublic
+      IpProtocol: tcp
+      ToPort: 8080
+    Type: AWS::EC2::SecurityGroupIngress
+
+
+  Ec2SecurityGroupIngresXterm:
+    Condition: IfRunXterm
+    Properties:
+      CidrIp: !Ref CidrInbound
+      Description: Senzing X-term
+      FromPort: 5000
+      GroupId: !Ref Ec2SecurityGroupLoadBalancerPublic
+      IpProtocol: tcp
+      ToPort: 5000
+    Type: AWS::EC2::SecurityGroupIngress
+
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-internetgateway.html
 
   Ec2InternetGateway:
@@ -772,7 +795,6 @@ Resources:
         -
           ContainerName: swagger
           ContainerPort: 8080
-#         LoadBalancerName: !GetAtt LoadBalancerPublic.LoadBalancerName
           TargetGroupArn: !Ref TargetGroupSwagger
       NetworkConfiguration:
         AwsvpcConfiguration:
@@ -792,7 +814,6 @@ Resources:
     Type: AWS::ECS::Service
 
   EcsServiceXterm:
-    Condition: IfRunXtermHttps
     DependsOn:
      - ListenerPort443
     Properties:
@@ -804,7 +825,6 @@ Resources:
         -
           ContainerName: xterm
           ContainerPort: 5000
-#         LoadBalancerName: !GetAtt LoadBalancerPublic.LoadBalancerName
           TargetGroupArn: !Ref TargetGroupXterm
       NetworkConfiguration:
         AwsvpcConfiguration:
