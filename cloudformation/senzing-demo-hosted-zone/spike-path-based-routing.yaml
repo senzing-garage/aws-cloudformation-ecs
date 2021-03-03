@@ -719,6 +719,9 @@ Resources:
             -
               Name: URL
               Value: "https://raw.githubusercontent.com/Senzing/senzing-rest-api-specification/master/senzing-rest-api.yaml"
+            -
+              Name: BASE_URL
+              Value: /swagger
           Essential: true
           Image: public.ecr.aws/senzing/swagger-ui:latest
           LogConfiguration:
