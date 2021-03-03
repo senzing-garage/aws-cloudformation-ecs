@@ -479,7 +479,6 @@ Resources:
       Timeout: 600
     Type: AWS::Lambda::Function
 
-
 # -- Run ECS tasks-------------------------------------------------------------
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/template-custom-resources.html
