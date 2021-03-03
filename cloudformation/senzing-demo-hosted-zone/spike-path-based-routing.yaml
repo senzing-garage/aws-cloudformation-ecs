@@ -56,6 +56,7 @@ Mappings:
     Stack:
       Name: spike-routing
     Run:
+      Swagger: Yes
       Xterm: Yes
 
   VpcCidrs:
@@ -81,6 +82,14 @@ Conditions:
     - !Equals
       - !Ref Route53HostedZoneId
       - ''
+
+  IfRunSwagger: !Equals
+    - !FindInMap [Constants, Run, Swagger]
+    - Yes
+
+  IfRunSwaggerHttps: !And
+    - !Condition IfRoute53HostedZoneId
+    - !Condition IfRunSwagger
 
   IfRunXterm: !Equals
     - !FindInMap [Constants, Run, Xterm]
@@ -341,24 +350,25 @@ Resources:
 
 
   Ec2SecurityGroupIngresSwagger:
+    Condition: IfRunSwaggerHttps
     Properties:
-      CidrIp: !Ref CidrInbound
-      Description: Swagger UI
+      Description: Allow Health Check on Container 8080 from ALB
       FromPort: 8080
       GroupId: !Ref Ec2SecurityGroupLoadBalancerPublic
       IpProtocol: tcp
+      SourceSecurityGroupId: !GetAtt Ec2SecurityGroupLoadBalancerPublic.GroupId
       ToPort: 8080
     Type: AWS::EC2::SecurityGroupIngress
 
 
   Ec2SecurityGroupIngresXterm:
-    Condition: IfRunXterm
+    Condition: IfRunXtermHttps
     Properties:
-      CidrIp: !Ref CidrInbound
-      Description: Senzing X-term
+      Description: Allow Health Check on Container 5000 from ALB
       FromPort: 5000
       GroupId: !Ref Ec2SecurityGroupLoadBalancerPublic
       IpProtocol: tcp
+      SourceSecurityGroupId: !GetAtt Ec2SecurityGroupLoadBalancerPublic.GroupId
       ToPort: 5000
     Type: AWS::EC2::SecurityGroupIngress
 
@@ -517,13 +527,10 @@ Resources:
       Timeout: 30
     Type: AWS::Lambda::Function
 
-
-
 # -- Run ECS tasks-------------------------------------------------------------
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/template-custom-resources.html
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-cfn-customresource.html
-
 
   LambdaRunnerFindDomainName:
     Condition: IfRoute53HostedZoneId
@@ -558,6 +565,7 @@ Resources:
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-elasticloadbalancingv2-targetgroup.html
 
   TargetGroupSwagger:
+    Condition: IfRunSwaggerHttps
     DependsOn:
      - LoadBalancerPublic
     Properties:
@@ -582,8 +590,9 @@ Resources:
       VpcId: !Ref Ec2Vpc
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
 
+
   TargetGroupXterm:
-    Condition: IfRunXterm
+    Condition: IfRunXtermHttps
     DependsOn:
      - LoadBalancerPublic
     Properties:
@@ -642,7 +651,7 @@ Resources:
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-elasticloadbalancingv2-listenerrule.html
 
   ListenerRuleSwagger:
-    Condition: IfRoute53HostedZoneId
+    Condition: IfRunSwaggerHttps
     Properties:
       Actions:
         -
@@ -783,9 +792,10 @@ Resources:
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ecs-service.html
 
   EcsServiceSwagger:
-    Condition: IfRoute53HostedZoneId
+    Condition: IfRunSwaggerHttps
     DependsOn:
      - ListenerPort443
+     - ListenerRuleSwagger
     Properties:
       Cluster: !Ref EcsCluster
       DesiredCount: 1
@@ -813,9 +823,12 @@ Resources:
       TaskDefinition: !Ref EcsTaskDefinitionSwagger
     Type: AWS::ECS::Service
 
+
   EcsServiceXterm:
+    Condition: IfRunXtermHttps
     DependsOn:
      - ListenerPort443
+     - ListenerRuleXterm
     Properties:
       Cluster: !Ref EcsCluster
       DesiredCount: 1
@@ -875,7 +888,7 @@ Outputs:
     Value: !Ref Ec2SubnetPublic2
 
   UrlSwagger:
-    Condition: IfRoute53HostedZoneId
+    Condition: IfRunSwaggerHttps
     Description: 'HTTPS URL for Swagger. Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#urlswagger'
     Value: !Sub
       - "https://${AWS::StackName}.${DomainName}/swagger/"
