@@ -177,11 +177,13 @@ Resources:
           -
             Action:
               - acm-pca:CreateCertificateAuthority
+              - acm-pca:GetCertificate
             Effect: Allow
             Resource:
               - '*'
         Version: '2012-10-17'
       Roles:
+       - !Ref IamRoleLambda
        - !Ref IamRoleRootCa
     Type: AWS::IAM::Policy
 
@@ -215,9 +217,7 @@ Resources:
   InternalRootCACertificate:
     Properties:
       CertificateAuthorityArn: !Ref InternalRootCA
-      CertificateSigningRequest: !GetAtt
-        - InternalRootCA
-        - CertificateSigningRequest
+      CertificateSigningRequest: !GetAtt InternalRootCA.CertificateSigningRequest
       SigningAlgorithm: SHA256WITHRSA
       TemplateArn: 'arn:aws:acm-pca:::template/RootCACertificate/V1'
       Validity:
@@ -229,9 +229,7 @@ Resources:
 
   InternalRootCAActivation:
     Properties:
-      Certificate: !GetAtt
-        - InternalRootCACertificate
-        - Certificate
+      Certificate: !GetAtt InternalRootCACertificate.Certificate
       CertificateAuthorityArn: !Ref InternalRootCA
       Status: ACTIVE
     Type: 'AWS::ACMPCA::CertificateAuthorityActivation'
@@ -239,7 +237,9 @@ Resources:
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-certificatemanager-certificate.html
 
   ACMInternalCertificate:
-    DependsOn: InternalRootCAActivation
+    DependsOn:
+     - InternalRootCAActivation
+     - LambdaRunnerWaitForCertificate
     Properties:
       CertificateAuthorityArn: !Ref InternalRootCA
       DomainName: !GetAtt LoadBalancerPublic.DNSName
@@ -410,8 +410,6 @@ Resources:
           Value: !Sub "${AWS::StackName}-ecs-cluster"
     Type: AWS::ECS::Cluster
 
-
-
 # -- LambdaFunction -----------------------------------------------------------
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-lambda-function.html
@@ -491,7 +489,7 @@ Resources:
     Properties:
       ClusterId: !Ref EcsCluster
       CertificateAuthorityArn: !Ref InternalRootCA
-      CertificateArn: !Ref InternalRootCACertificate
+      CertificateArn: !GetAtt InternalRootCACertificate.Arn
       ServiceToken: !GetAtt LambdaFunctionWaitForCertificate.Arn
       Tags:
         - Key: Name
@@ -544,22 +542,12 @@ Resources:
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-elasticloadbalancingv2-listener.html
 
-  ListenerSwaggerHttp:
-    Properties:
-      DefaultActions:
-        - TargetGroupArn: !Ref TargetGroupSwagger
-          Type: forward
-      LoadBalancerArn: !Ref LoadBalancerPublic
-      Port: 8080
-      Protocol: HTTP
-    Type: AWS::ElasticLoadBalancingV2::Listener
-
-
   ListenerSwaggerHttps:
-    DependsOn: InternalRootCAActivation
+    DependsOn:
+     - LambdaRunnerWaitForCertificate
     Properties:
       Certificates:
-        - CertificateArn: !Ref InternalRootCA
+        - CertificateArn: !GetAtt InternalRootCACertificate.Arn
       DefaultActions:
         - TargetGroupArn: !Ref TargetGroupSwagger
           Type: forward
@@ -682,10 +670,6 @@ Outputs:
     Export:
       Name: !Sub "${AWS::StackName}-subnet-public-2"
     Value: !Ref Ec2SubnetPublic2
-
-  UrlSwaggerHttp:
-    Description: 'URL for Swagger. Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#urlswagger'
-    Value: !Sub "http://${LoadBalancerPublic.DNSName}:8080"
 
   UrlSwaggerHttps:
     Description: 'URL for Swagger. Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#urlswagger'
