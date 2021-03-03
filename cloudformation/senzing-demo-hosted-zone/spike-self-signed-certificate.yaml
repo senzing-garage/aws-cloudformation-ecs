@@ -602,7 +602,6 @@ Resources:
 
   EcsServiceSwagger:
     DependsOn:
-     - ListenerSwaggerHttp
      - ListenerSwaggerHttps
      - LambdaRunnerWaitForCertificate
     Properties:
