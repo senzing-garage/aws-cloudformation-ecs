@@ -757,10 +757,13 @@ Resources:
         -
           Environment:
             -
+              Name: SENZING_BASE_URL_XTERM
+              Value: /xterm/
+            -
               Name: SENZING_SKIP_DATABASE_PERFORMANCE_TEST
               Value: 'true'
           Essential: true
-          Image: public.ecr.aws/senzing/xterm:1.0.3
+          Image: public.ecr.aws/senzing/xterm:1.1.0
           LinuxParameters:
             Capabilities:
               Add:
