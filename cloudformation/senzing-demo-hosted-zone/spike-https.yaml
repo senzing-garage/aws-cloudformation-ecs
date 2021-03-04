@@ -55,6 +55,9 @@ Mappings:
   Constants:
     Stack:
       Name: spike-https
+    Run:
+      Swagger: Yes
+      Xterm: Yes
 
   VpcCidrs:
     vpc:
@@ -79,6 +82,22 @@ Conditions:
     - !Equals
       - !Ref Route53HostedZoneId
       - ''
+
+  IfRunSwagger: !Equals
+    - !FindInMap [Constants, Run, Swagger]
+    - Yes
+
+  IfRunSwaggerHttps: !And
+    - !Condition IfRoute53HostedZoneId
+    - !Condition IfRunSwagger
+
+  IfRunXterm: !Equals
+    - !FindInMap [Constants, Run, Xterm]
+    - Yes
+
+  IfRunXtermHttps: !And
+    - !Condition IfRoute53HostedZoneId
+    - !Condition IfRunXterm
 
 # -----------------------------------------------------------------------------
 # Resources
@@ -132,6 +151,26 @@ Resources:
           Value: !Sub "${AWS::StackName}-iam-role-swagger"
     Type: AWS::IAM::Role
 
+
+  IamRoleXterm:
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          -
+            Action:
+              - sts:AssumeRole
+            Effect: Allow
+            Principal:
+              Service:
+                - ecs-tasks.amazonaws.com
+                - route53.amazonaws.com
+        Version: '2012-10-17'
+      Description: !Sub "${AWS::StackName}-iam-role-xterm"
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-iam-role-xterm"
+    Type: AWS::IAM::Role
+
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-iam-policy.html
 
   IamPolicyLoggingCreateStream:
@@ -150,6 +189,7 @@ Resources:
       Roles:
        - !Ref IamRoleLambda
        - !Ref IamRoleSwagger
+       - !Ref IamRoleXterm
     Type: AWS::IAM::Policy
 
 
@@ -169,6 +209,7 @@ Resources:
       Roles:
        - !Ref IamRoleLambda
        - !Ref IamRoleSwagger
+       - !Ref IamRoleXterm
     Type: AWS::IAM::Policy
 
 
@@ -187,6 +228,7 @@ Resources:
       Roles:
        - !Ref IamRoleLambda
        - !Ref IamRoleSwagger
+       - !Ref IamRoleXterm
     Type: AWS::IAM::Policy
 
 
@@ -205,6 +247,7 @@ Resources:
       Roles:
        - !Ref IamRoleLambda
        - !Ref IamRoleSwagger
+       - !Ref IamRoleXterm
     Type: AWS::IAM::Policy
 
 # -- Logging ------------------------------------------------------------------
@@ -217,7 +260,6 @@ Resources:
         - "/senzing/${StackName}/${AWS::StackName}"
         - StackName: !FindInMap [Constants, Stack, Name]
     Type: AWS::Logs::LogGroup
-
 
   LogsLogGroupLambdaFindDomainName:
     Condition: IfRoute53HostedZoneId
@@ -295,14 +337,39 @@ Resources:
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-ec2-security-group-ingress.html
 
-  Ec2SecurityGroupIngresSwagger:
+  Ec2SecurityGroupHttps:
+    Condition: IfRoute53HostedZoneId
     Properties:
       CidrIp: !Ref CidrInbound
-      Description: Swagger UI
+      Description: HTTPS
+      FromPort: 443
+      GroupId: !Ref Ec2SecurityGroupLoadBalancerPublic
+      IpProtocol: tcp
+      ToPort: 443
+    Type: AWS::EC2::SecurityGroupIngress
+
+
+  Ec2SecurityGroupIngresSwagger:
+    Condition: IfRunSwaggerHttps
+    Properties:
+      Description: Allow Health Check on Container 8080 from ALB
       FromPort: 8080
       GroupId: !Ref Ec2SecurityGroupLoadBalancerPublic
       IpProtocol: tcp
-      ToPort: 8081
+      SourceSecurityGroupId: !GetAtt Ec2SecurityGroupLoadBalancerPublic.GroupId
+      ToPort: 8080
+    Type: AWS::EC2::SecurityGroupIngress
+
+
+  Ec2SecurityGroupIngresXterm:
+    Condition: IfRunXtermHttps
+    Properties:
+      Description: Allow Health Check on Container 5000 from ALB
+      FromPort: 5000
+      GroupId: !Ref Ec2SecurityGroupLoadBalancerPublic
+      IpProtocol: tcp
+      SourceSecurityGroupId: !GetAtt Ec2SecurityGroupLoadBalancerPublic.GroupId
+      ToPort: 5000
     Type: AWS::EC2::SecurityGroupIngress
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-internetgateway.html
@@ -482,6 +549,7 @@ Resources:
 
   LoadBalancerPublic:
     Properties:
+      Name: !Sub "${AWS::StackName}-load-balancer-public"
       Scheme: internet-facing
       SecurityGroups:
         - !Ref Ec2SecurityGroupLoadBalancerPublic
@@ -497,6 +565,7 @@ Resources:
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-elasticloadbalancingv2-targetgroup.html
 
   TargetGroupSwagger:
+    Condition: IfRunSwaggerHttps
     DependsOn:
      - LoadBalancerPublic
     Properties:
@@ -505,6 +574,7 @@ Resources:
       HealthCheckProtocol: HTTP
       HealthCheckTimeoutSeconds: 50
       HealthyThresholdCount: 2
+      Name: !Sub "${AWS::StackName}-target-group-swagger"
       Matcher:
         HttpCode: 200-299
       Port: 8080
@@ -520,31 +590,100 @@ Resources:
       VpcId: !Ref Ec2Vpc
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
 
+
+  TargetGroupXterm:
+    Condition: IfRunXtermHttps
+    DependsOn:
+     - LoadBalancerPublic
+    Properties:
+      HealthCheckIntervalSeconds: 80
+      HealthCheckPath: '/'
+      HealthCheckProtocol: HTTP
+      HealthCheckTimeoutSeconds: 50
+      HealthyThresholdCount: 2
+      Name: !Sub "${AWS::StackName}-target-group-xterm"
+      Matcher:
+        HttpCode: 200-299
+      Port: 5000
+      Protocol: HTTP
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-target-group-xterm"
+      TargetGroupAttributes:
+      -
+        Key: deregistration_delay.timeout_seconds
+        Value: '60'
+      -
+        Key: stickiness.enabled
+        Value: 'true'
+      -
+        Key: stickiness.type
+        Value: lb_cookie
+      -
+        Key: stickiness.lb_cookie.duration_seconds
+        Value: '86400'
+      TargetType: ip
+      UnhealthyThresholdCount: 5
+      VpcId: !Ref Ec2Vpc
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-elasticloadbalancingv2-listener.html
 
-  ListenerSwaggerHttp:
-    Properties:
-      DefaultActions:
-        - TargetGroupArn: !Ref TargetGroupSwagger
-          Type: forward
-      LoadBalancerArn: !Ref LoadBalancerPublic
-      Port: 8080
-      Protocol: HTTP
-    Type: AWS::ElasticLoadBalancingV2::Listener
-
-
-  ListenerSwaggerHttps:
+  ListenerPort443:
     Condition: IfRoute53HostedZoneId
     Properties:
       Certificates:
         - CertificateArn: !GetAtt LambdaRunnerFindDomainName.CertificateArn
       DefaultActions:
-        - TargetGroupArn: !Ref TargetGroupSwagger
-          Type: forward
+        - Order: 1
+          RedirectConfig:
+            Protocol: HTTPS
+            Port: '443'
+            Host: hub.senzing.com
+            Path: /aws-cloudformation-ecs-poc-simple/
+            StatusCode: HTTP_301
+          Type: redirect
       LoadBalancerArn: !Ref LoadBalancerPublic
-      Port: 8081
+      Port: 443
       Protocol: HTTPS
     Type: AWS::ElasticLoadBalancingV2::Listener
+
+# https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-elasticloadbalancingv2-listenerrule.html
+
+  ListenerRuleSwagger:
+    Condition: IfRunSwaggerHttps
+    Properties:
+      Actions:
+        -
+          Type: "forward"
+          TargetGroupArn: !Ref TargetGroupSwagger
+          Order: 1
+      Conditions:
+        -
+          Field: "path-pattern"
+          Values:
+            - "/swagger/*"
+      ListenerArn: !Ref ListenerPort443
+      Priority: 2
+    Type: "AWS::ElasticLoadBalancingV2::ListenerRule"
+
+
+  ListenerRuleXterm:
+    Condition: IfRunXtermHttps
+    Properties:
+      Actions:
+        -
+          Type: "forward"
+          TargetGroupArn: !Ref TargetGroupXterm
+          Order: 1
+      Conditions:
+        -
+          Field: "path-pattern"
+          Values:
+            - "/xterm/*"
+      ListenerArn: !Ref ListenerPort443
+      Priority: 3
+    Type: "AWS::ElasticLoadBalancingV2::ListenerRule"
 
 # -- Route53RecordSet ---------------------------------------------------------
 
@@ -580,6 +719,9 @@ Resources:
             -
               Name: URL
               Value: "https://raw.githubusercontent.com/Senzing/senzing-rest-api-specification/master/senzing-rest-api.yaml"
+            -
+              Name: BASE_URL
+              Value: /swagger
           Essential: true
           Image: public.ecr.aws/senzing/swagger-ui:latest
           LogConfiguration:
@@ -608,13 +750,58 @@ Resources:
       TaskRoleArn: !GetAtt IamRoleSwagger.Arn
     Type: AWS::ECS::TaskDefinition
 
+
+  EcsTaskDefinitionXterm:
+    Properties:
+      ContainerDefinitions:
+        -
+          Environment:
+            -
+              Name: SENZING_BASE_URL_XTERM
+              Value: /xterm/
+            -
+              Name: SENZING_SKIP_DATABASE_PERFORMANCE_TEST
+              Value: 'true'
+          Essential: true
+          Image: public.ecr.aws/senzing/xterm:1.1.0
+          LinuxParameters:
+            Capabilities:
+              Add:
+                - SYS_PTRACE
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: !Ref LogsLogGroupMain
+              awslogs-region: !Ref AWS::Region
+              awslogs-stream-prefix: service
+          Name: xterm
+          PortMappings:
+            - ContainerPort: 5000
+              HostPort: 5000
+              Protocol: tcp
+          Privileged: false
+          ReadonlyRootFilesystem: false
+      Cpu: '1024'
+      ExecutionRoleArn: !GetAtt IamRoleXterm.Arn
+      Family: !Sub "${AWS::StackName}-task-definition-xterm"
+      Memory: '8192'
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-ecs-task-definition-xterm"
+    Type: AWS::ECS::TaskDefinition
+
 # -- EcsService ---------------------------------------------------------------
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ecs-service.html
 
   EcsServiceSwagger:
+    Condition: IfRunSwaggerHttps
     DependsOn:
-     - ListenerSwaggerHttp
+     - ListenerPort443
+     - ListenerRuleSwagger
     Properties:
       Cluster: !Ref EcsCluster
       DesiredCount: 1
@@ -622,8 +809,8 @@ Resources:
       LaunchType: FARGATE
       LoadBalancers:
         -
-          ContainerPort: 8080
           ContainerName: swagger
+          ContainerPort: 8080
           TargetGroupArn: !Ref TargetGroupSwagger
       NetworkConfiguration:
         AwsvpcConfiguration:
@@ -642,21 +829,45 @@ Resources:
       TaskDefinition: !Ref EcsTaskDefinitionSwagger
     Type: AWS::ECS::Service
 
+
+  EcsServiceXterm:
+    Condition: IfRunXtermHttps
+    DependsOn:
+     - ListenerPort443
+     - ListenerRuleXterm
+    Properties:
+      Cluster: !Ref EcsCluster
+      DesiredCount: 1
+      EnableECSManagedTags: true
+      LaunchType: FARGATE
+      LoadBalancers:
+        -
+          ContainerName: xterm
+          ContainerPort: 5000
+          TargetGroupArn: !Ref TargetGroupXterm
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: ENABLED
+          SecurityGroups:
+            - !Ref Ec2SecurityGroupLoadBalancerPublic
+          Subnets:
+            - !Ref Ec2SubnetPublic1
+            - !Ref Ec2SubnetPublic2
+      PlatformVersion: 1.4.0
+      PropagateTags: TASK_DEFINITION
+      ServiceName: xterm
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-ecs-service-xterm"
+      TaskDefinition: !Ref EcsTaskDefinitionXterm
+    Type: AWS::ECS::Service
+
 # -----------------------------------------------------------------------------
 # Outputs
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/outputs-section-structure.html
 # -----------------------------------------------------------------------------
 
 Outputs:
-
-  AccountID:
-    Description: 'The accountID'
-    Value: !Sub "${AWS::AccountId}"
-
-  CertificateArn:
-    Condition: IfRoute53HostedZoneId
-    Description: 'ARN of the SSL certificate. Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#certificatearn'
-    Value: !GetAtt LambdaRunnerFindDomainName.CertificateArn
 
   Ec2Vpc:
     Description: 'The ID of the VPC. Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#ec2vpc'
@@ -683,19 +894,15 @@ Outputs:
     Value: !Ref Ec2SubnetPublic2
 
   UrlSwagger:
-    Description: 'URL for Swagger. Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#urlswagger'
-    Value: !Sub "http://${LoadBalancerPublic.DNSName}:8080"
-
-  UrlSwaggerHttp:
-    Condition: IfRoute53HostedZoneId
-    Description: 'HTTP URL for Swagger. Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#urlswaggerhttp'
+    Condition: IfRunSwaggerHttps
+    Description: 'HTTPS URL for Swagger. Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#urlswagger'
     Value: !Sub
-      - "http://${AWS::StackName}.${DomainName}:8080"
+      - "https://${AWS::StackName}.${DomainName}/swagger/"
       - DomainName: !GetAtt LambdaRunnerFindDomainName.DomainName
 
-  UrlSwaggerHttps:
-    Condition: IfRoute53HostedZoneId
-    Description: 'HTTPS URL for Swagger. Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#urlswaggerhttps'
+  UrlXterm:
+    Condition: IfRunXtermHttps
+    Description: 'HTTPS URL for Xterm. Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#urlxterm'
     Value: !Sub
-      - "https://${AWS::StackName}.${DomainName}:8081"
+      - "https://${AWS::StackName}.${DomainName}/xterm/"
       - DomainName: !GetAtt LambdaRunnerFindDomainName.DomainName
