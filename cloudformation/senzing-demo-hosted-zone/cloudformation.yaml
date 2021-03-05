@@ -2227,10 +2227,9 @@ Resources:
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-elasticloadbalancingv2-targetgroup.html
 
-  TargetGroupApiServer:
+  TargetGroupApiServerPrivate:
     Condition: IfRunApiServer
     DependsOn:
-     - LoadBalancerPublic
      - LoadBalancerPrivate
     Properties:
       HealthCheckIntervalSeconds: 80
@@ -2240,12 +2239,38 @@ Resources:
       HealthyThresholdCount: 2
       Matcher:
         HttpCode: 200-299
-      Name: !Sub "${AWS::StackName}-target-group-api-server-public"
       Port: 8250
       Protocol: HTTP
       Tags:
         - Key: Name
-          Value: !Sub "${AWS::StackName}-target-group-api-server-public"
+          Value: !Sub "${AWS::StackName}-tg-api-server-private"
+      TargetGroupAttributes:
+        - Key: deregistration_delay.timeout_seconds
+          Value: '60'
+      TargetType: ip
+      UnhealthyThresholdCount: 5
+      VpcId: !Ref Ec2Vpc
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+
+
+  TargetGroupApiServerPublic:
+    Condition: IfRunApiServer
+    DependsOn:
+     - LoadBalancerPublic
+    Properties:
+      HealthCheckIntervalSeconds: 80
+      HealthCheckPath: '/heartbeat'
+      HealthCheckProtocol: HTTP
+      HealthCheckTimeoutSeconds: 50
+      HealthyThresholdCount: 2
+      Matcher:
+        HttpCode: 200-299
+      Name: !Sub "${AWS::StackName}-tg-api-server-public"
+      Port: 8250
+      Protocol: HTTP
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-tg-api-server-public"
       TargetGroupAttributes:
         - Key: deregistration_delay.timeout_seconds
           Value: '60'
@@ -2267,12 +2292,12 @@ Resources:
       HealthyThresholdCount: 2
       Matcher:
         HttpCode: 200-299
-      Name: !Sub "${AWS::StackName}-target-group-jupyter"
+      Name: !Sub "${AWS::StackName}-tg-jupyter"
       Port: 8888
       Protocol: HTTP
       Tags:
         - Key: Name
-          Value: !Sub "${AWS::StackName}-target-group-jupyter"
+          Value: !Sub "${AWS::StackName}-tg-jupyter"
       TargetGroupAttributes:
       -
         Key: deregistration_delay.timeout_seconds
@@ -2304,12 +2329,12 @@ Resources:
       HealthyThresholdCount: 2
       Matcher:
         HttpCode: 200-299
-      Name: !Sub "${AWS::StackName}-target-group-swagger"
+      Name: !Sub "${AWS::StackName}-tg-swagger"
       Port: 8080
       Protocol: HTTP
       Tags:
         - Key: Name
-          Value: !Sub "${AWS::StackName}-target-group-swagger"
+          Value: !Sub "${AWS::StackName}-tg-swagger"
       TargetGroupAttributes:
       - Key: deregistration_delay.timeout_seconds
         Value: '60'
@@ -2331,12 +2356,12 @@ Resources:
       HealthyThresholdCount: 2
       Matcher:
         HttpCode: 200-299
-      Name: !Sub "${AWS::StackName}-target-group-web-app"
+      Name: !Sub "${AWS::StackName}-tg-web-app"
       Port: 8251
       Protocol: HTTP
       Tags:
         - Key: Name
-          Value: !Sub "${AWS::StackName}-target-group-web-app"
+          Value: !Sub "${AWS::StackName}-tg-web-app"
       TargetGroupAttributes:
       - Key: deregistration_delay.timeout_seconds
         Value: '60'
@@ -2358,12 +2383,12 @@ Resources:
       HealthyThresholdCount: 2
       Matcher:
         HttpCode: 200-299
-      Name: !Sub "${AWS::StackName}-target-group-xterm"
+      Name: !Sub "${AWS::StackName}-tg-xterm"
       Port: 5000
       Protocol: HTTP
       Tags:
         - Key: Name
-          Value: !Sub "${AWS::StackName}-target-group-xterm"
+          Value: !Sub "${AWS::StackName}-tg-xterm"
       TargetGroupAttributes:
       -
         Key: deregistration_delay.timeout_seconds
@@ -2407,7 +2432,7 @@ Resources:
     Condition: IfRunApiServer
     Properties:
       DefaultActions:
-        - TargetGroupArn: !Ref TargetGroupApiServer
+        - TargetGroupArn: !Ref TargetGroupApiServerPrivate
           Type: forward
       LoadBalancerArn: !Ref LoadBalancerPrivate
       Port: 8250
@@ -2422,7 +2447,7 @@ Resources:
       Actions:
         -
           Type: "forward"
-          TargetGroupArn: !Ref TargetGroupApiServer
+          TargetGroupArn: !Ref TargetGroupApiServerPublic
           Order: 1
       Conditions:
         -
@@ -2448,7 +2473,7 @@ Resources:
           Values:
             - "/jupyter/*"
       ListenerArn: !Ref ListenerPort443
-      Priority: 3
+      Priority: 6
     Type: "AWS::ElasticLoadBalancingV2::ListenerRule"
 
 
@@ -2466,7 +2491,7 @@ Resources:
           Values:
             - "/swagger/*"
       ListenerArn: !Ref ListenerPort443
-      Priority: 2
+      Priority: 4
     Type: "AWS::ElasticLoadBalancingV2::ListenerRule"
 
 
@@ -2484,7 +2509,7 @@ Resources:
           Values:
             - "/app/*"
       ListenerArn: !Ref ListenerPort443
-      Priority: 3
+      Priority: 2
     Type: "AWS::ElasticLoadBalancingV2::ListenerRule"
 
 
@@ -2502,7 +2527,7 @@ Resources:
           Values:
             - "/xterm/*"
       ListenerArn: !Ref ListenerPort443
-      Priority: 3
+      Priority: 5
     Type: "AWS::ElasticLoadBalancingV2::ListenerRule"
 
 # -- Route53RecordSet ---------------------------------------------------------
@@ -2545,6 +2570,7 @@ Resources:
             - -allowedOrigins
             - '*'
             - -enableAdmin
+            - -skipStartupPerf
           Essential: true
           Image: public.ecr.aws/senzing/senzing-api-server:2.3.2
           LogConfiguration:
@@ -3654,7 +3680,7 @@ Resources:
         -
           ContainerPort: 8250
           ContainerName: api-server
-          TargetGroupArn: !Ref TargetGroupApiServer
+          TargetGroupArn: !Ref TargetGroupApiServerPublic
       NetworkConfiguration:
         AwsvpcConfiguration:
           AssignPublicIp: DISABLED
