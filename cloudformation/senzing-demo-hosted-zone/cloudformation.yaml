@@ -2227,37 +2227,11 @@ Resources:
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-elasticloadbalancingv2-targetgroup.html
 
-  TargetGroupApiServerPrivate:
-    Condition: IfRunApiServer
-    DependsOn:
-     - LoadBalancerPrivate
-    Properties:
-      HealthCheckIntervalSeconds: 80
-      HealthCheckPath: '/heartbeat'
-      HealthCheckProtocol: HTTP
-      HealthCheckTimeoutSeconds: 50
-      HealthyThresholdCount: 2
-      Matcher:
-        HttpCode: 200-299
-      Name: !Sub "${AWS::StackName}-target-group-api-server-private"
-      Port: 8250
-      Protocol: HTTP
-      Tags:
-        - Key: Name
-          Value: !Sub "${AWS::StackName}-target-group-api-server-private"
-      TargetGroupAttributes:
-        - Key: deregistration_delay.timeout_seconds
-          Value: '60'
-      TargetType: ip
-      UnhealthyThresholdCount: 5
-      VpcId: !Ref Ec2Vpc
-    Type: AWS::ElasticLoadBalancingV2::TargetGroup
-
-
-  TargetGroupApiServerPublic:
+  TargetGroupApiServer:
     Condition: IfRunApiServer
     DependsOn:
      - LoadBalancerPublic
+     - LoadBalancerPrivate
     Properties:
       HealthCheckIntervalSeconds: 80
       HealthCheckPath: '/heartbeat'
@@ -2282,7 +2256,7 @@ Resources:
 
 
   TargetGroupJupyter:
-    Condition: IfRunJupyterHttps
+    Condition: IfRunJupyter
     DependsOn:
      - LoadBalancerPublic
     Properties:
@@ -2319,7 +2293,7 @@ Resources:
 
 
   TargetGroupSwagger:
-    Condition: IfRunSwaggerHttps
+    Condition: IfRunSwagger
     DependsOn:
      - LoadBalancerPublic
     Properties:
@@ -2346,7 +2320,7 @@ Resources:
 
 
   TargetGroupWebApp:
-    Condition: IfRunWebAppHttps
+    Condition: IfRunWebApp
     DependsOn:
      - LoadBalancerPublic
     Properties:
@@ -2373,7 +2347,7 @@ Resources:
 
 
   TargetGroupXterm:
-    Condition: IfRunXtermHttps
+    Condition: IfRunXterm
     DependsOn:
      - LoadBalancerPublic
     Properties:
@@ -2433,7 +2407,7 @@ Resources:
     Condition: IfRunApiServer
     Properties:
       DefaultActions:
-        - TargetGroupArn: !Ref TargetGroupApiServerPrivate
+        - TargetGroupArn: !Ref TargetGroupApiServer
           Type: forward
       LoadBalancerArn: !Ref LoadBalancerPrivate
       Port: 8250
@@ -2558,7 +2532,6 @@ Resources:
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ecs-taskdefinition.html
 
   EcsTaskDefinitionApiServer:
-    Condition: IfRunApiServer
     Properties:
       ContainerDefinitions:
         -
@@ -3670,8 +3643,8 @@ Resources:
     Condition: IfRunApiServer
     DependsOn:
      - LambdaRunnerInitSenzing
-     - ListenerRuleApiServerPublic
-     - ListenerRuleApiServerPrivate
+#    - ListenerRuleApiServerPublic
+#    - ListenerRuleApiServerPrivate
     Properties:
       Cluster: !Ref EcsCluster
       DesiredCount: 1
@@ -3681,11 +3654,7 @@ Resources:
         -
           ContainerPort: 8250
           ContainerName: api-server
-          TargetGroupArn: !Ref TargetGroupApiServerPrivate
-        -
-          ContainerPort: 8250
-          ContainerName: api-server
-          TargetGroupArn: !Ref TargetGroupApiServerPublic
+          TargetGroupArn: !Ref TargetGroupApiServer
       NetworkConfiguration:
         AwsvpcConfiguration:
           AssignPublicIp: DISABLED
@@ -3853,7 +3822,7 @@ Resources:
 
 
   EcsServiceWebApp:
-    Condition: IfRunWebApp
+    Condition: IfRunWebAppHttps
     DependsOn:
      - ListenerPort443
      - ListenerRuleWebApp
