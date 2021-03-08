@@ -74,6 +74,7 @@ Parameters:
     Type: String
 
   Route53HostedZoneId:
+    Default: ''
     Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#route53hostedzoneid'
     Type: AWS::Route53::HostedZone::Id
 
@@ -118,7 +119,7 @@ Mappings:
       WebApp: Yes
       Xterm: Yes
     Stack:
-      Name: poc-simple
+      Name: hosted-zone
     StreamProducer:
       InputUrl: https://public-read-access.s3.amazonaws.com/TestDataSets/test-dataset-100m.json.gz
       RecordMax: 20000
@@ -143,13 +144,26 @@ Mappings:
 
 Conditions:
 
+  IfRoute53HostedZoneId: !Not
+    - !Equals
+      - !Ref Route53HostedZoneId
+      - ''
+
   IfRunApiServer: !Equals
     - !FindInMap [Constants, Run, ApiServer]
     - Yes
 
+  IfRunApiServerHttps: !And
+    - !Condition IfRoute53HostedZoneId
+    - !Condition IfRunApiServer
+
   IfRunJupyter: !Equals
     - !FindInMap [Constants, Run, Jupyter]
     - Yes
+
+  IfRunJupyterHttps: !And
+    - !Condition IfRoute53HostedZoneId
+    - !Condition IfRunJupyter
 
   IfRunRedoer: !Equals
     - !FindInMap [Constants, Run, Redoer]
@@ -171,6 +185,10 @@ Conditions:
     - !FindInMap [Constants, Run, Swagger]
     - Yes
 
+  IfRunSwaggerHttps: !And
+    - !Condition IfRoute53HostedZoneId
+    - !Condition IfRunSwagger
+
   IfRunVpcFlowLogs: !Equals
     - !FindInMap [Constants, Run, VpcFlowLogs]
     - Yes
@@ -179,9 +197,17 @@ Conditions:
     - !FindInMap [Constants, Run, WebApp]
     - Yes
 
+  IfRunWebAppHttps: !And
+    - !Condition IfRoute53HostedZoneId
+    - !Condition IfRunWebApp
+
   IfRunXterm: !Equals
     - !FindInMap [Constants, Run, Xterm]
     - Yes
+
+  IfRunXtermHttps: !And
+    - !Condition IfRoute53HostedZoneId
+    - !Condition IfRunXterm
 
 # -----------------------------------------------------------------------------
 # Resources
@@ -358,6 +384,7 @@ Resources:
               Service:
                 - ecs-tasks.amazonaws.com
                 - lambda.amazonaws.com
+                - route53.amazonaws.com
                 - sqs.amazonaws.com
         Version: '2012-10-17'
       Description: !Sub "${AWS::StackName}-iam-role-lambda"
@@ -456,6 +483,7 @@ Resources:
             Principal:
               Service:
                 - ecs-tasks.amazonaws.com
+                - route53.amazonaws.com
         Version: '2012-10-17'
       Description: !Sub "${AWS::StackName}-iam-role-swagger"
       Tags:
@@ -494,6 +522,7 @@ Resources:
             Principal:
               Service:
                 - ecs-tasks.amazonaws.com
+                - route53.amazonaws.com
         Version: '2012-10-17'
       Description: !Sub "${AWS::StackName}-iam-role-xterm"
       Tags:
@@ -502,6 +531,25 @@ Resources:
     Type: AWS::IAM::Role
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-iam-policy.html
+
+  IamPolicyCertificateManager:
+    Properties:
+      PolicyName: !Sub "${AWS::StackName}-iam-policy-certificate-manager"
+      PolicyDocument:
+        Statement:
+          -
+            Action:
+              - acm:ListCertificates
+            Effect: Allow
+            Resource:
+              - '*'
+        Version: '2012-10-17'
+      Roles:
+       - !Ref IamRoleLambda
+       - !Ref IamRoleSwagger
+       - !Ref IamRoleXterm
+    Type: AWS::IAM::Policy
+
 
   IamPolicyEfs:
     Properties:
@@ -593,28 +641,21 @@ Resources:
     Type: AWS::IAM::Policy
 
 
-  IamPolicyTaskRunner:
+  IamPolicyRoute53:
     Properties:
-      PolicyName: !Sub "${AWS::StackName}-iam-policy-task-runner"
+      PolicyName: !Sub "${AWS::StackName}-iam-policy-route53"
       PolicyDocument:
         Statement:
           -
             Action:
-              - ecs:DescribeTasks
-              - ecs:RunTask
+              - route53:GetHostedZone
             Effect: Allow
             Resource:
               - '*'
         Version: '2012-10-17'
       Roles:
-       - !Ref IamRoleApiServer
-       - !Ref IamRoleJupyter
        - !Ref IamRoleLambda
-       - !Ref IamRoleRedoer
-       - !Ref IamRoleSshd
-       - !Ref IamRoleStreamLoader
        - !Ref IamRoleSwagger
-       - !Ref IamRoleWebApp
        - !Ref IamRoleXterm
     Type: AWS::IAM::Policy
 
@@ -655,6 +696,32 @@ Resources:
        - !Ref IamRoleStreamProducer
     Type: AWS::IAM::Policy
 
+
+  IamPolicyTaskRunner:
+    Properties:
+      PolicyName: !Sub "${AWS::StackName}-iam-policy-task-runner"
+      PolicyDocument:
+        Statement:
+          -
+            Action:
+              - ecs:DescribeTasks
+              - ecs:RunTask
+            Effect: Allow
+            Resource:
+              - '*'
+        Version: '2012-10-17'
+      Roles:
+       - !Ref IamRoleApiServer
+       - !Ref IamRoleJupyter
+       - !Ref IamRoleLambda
+       - !Ref IamRoleRedoer
+       - !Ref IamRoleSshd
+       - !Ref IamRoleStreamLoader
+       - !Ref IamRoleSwagger
+       - !Ref IamRoleWebApp
+       - !Ref IamRoleXterm
+    Type: AWS::IAM::Policy
+
 # -- Logging ------------------------------------------------------------------
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-logs-loggroup.html
@@ -664,26 +731,6 @@ Resources:
       LogGroupName: !Sub
         - "/senzing/${StackName}/${AWS::StackName}"
         - StackName: !FindInMap [Constants, Stack, Name]
-    Type: AWS::Logs::LogGroup
-
-  LogsLogGroupLambdaRandomString:
-    Properties:
-      LogGroupName: !Sub "/aws/lambda/${AWS::StackName}-lambda-random-string"
-    Type: AWS::Logs::LogGroup
-
-  LogsLogGroupLambdaRunTask:
-    Properties:
-      LogGroupName: !Sub "/aws/lambda/${AWS::StackName}-lambda-run-task"
-    Type: AWS::Logs::LogGroup
-
-  LogsLogGroupLambdaRunTaskAndWait:
-    Properties:
-      LogGroupName: !Sub "/aws/lambda/${AWS::StackName}-lambda-run-task-and-wait"
-    Type: AWS::Logs::LogGroup
-
-  LogsLogGroupLambdaStringToLower:
-    Properties:
-      LogGroupName: !Sub "/aws/lambda/${AWS::StackName}-lambda-string-to-lower"
     Type: AWS::Logs::LogGroup
 
   LogsLogGroupDbClusterCore:
@@ -705,6 +752,32 @@ Resources:
       LogGroupName: !Sub
         - "/aws/rds/cluster/${StackNameAsLower}-aurora-senzing-cluster-res/postgresql"
         - StackNameAsLower: !GetAtt LambdaRunnerStackNameAsLower.OutputString
+    Type: AWS::Logs::LogGroup
+
+  LogsLogGroupLambdaFindDomainName:
+    Condition: IfRoute53HostedZoneId
+    Properties:
+      LogGroupName: !Sub "/aws/lambda/${AWS::StackName}-lambda-find-domain-name"
+    Type: AWS::Logs::LogGroup
+
+  LogsLogGroupLambdaRandomString:
+    Properties:
+      LogGroupName: !Sub "/aws/lambda/${AWS::StackName}-lambda-random-string"
+    Type: AWS::Logs::LogGroup
+
+  LogsLogGroupLambdaRunTask:
+    Properties:
+      LogGroupName: !Sub "/aws/lambda/${AWS::StackName}-lambda-run-task"
+    Type: AWS::Logs::LogGroup
+
+  LogsLogGroupLambdaRunTaskAndWait:
+    Properties:
+      LogGroupName: !Sub "/aws/lambda/${AWS::StackName}-lambda-run-task-and-wait"
+    Type: AWS::Logs::LogGroup
+
+  LogsLogGroupLambdaStringToLower:
+    Properties:
+      LogGroupName: !Sub "/aws/lambda/${AWS::StackName}-lambda-string-to-lower"
     Type: AWS::Logs::LogGroup
 
   LogsLogGroupLambdaWaitForEfs:
@@ -837,20 +910,6 @@ Resources:
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-ec2-security-group.html
 
-  Ec2SecurityGroupLambdaRunner:
-    Properties:
-      GroupDescription: !Sub "${AWS::StackName} - Lambda open ports."
-      SecurityGroupEgress:
-        -
-          CidrIp: 0.0.0.0/0
-          Description: All
-          IpProtocol: '-1'
-      Tags:
-        - Key: Name
-          Value: !Sub "${AWS::StackName}-ec2-security-group-lambda-runner"
-      VpcId: !Ref Ec2Vpc
-    Type: AWS::EC2::SecurityGroup
-
 
   Ec2SecurityGroupInternal:
     Properties:
@@ -967,6 +1026,21 @@ Resources:
     Type: AWS::EC2::SecurityGroup
 
 
+  Ec2SecurityGroupLambdaRunner:
+    Properties:
+      GroupDescription: !Sub "${AWS::StackName} - Lambda open ports."
+      SecurityGroupEgress:
+        -
+          CidrIp: 0.0.0.0/0
+          Description: All
+          IpProtocol: '-1'
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-ec2-security-group-lambda-runner"
+      VpcId: !Ref Ec2Vpc
+    Type: AWS::EC2::SecurityGroup
+
+
   Ec2SecurityGroupLoadBalancerPrivate:
     Properties:
       GroupDescription: !Sub "${AWS::StackName} - Private load balancer open ports."
@@ -1023,6 +1097,18 @@ Resources:
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-ec2-security-group-ingress.html
 
+  Ec2SecurityGroupHttps:
+    Condition: IfRoute53HostedZoneId
+    Properties:
+      CidrIp: !Ref CidrInbound
+      Description: HTTPS
+      FromPort: 443
+      GroupId: !Ref Ec2SecurityGroupLoadBalancerPublic
+      IpProtocol: tcp
+      ToPort: 443
+    Type: AWS::EC2::SecurityGroupIngress
+
+
   Ec2SecurityGroupIngresApiServerPublic:
     Condition: IfRunApiServer
     Properties:
@@ -1060,13 +1146,13 @@ Resources:
 
 
   Ec2SecurityGroupIngresSwagger:
-    Condition: IfRunSwagger
+    Condition: IfRunSwaggerHttps
     Properties:
-      CidrIp: !Ref CidrInbound
-      Description: Swagger UI
+      Description: Allow Health Check on Container 8080 from ALB
       FromPort: 8080
       GroupId: !Ref Ec2SecurityGroupLoadBalancerPublic
       IpProtocol: tcp
+      SourceSecurityGroupId: !GetAtt Ec2SecurityGroupLoadBalancerPublic.GroupId
       ToPort: 8080
     Type: AWS::EC2::SecurityGroupIngress
 
@@ -1084,13 +1170,13 @@ Resources:
 
 
   Ec2SecurityGroupIngresXterm:
-    Condition: IfRunXterm
+    Condition: IfRunXtermHttps
     Properties:
-      CidrIp: !Ref CidrInbound
-      Description: Senzing X-term
+      Description: Allow Health Check on Container 5000 from ALB
       FromPort: 5000
       GroupId: !Ref Ec2SecurityGroupLoadBalancerPublic
       IpProtocol: tcp
+      SourceSecurityGroupId: !GetAtt Ec2SecurityGroupLoadBalancerPublic.GroupId
       ToPort: 5000
     Type: AWS::EC2::SecurityGroupIngress
 
@@ -1414,10 +1500,6 @@ Resources:
   EcsCluster:
     Properties:
       ClusterName: !Sub "${AWS::StackName}-cluster"
-#     ClusterSettings:
-#       -
-#         Name: containerInsights
-#         Value: disabled
       Tags:
         - Key: Name
           Value: !Sub "${AWS::StackName}-ecs-cluster"
@@ -1426,6 +1508,93 @@ Resources:
 # -- LambdaFunction -----------------------------------------------------------
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-lambda-function.html
+
+  LambdaFunctionFindDomainName:
+    Condition: IfRoute53HostedZoneId
+    DependsOn:
+     - IamPolicyRoute53
+    Properties:
+      Code:
+        ZipFile: |
+          #!/usr/bin/env python3
+
+          import boto3
+          import cfnresponse
+          import datetime
+          import json
+          import logging
+          import traceback
+          from json import JSONEncoder
+
+          logger = logging.getLogger()
+          logger.setLevel(logging.INFO)
+
+          class DateTimeEncoder(JSONEncoder):
+              def default(self, obj):
+                  if isinstance(obj, (datetime.date, datetime.datetime)):
+                      return obj.isoformat()
+
+          def find_certificate_arn(certificate_domain_name, certificate_list):
+              certificate_summary_list = certificate_list.get('CertificateSummaryList', [])
+              for certificate_summary in certificate_summary_list:
+                  if certificate_summary.get('DomainName') == certificate_domain_name:
+                     return certificate_summary.get('CertificateArn')
+              return ""
+
+          def handler(event, context):
+              result = cfnresponse.SUCCESS
+              response = {}
+              try:
+                  logger.info("Event: {0}".format(json.dumps(event)))
+                  if event['RequestType'] in ['Create', 'Update']:
+                      properties = event.get('ResourceProperties', {})
+                      hosted_zone_id = properties.get('HostedZoneId', {})
+
+                      # Find domain in AWS Route53
+                      # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/route53.html
+
+                      route53 = boto3.client('route53')
+                      hosted_zone_dict = route53.get_hosted_zone(Id=hosted_zone_id)
+                      name = hosted_zone_dict.get("HostedZone", {}).get("Name", " ")
+                      response["Name"] = name
+                      response["DomainName"] = name[:-1]
+
+                      # Find Certificate in AWS Certificate Manager
+                      # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/acm.html
+
+                      certificate_domain_name = "*.{0}".format(response["DomainName"])
+                      logger.info("domain_name = {0}".format(certificate_domain_name))
+
+                      acm_client = boto3.client('acm')
+                      certificate_list = acm_client.list_certificates()
+                      certificate_arn = find_certificate_arn(certificate_domain_name, certificate_list)
+                      response["CertificateArn"] = certificate_arn
+                      logger.info("certificate_arn = {0}".format(certificate_arn))
+
+                      if not certificate_arn:
+                          logger.warning("Cannot find certificate for '{0}'".format(certificate_domain_name))
+                          result = cfnresponse.FAILED
+
+                  logger.info("Response: {0}".format(json.dumps(response, cls=DateTimeEncoder)))
+
+              except Exception as e:
+                  logger.error(e)
+                  traceback.print_exc()
+                  result = cfnresponse.FAILED
+              finally:
+                  cfnresponse.send(event, context, result, response)
+
+      Description: Gets Route53 hosted zone information.
+      FunctionName: !Sub "${AWS::StackName}-lambda-find-domain-name"
+      Handler: index.handler
+      Role: !GetAtt IamRoleLambda.Arn
+      Runtime: python3.8
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-lambda-find-domain-name"
+      Timeout: 30
+    Type: AWS::Lambda::Function
+
 
   LambdaFunctionRandomString:
     DependsOn:
@@ -1745,6 +1914,18 @@ Resources:
     Type: Custom::LambdaRunnerDbPassword
 
 
+  LambdaRunnerFindDomainName:
+    Condition: IfRoute53HostedZoneId
+    Properties:
+      ClusterId: !Ref EcsCluster
+      HostedZoneId: !Ref Route53HostedZoneId
+      ServiceToken: !GetAtt LambdaFunctionFindDomainName.Arn
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-lambda-runner-find-domain-name"
+    Type: Custom::LambdaRunnerFindDomainName
+
+
   LambdaRunnerInitEfs:
     DependsOn:
      - LambdaRunnerWaitForEfsMountTarget1
@@ -2015,6 +2196,7 @@ Resources:
 
   LoadBalancerPublic:
     Properties:
+      Name: !Sub "${AWS::StackName}-load-balancer-public"
       Scheme: internet-facing
       SecurityGroups:
         - !Ref Ec2SecurityGroupLoadBalancerPublic
@@ -2030,6 +2212,7 @@ Resources:
 
   LoadBalancerPrivate:
     Properties:
+      Name: !Sub "${AWS::StackName}-load-balancer-private"
       Scheme: internal
       SecurityGroups:
         - !Ref Ec2SecurityGroupLoadBalancerPrivate
@@ -2060,7 +2243,7 @@ Resources:
       Protocol: HTTP
       Tags:
         - Key: Name
-          Value: !Sub "${AWS::StackName}-target-group-api-server-private"
+          Value: !Sub "${AWS::StackName}-tg-api-server-private"
       TargetGroupAttributes:
         - Key: deregistration_delay.timeout_seconds
           Value: '60'
@@ -2082,11 +2265,12 @@ Resources:
       HealthyThresholdCount: 2
       Matcher:
         HttpCode: 200-299
+      Name: !Sub "${AWS::StackName}-tg-api-server-public"
       Port: 8250
       Protocol: HTTP
       Tags:
         - Key: Name
-          Value: !Sub "${AWS::StackName}-target-group-api-server-public"
+          Value: !Sub "${AWS::StackName}-tg-api-server-public"
       TargetGroupAttributes:
         - Key: deregistration_delay.timeout_seconds
           Value: '60'
@@ -2108,11 +2292,12 @@ Resources:
       HealthyThresholdCount: 2
       Matcher:
         HttpCode: 200-299
+      Name: !Sub "${AWS::StackName}-tg-jupyter"
       Port: 8888
       Protocol: HTTP
       Tags:
         - Key: Name
-          Value: !Sub "${AWS::StackName}-target-group-jupyter"
+          Value: !Sub "${AWS::StackName}-tg-jupyter"
       TargetGroupAttributes:
       -
         Key: deregistration_delay.timeout_seconds
@@ -2144,11 +2329,12 @@ Resources:
       HealthyThresholdCount: 2
       Matcher:
         HttpCode: 200-299
+      Name: !Sub "${AWS::StackName}-tg-swagger"
       Port: 8080
       Protocol: HTTP
       Tags:
         - Key: Name
-          Value: !Sub "${AWS::StackName}-target-group-swagger"
+          Value: !Sub "${AWS::StackName}-tg-swagger"
       TargetGroupAttributes:
       - Key: deregistration_delay.timeout_seconds
         Value: '60'
@@ -2170,11 +2356,12 @@ Resources:
       HealthyThresholdCount: 2
       Matcher:
         HttpCode: 200-299
+      Name: !Sub "${AWS::StackName}-tg-web-app"
       Port: 8251
       Protocol: HTTP
       Tags:
         - Key: Name
-          Value: !Sub "${AWS::StackName}-target-group-web-app"
+          Value: !Sub "${AWS::StackName}-tg-web-app"
       TargetGroupAttributes:
       - Key: deregistration_delay.timeout_seconds
         Value: '60'
@@ -2196,11 +2383,12 @@ Resources:
       HealthyThresholdCount: 2
       Matcher:
         HttpCode: 200-299
+      Name: !Sub "${AWS::StackName}-tg-xterm"
       Port: 5000
       Protocol: HTTP
       Tags:
         - Key: Name
-          Value: !Sub "${AWS::StackName}-target-group-xterm"
+          Value: !Sub "${AWS::StackName}-tg-xterm"
       TargetGroupAttributes:
       -
         Key: deregistration_delay.timeout_seconds
@@ -2221,6 +2409,25 @@ Resources:
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-elasticloadbalancingv2-listener.html
 
+  ListenerPort443:
+    Condition: IfRoute53HostedZoneId
+    Properties:
+      Certificates:
+        - CertificateArn: !GetAtt LambdaRunnerFindDomainName.CertificateArn
+      DefaultActions:
+        - Order: 1
+          RedirectConfig:
+            Protocol: HTTPS
+            Port: '443'
+            Host: hub.senzing.com
+            Path: /aws-cloudformation-ecs-poc-simple/
+            StatusCode: HTTP_301
+          Type: redirect
+      LoadBalancerArn: !Ref LoadBalancerPublic
+      Port: 443
+      Protocol: HTTPS
+    Type: AWS::ElasticLoadBalancingV2::Listener
+
   ListenerApiServerPrivate:
     Condition: IfRunApiServer
     Properties:
@@ -2232,78 +2439,116 @@ Resources:
       Protocol: HTTP
     Type: AWS::ElasticLoadBalancingV2::Listener
 
+# https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-elasticloadbalancingv2-listenerrule.html
 
-  ListenerApiServerPublic:
-    Condition: IfRunApiServer
+  ListenerRuleApiServer:
+    Condition: IfRunApiServerHttps
     Properties:
-      DefaultActions:
-        - TargetGroupArn: !Ref TargetGroupApiServerPublic
-          Type: forward
-      LoadBalancerArn: !Ref LoadBalancerPublic
-      Port: 8250
-      Protocol: HTTP
-    Type: AWS::ElasticLoadBalancingV2::Listener
+      Actions:
+        -
+          Type: "forward"
+          TargetGroupArn: !Ref TargetGroupApiServerPublic
+          Order: 1
+      Conditions:
+        -
+          Field: "path-pattern"
+          Values:
+            - "/api/*"
+      ListenerArn: !Ref ListenerPort443
+      Priority: 3
+    Type: "AWS::ElasticLoadBalancingV2::ListenerRule"
 
 
-  ListenerJupyter:
-    Condition: IfRunJupyter
+  ListenerRuleJupyter:
+    Condition: IfRunJupyterHttps
     Properties:
-      DefaultActions:
-        - TargetGroupArn: !Ref TargetGroupJupyter
-          Type: forward
-      LoadBalancerArn: !Ref LoadBalancerPublic
-      Port: 8888
-      Protocol: HTTP
-    Type: AWS::ElasticLoadBalancingV2::Listener
+      Actions:
+        -
+          Type: "forward"
+          TargetGroupArn: !Ref TargetGroupJupyter
+          Order: 1
+      Conditions:
+        -
+          Field: "path-pattern"
+          Values:
+            - "/jupyter/*"
+      ListenerArn: !Ref ListenerPort443
+      Priority: 6
+    Type: "AWS::ElasticLoadBalancingV2::ListenerRule"
 
 
-  ListenerSwagger:
-    Condition: IfRunSwagger
+  ListenerRuleSwagger:
+    Condition: IfRunSwaggerHttps
     Properties:
-      DefaultActions:
-        - TargetGroupArn: !Ref TargetGroupSwagger
-          Type: forward
-      LoadBalancerArn: !Ref LoadBalancerPublic
-      Port: 8080
-      Protocol: HTTP
-    Type: AWS::ElasticLoadBalancingV2::Listener
+      Actions:
+        -
+          Type: "forward"
+          TargetGroupArn: !Ref TargetGroupSwagger
+          Order: 1
+      Conditions:
+        -
+          Field: "path-pattern"
+          Values:
+            - "/swagger/*"
+      ListenerArn: !Ref ListenerPort443
+      Priority: 4
+    Type: "AWS::ElasticLoadBalancingV2::ListenerRule"
 
 
-  ListenerWebApp:
-    Condition: IfRunWebApp
+  ListenerRuleWebApp:
+    Condition: IfRunWebAppHttps
     Properties:
-      DefaultActions:
-        - TargetGroupArn: !Ref TargetGroupWebApp
-          Type: forward
-      LoadBalancerArn: !Ref LoadBalancerPublic
-      Port: 8251
-      Protocol: HTTP
-    Type: AWS::ElasticLoadBalancingV2::Listener
+      Actions:
+        -
+          Type: "forward"
+          TargetGroupArn: !Ref TargetGroupWebApp
+          Order: 1
+      Conditions:
+        -
+          Field: "path-pattern"
+          Values:
+            - "/app/*"
+      ListenerArn: !Ref ListenerPort443
+      Priority: 2
+    Type: "AWS::ElasticLoadBalancingV2::ListenerRule"
 
 
-  ListenerXterm:
-    Condition: IfRunXterm
+  ListenerRuleXterm:
+    Condition: IfRunXtermHttps
     Properties:
-      DefaultActions:
-        - TargetGroupArn: !Ref TargetGroupXterm
-          Type: forward
-      LoadBalancerArn: !Ref LoadBalancerPublic
-      Port: 5000
-      Protocol: HTTP
-    Type: AWS::ElasticLoadBalancingV2::Listener
+      Actions:
+        -
+          Type: "forward"
+          TargetGroupArn: !Ref TargetGroupXterm
+          Order: 1
+      Conditions:
+        -
+          Field: "path-pattern"
+          Values:
+            - "/xterm/*"
+      ListenerArn: !Ref ListenerPort443
+      Priority: 5
+    Type: "AWS::ElasticLoadBalancingV2::ListenerRule"
 
 # -- Route53RecordSet ---------------------------------------------------------
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-route53-recordset.html
 
   Route53RecordSet:
+    Condition: IfRoute53HostedZoneId
     Properties:
       AliasTarget:
-        DNSName: !GetAtt LoadBalancerPublic.DNSName
+        DNSName: !Sub
+          - "dualstack.${LoadBalancerPublicDNSName}"
+          - LoadBalancerPublicDNSName: !GetAtt LoadBalancerPublic.DNSName
+        EvaluateTargetHealth: true
         HostedZoneId: !GetAtt LoadBalancerPublic.CanonicalHostedZoneID
       Comment: !Sub "${AWS::StackName} RecordSet"
       HostedZoneId: !Ref Route53HostedZoneId
-      Name: !Sub "${AWS::StackName}.senzing-mjd.com."
+      Name: !Sub
+        - "${StackName}.${DomainName}"
+        - StackName: !Ref AWS::StackName
+          DomainName: !GetAtt LambdaRunnerFindDomainName.Name
       Type: A
     Type: AWS::Route53::RecordSet
 
@@ -2312,7 +2557,6 @@ Resources:
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ecs-taskdefinition.html
 
   EcsTaskDefinitionApiServer:
-    Condition: IfRunApiServer
     Properties:
       ContainerDefinitions:
         -
@@ -2326,8 +2570,9 @@ Resources:
             - -allowedOrigins
             - '*'
             - -enableAdmin
+            - -skipStartupPerf
           Essential: true
-          Image: public.ecr.aws/senzing/senzing-api-server:2.3.1
+          Image: public.ecr.aws/senzing/senzing-api-server:2.3.2
           LogConfiguration:
             LogDriver: awslogs
             Options:
@@ -2642,7 +2887,7 @@ Resources:
               Name: SENZING_LICENSE_BASE64_ENCODED
               Value: !Sub "${SenzingLicenseAsBase64}"
           Essential: true
-          Image: public.ecr.aws/senzing/init-container:1.6.5
+          Image: public.ecr.aws/senzing/init-container:1.6.6
           LogConfiguration:
             LogDriver: awslogs
             Options:
@@ -2714,7 +2959,7 @@ Resources:
               Name: SENZING_ACCEPT_EULA
               Value: !Ref AcceptEula
           Essential: true
-          Image: public.ecr.aws/senzing/yum:1.1.3
+          Image: public.ecr.aws/senzing/yum:1.1.4
           LogConfiguration:
             LogDriver: awslogs
             Options:
@@ -2898,7 +3143,7 @@ Resources:
               Name: SENZING_SUBCOMMAND
               Value: redo
           Essential: true
-          Image: public.ecr.aws/senzing/redoer:1.3.4
+          Image: public.ecr.aws/senzing/redoer:1.3.5
           LogConfiguration:
             LogDriver: awslogs
             Options:
@@ -3108,7 +3353,7 @@ Resources:
               Name: SENZING_THREADS_PER_PROCESS
               Value: '8'
           Essential: true
-          Image: public.ecr.aws/senzing/stream-loader:1.7.0
+          Image: public.ecr.aws/senzing/stream-loader:1.7.2
           LogConfiguration:
             LogDriver: awslogs
             Options:
@@ -3211,7 +3456,7 @@ Resources:
               Name: SENZING_THREADS_PER_PRINT
               Value: '30'
           Essential: true
-          Image: public.ecr.aws/senzing/stream-producer:1.3.1
+          Image: public.ecr.aws/senzing/stream-producer:1.3.3
           LogConfiguration:
             LogDriver: awslogs
             Options:
@@ -3254,6 +3499,9 @@ Resources:
         -
           Environment:
             -
+              Name: BASE_URL
+              Value: /swagger
+            -
               Name: URL
               Value: "https://raw.githubusercontent.com/Senzing/senzing-rest-api-specification/master/senzing-rest-api.yaml"
           Essential: true
@@ -3292,7 +3540,7 @@ Resources:
           Environment:
             -
               Name: SENZING_API_SERVER_URL
-              Value: !Sub "http://${LoadBalancerPrivate.DNSName}:8250"
+              Value: !Sub "http://${LoadBalancerPrivate.DNSName}:8250/api"
             -
               Name: SENZING_WEB_SERVER_PORT
               Value: '8251'
@@ -3331,10 +3579,13 @@ Resources:
         -
           Environment:
             -
+              Name: SENZING_BASE_URL_XTERM
+              Value: /xterm/
+            -
               Name: SENZING_SKIP_DATABASE_PERFORMANCE_TEST
               Value: 'true'
           Essential: true
-          Image: public.ecr.aws/senzing/xterm:1.0.3
+          Image: public.ecr.aws/senzing/xterm:1.1.0
           LinuxParameters:
             Capabilities:
               Add:
@@ -3418,8 +3669,8 @@ Resources:
     Condition: IfRunApiServer
     DependsOn:
      - LambdaRunnerInitSenzing
-     - ListenerApiServerPublic
-     - ListenerApiServerPrivate
+#    - ListenerRuleApiServerPublic
+#    - ListenerRuleApiServerPrivate
     Properties:
       Cluster: !Ref EcsCluster
       DesiredCount: 1
@@ -3429,16 +3680,12 @@ Resources:
         -
           ContainerPort: 8250
           ContainerName: api-server
-          TargetGroupArn: !Ref TargetGroupApiServerPrivate
-        -
-          ContainerPort: 8250
-          ContainerName: api-server
           TargetGroupArn: !Ref TargetGroupApiServerPublic
       NetworkConfiguration:
         AwsvpcConfiguration:
           AssignPublicIp: DISABLED
           SecurityGroups:
-            - !Ref Ec2SecurityGroupInternal
+            - !Ref Ec2SecurityGroupLoadBalancerPublic
           Subnets:
             - !Ref Ec2SubnetPrivate1
             - !Ref Ec2SubnetPrivate2
@@ -3453,10 +3700,11 @@ Resources:
 
 
   EcsServiceJupyter:
-    Condition: IfRunJupyter
+    Condition: IfRunJupyterHttps
     DependsOn:
      - LambdaRunnerInitSenzing
-     - ListenerJupyter
+     - ListenerPort443
+     - ListenerRuleJupyter
     Properties:
       Cluster: !Ref EcsCluster
       DesiredCount: 1
@@ -3464,14 +3712,14 @@ Resources:
       LaunchType: FARGATE
       LoadBalancers:
         -
-          ContainerPort: 8888
           ContainerName: jupyter
+          ContainerPort: 8888
           TargetGroupArn: !Ref TargetGroupJupyter
       NetworkConfiguration:
         AwsvpcConfiguration:
           AssignPublicIp: DISABLED
           SecurityGroups:
-            - !Ref Ec2SecurityGroupInternal
+            - !Ref Ec2SecurityGroupLoadBalancerPublic
           Subnets:
             - !Ref Ec2SubnetPrivate1
             - !Ref Ec2SubnetPrivate2
@@ -3567,9 +3815,10 @@ Resources:
 
 
   EcsServiceSwagger:
-    Condition: IfRunSwagger
+    Condition: IfRunSwaggerHttps
     DependsOn:
-     - ListenerSwagger
+     - ListenerPort443
+     - ListenerRuleSwagger
     Properties:
       Cluster: !Ref EcsCluster
       DesiredCount: 1
@@ -3577,17 +3826,17 @@ Resources:
       LaunchType: FARGATE
       LoadBalancers:
         -
-          ContainerPort: 8080
           ContainerName: swagger
+          ContainerPort: 8080
           TargetGroupArn: !Ref TargetGroupSwagger
       NetworkConfiguration:
         AwsvpcConfiguration:
-          AssignPublicIp: DISABLED
+          AssignPublicIp: ENABLED
           SecurityGroups:
-            - !Ref Ec2SecurityGroupInternal
+            - !Ref Ec2SecurityGroupLoadBalancerPublic
           Subnets:
-            - !Ref Ec2SubnetPrivate1
-            - !Ref Ec2SubnetPrivate2
+            - !Ref Ec2SubnetPublic1
+            - !Ref Ec2SubnetPublic2
       PlatformVersion: 1.4.0
       PropagateTags: TASK_DEFINITION
       ServiceName: swagger
@@ -3599,10 +3848,10 @@ Resources:
 
 
   EcsServiceWebApp:
-    Condition: IfRunWebApp
+    Condition: IfRunWebAppHttps
     DependsOn:
-     - LoadBalancerPublic
-     - ListenerWebApp
+     - ListenerPort443
+     - ListenerRuleWebApp
     Properties:
       Cluster: !Ref EcsCluster
       DesiredCount: 1
@@ -3610,14 +3859,14 @@ Resources:
       LaunchType: FARGATE
       LoadBalancers:
         -
-          ContainerPort: 8251
           ContainerName: webapp
+          ContainerPort: 8251
           TargetGroupArn: !Ref TargetGroupWebApp
       NetworkConfiguration:
         AwsvpcConfiguration:
           AssignPublicIp: DISABLED
           SecurityGroups:
-            - !Ref Ec2SecurityGroupInternal
+            - !Ref Ec2SecurityGroupLoadBalancerPublic
           Subnets:
             - !Ref Ec2SubnetPrivate1
             - !Ref Ec2SubnetPrivate2
@@ -3632,10 +3881,11 @@ Resources:
 
 
   EcsServiceXterm:
-    Condition: IfRunXterm
+    Condition: IfRunXtermHttps
     DependsOn:
      - LambdaRunnerInitSenzing
-     - ListenerXterm
+     - ListenerPort443
+     - ListenerRuleXterm
     Properties:
       Cluster: !Ref EcsCluster
       DesiredCount: 1
@@ -3643,17 +3893,17 @@ Resources:
       LaunchType: FARGATE
       LoadBalancers:
         -
-          ContainerPort: 5000
           ContainerName: xterm
+          ContainerPort: 5000
           TargetGroupArn: !Ref TargetGroupXterm
       NetworkConfiguration:
         AwsvpcConfiguration:
-          AssignPublicIp: DISABLED
+          AssignPublicIp: ENABLED
           SecurityGroups:
-            - !Ref Ec2SecurityGroupInternal
+            - !Ref Ec2SecurityGroupLoadBalancerPublic
           Subnets:
-            - !Ref Ec2SubnetPrivate1
-            - !Ref Ec2SubnetPrivate2
+            - !Ref Ec2SubnetPublic1
+            - !Ref Ec2SubnetPublic2
       PlatformVersion: 1.4.0
       PropagateTags: TASK_DEFINITION
       ServiceName: xterm
@@ -3868,26 +4118,36 @@ Outputs:
     Value: !Ref Ec2SubnetPublic2
 
   UrlApiServerHeartbeat:
-    Condition: IfRunApiServer
+    Condition: IfRunApiServerHttps
     Description: "URL for API Server's heartbeat. Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#urlapiserverheartbeat"
-    Value: !Sub "http://${LoadBalancerPublic.DNSName}:8250/heartbeat"
+    Value: !Sub
+      - "https://${AWS::StackName}.${DomainName}/api/heartbeat"
+      - DomainName: !GetAtt LambdaRunnerFindDomainName.DomainName
 
   UrlJupyter:
-    Condition: IfRunJupyter
+    Condition: IfRunJupyterHttps
     Description: 'URL for Jupyter Notebooks. Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#urljupyter'
-    Value: !Sub "http://${LoadBalancerPublic.DNSName}:8888"
+    Value: !Sub
+      - "https://${AWS::StackName}.${DomainName}/jupyter/"
+      - DomainName: !GetAtt LambdaRunnerFindDomainName.DomainName
 
   UrlSwagger:
-    Condition: IfRunSwagger
-    Description: 'URL for Swagger. Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#urlswagger'
-    Value: !Sub "http://${LoadBalancerPublic.DNSName}:8080"
+    Condition: IfRunSwaggerHttps
+    Description: 'HTTPS URL for Swagger. Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#urlswagger'
+    Value: !Sub
+      - "https://${AWS::StackName}.${DomainName}/swagger/"
+      - DomainName: !GetAtt LambdaRunnerFindDomainName.DomainName
 
   UrlWebApp:
-    Condition: IfRunWebApp
+    Condition: IfRunWebAppHttps
     Description: 'URL for Senzing Web App. Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#urlwebapp'
-    Value: !Sub "http://${LoadBalancerPublic.DNSName}:8251"
+    Value: !Sub
+      - "https://${AWS::StackName}.${DomainName}/app/"
+      - DomainName: !GetAtt LambdaRunnerFindDomainName.DomainName
 
   UrlXterm:
-    Condition: IfRunXterm
-    Description: 'URL for Senzing X-Term. Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#urlxterm'
-    Value: !Sub "http://${LoadBalancerPublic.DNSName}:5000"
+    Condition: IfRunXtermHttps
+    Description: 'HTTPS URL for Xterm. Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#urlxterm'
+    Value: !Sub
+      - "https://${AWS::StackName}.${DomainName}/xterm/"
+      - DomainName: !GetAtt LambdaRunnerFindDomainName.DomainName
