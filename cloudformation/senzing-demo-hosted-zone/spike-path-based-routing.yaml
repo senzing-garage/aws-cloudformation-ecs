@@ -3,7 +3,7 @@ AWSTemplateFormatVersion: 2010-09-09
 # File format follows https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/template-anatomy.html
 
 Description: >-
-  Senzing aws-cloudformation-ecs/senzing-demo-hosted-zone/spike-https Version: 0.1.0
+  Senzing aws-cloudformation-ecs/senzing-demo-hosted-zone/spike-path-based-routing Version: 0.1.0
   For more information see https://github.com/Senzing/aws-cloudformation-ecs
 
 # -----------------------------------------------------------------------------
@@ -54,7 +54,7 @@ Mappings:
 
   Constants:
     Stack:
-      Name: spike-https
+      Name: spike-routing
     Run:
       Swagger: Yes
       Xterm: Yes
@@ -173,14 +173,15 @@ Resources:
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-iam-policy.html
 
-  IamPolicyCertificateManager:
+  IamPolicyLoggingCreateStream:
     Properties:
-      PolicyName: !Sub "${AWS::StackName}-iam-policy-certificate-manager"
+      PolicyName: !Sub "${AWS::StackName}-iam-policy-logging-create-stream"
       PolicyDocument:
         Statement:
           -
             Action:
-              - acm:ListCertificates
+              - logs:CreateLogStream
+              - logs:PutLogEvents
             Effect: Allow
             Resource:
               - '*'
@@ -191,15 +192,16 @@ Resources:
        - !Ref IamRoleXterm
     Type: AWS::IAM::Policy
 
-  IamPolicyLoggingCreateStream:
+
+  IamPolicyTaskRunner:
     Properties:
-      PolicyName: !Sub "${AWS::StackName}-iam-policy-logging-create-stream"
+      PolicyName: !Sub "${AWS::StackName}-iam-policy-task-runner"
       PolicyDocument:
         Statement:
           -
             Action:
-              - logs:CreateLogStream
-              - logs:PutLogEvents
+              - ecs:DescribeTasks
+              - ecs:RunTask
             Effect: Allow
             Resource:
               - '*'
@@ -230,15 +232,14 @@ Resources:
     Type: AWS::IAM::Policy
 
 
-  IamPolicyTaskRunner:
+  IamPolicyCertificateManager:
     Properties:
-      PolicyName: !Sub "${AWS::StackName}-iam-policy-task-runner"
+      PolicyName: !Sub "${AWS::StackName}-iam-policy-certificate-manager"
       PolicyDocument:
         Statement:
           -
             Action:
-              - ecs:DescribeTasks
-              - ecs:RunTask
+              - acm:ListCertificates
             Effect: Allow
             Resource:
               - '*'
@@ -573,9 +574,9 @@ Resources:
       HealthCheckProtocol: HTTP
       HealthCheckTimeoutSeconds: 50
       HealthyThresholdCount: 2
+      Name: !Sub "${AWS::StackName}-target-group-swagger"
       Matcher:
         HttpCode: 200-299
-      Name: !Sub "${AWS::StackName}-target-group-swagger"
       Port: 8080
       Protocol: HTTP
       Tags:
@@ -600,9 +601,9 @@ Resources:
       HealthCheckProtocol: HTTP
       HealthCheckTimeoutSeconds: 50
       HealthyThresholdCount: 2
+      Name: !Sub "${AWS::StackName}-target-group-xterm"
       Matcher:
         HttpCode: 200-299
-      Name: !Sub "${AWS::StackName}-target-group-xterm"
       Port: 5000
       Protocol: HTTP
       Tags:
@@ -716,11 +717,11 @@ Resources:
         -
           Environment:
             -
-              Name: BASE_URL
-              Value: /swagger
-            -
               Name: URL
               Value: "https://raw.githubusercontent.com/Senzing/senzing-rest-api-specification/master/senzing-rest-api.yaml"
+            -
+              Name: BASE_URL
+              Value: /swagger
           Essential: true
           Image: public.ecr.aws/senzing/swagger-ui:latest
           LogConfiguration:
