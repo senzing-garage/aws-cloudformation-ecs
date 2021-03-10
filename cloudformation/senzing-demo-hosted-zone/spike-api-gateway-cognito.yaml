@@ -172,7 +172,7 @@ Resources:
     Type: COGNITO_USER_POOLS
       IdentitySource: method.request.header.authorization
       Name: CognitoAuthorizer
-      ProviderARNs: !GetAtt CognitoUsers.Arn
+      ProviderARNs: !GetAtt UserPool.Arn
       RestApiId: !Ref RestApi
 
   # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-apigateway-resource.html
@@ -192,26 +192,6 @@ Resources:
     Properties:
       AdminCreateUserConfig:
         AllowAdminCreateUserOnly: true
-        InviteMessageTemplate:
-          EmailMessage: !Sub
-            - |
-              <html>
-              <p>
-                  To log into https://${AWS::StackName}.${DomainName},
-                  use these credentials:
-                  <ul>
-                      <li><b>Username:</b>  {username}</li>
-                      <li><b>OneTime Password:</b>  {####}</li>
-                  </ul>
-              </p>
-              <p>
-                  You will be prompted to change your password.
-                  This one-time password is valid for three weeks.
-              </p>
-              </html>
-            - DomainName: !GetAtt LambdaRunnerFindDomainName.DomainName
-          EmailSubject: !Sub 'Temporary password for AWS ${AWS::StackName} stack'
-          SMSMessage: 'Use the username {username} and the temporary password {####} to log in for the first time.'
       AutoVerifiedAttributes:
         - email
       Policies:
@@ -240,14 +220,10 @@ Resources:
   UserPoolClient:
     Properties:
       AllowedOAuthFlows:
-        - code # Required for ALB authentication
-      AllowedOAuthFlowsUserPoolClient: true # Required for ALB authentication
+        - client_credentials # Required for machine to machine auth
+      AllowedOAuthFlowsUserPoolClient: true
       AllowedOAuthScopes:
         - openid
-      CallbackURLs:
-        - !Sub
-          - "https://${AWS::StackName}.${DomainName}/oauth2/idpresponse"
-          - DomainName: !GetAtt LambdaRunnerFindDomainName.DomainName
       GenerateSecret: true
       SupportedIdentityProviders: # Optional: add providers for identity federation
         - COGNITO
