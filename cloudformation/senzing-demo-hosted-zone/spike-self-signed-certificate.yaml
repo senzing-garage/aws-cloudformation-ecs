@@ -159,10 +159,6 @@ Resources:
         - StackName: !FindInMap [Constants, Stack, Name]
     Type: AWS::Logs::LogGroup
 
-  LogsLogGroupLambdaGenerateCertificateAuthority:
-    Properties:
-      LogGroupName: !Sub "/aws/lambda/${AWS::StackName}-lambda-generate-certificate-authority"
-    Type: AWS::Logs::LogGroup
 
   LogsLogGroupLambdaGenerateSelfSignedCertificate:
     Properties:
@@ -318,182 +314,14 @@ Resources:
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-lambda-function.html
 
-  LambdaFunctionGenerateCertificateAuthority:
-    Properties:
-      Code:
-        ZipFile: |
-          #!/usr/bin/env python3
-
-          import boto3
-          import cfnresponse
-          import datetime
-          import json
-          import logging
-          import random
-          import traceback
-          from OpenSSL import crypto
-          from json import JSONEncoder
-
-          logger = logging.getLogger()
-          logger.setLevel(logging.INFO)
-
-          class DateTimeEncoder(JSONEncoder):
-              def default(self, obj):
-                  if isinstance(obj, (datetime.date, datetime.datetime)):
-                      return obj.isoformat()
-
-          def handler(event, context):
-              result = cfnresponse.SUCCESS
-              response_data = {}
-              try:
-                  logger.info("Event: {0}".format(json.dumps(event)))
-                  if event['RequestType'] in ['Create', 'Update']:
-
-                      # Inspired by https://pillpall.github.io/aws/2020/08/27/Create-Self-Signed-Certificate-with-Cloudformation.html
-
-                      # Create Certificate Authority
-
-                      ca_key = crypto.PKey()
-                      ca_key.generate_key(crypto.TYPE_RSA, 2048)
-                      ca_cert = crypto.X509()
-                      ca_cert.set_version(2)
-                      ca_cert.set_serial_number(random.randrange(100000))
-                      ca_subj = ca_cert.get_subject()
-                      ca_subj.C = "US"
-                      ca_subj.ST = "California"
-                      ca_subj.L = "San Francisco"
-                      ca_subj.O = "MyOrganization"
-                      ca_subj.OU = "MyOrganizationalUnit"
-                      ca_subj.CN = "My own Root CA"
-                      ca_cert.add_extensions([
-                          crypto.X509Extension(b"subjectKeyIdentifier", False, b"hash", subject=ca_cert),
-                      ])
-                      ca_cert.add_extensions([
-                          crypto.X509Extension(b"authorityKeyIdentifier", False, b"keyid:always", issuer=ca_cert),
-                      ])
-                      ca_cert.add_extensions([
-                          crypto.X509Extension(b"basicConstraints", False, b"CA:TRUE"),
-                          crypto.X509Extension(b"keyUsage", False, b"keyCertSign, cRLSign"),
-                      ])
-                      ca_cert.set_issuer(ca_subj)
-                      ca_cert.set_pubkey(ca_key)
-                      ca_cert.sign(ca_key, 'sha256')
-                      ca_cert.gmtime_adj_notBefore(0)
-                      ca_cert.gmtime_adj_notAfter(10*365*24*60*60)
-
-                      # Output
-
-                      response_data["CertificateChain"] = crypto.dump_certificate(crypto.FILETYPE_PEM, ca_cert).decode('utf-8')
-
-                  logger.info("Response: {0}".format(json.dumps(response, cls=DateTimeEncoder)))
-
-              except Exception as e:
-                  logger.error(e)
-                  traceback.print_exc()
-                  result = cfnresponse.FAILED
-              finally:
-                  cfnresponse.send(event, context, result, response_data)
-
-      Description: Generate a Certificate Authority.
-      FunctionName: !Sub "${AWS::StackName}-lambda-generate-certificate-authority"
-      Handler: index.handler
-      Role: !GetAtt IamRoleLambda.Arn
-      Runtime: python3.8
-      Tags:
-        - Key: Name
-          Value: !Sub "${AWS::StackName}-lambda-generate-certificate-authority"
-      Timeout: 600
-    Type: AWS::Lambda::Function
-
-
   LambdaFunctionGenerateSelfSignedCertificate:
     Properties:
       Code:
-        ZipFile: |
-          #!/usr/bin/env python3
-
-          import boto3
-          import cfnresponse
-          import datetime
-          import json
-          import logging
-          import random
-          import traceback
-          from OpenSSL import crypto
-          from json import JSONEncoder
-
-          logger = logging.getLogger()
-          logger.setLevel(logging.INFO)
-
-          class DateTimeEncoder(JSONEncoder):
-              def default(self, obj):
-                  if isinstance(obj, (datetime.date, datetime.datetime)):
-                      return obj.isoformat()
-
-          def handler(event, context):
-              result = cfnresponse.SUCCESS
-              response_data = {}
-              try:
-                  logger.info("Event: {0}".format(json.dumps(event)))
-                  if event['RequestType'] in ['Create', 'Update']:
-
-                      # Inspired by https://pillpall.github.io/aws/2020/08/27/Create-Self-Signed-Certificate-with-Cloudformation.html
-
-                      # Create Self-Signed Certificate
-
-                      client_key = crypto.PKey()
-                      client_key.generate_key(crypto.TYPE_RSA, 2048)
-                      client_cert = crypto.X509()
-                      client_cert.set_version(2)
-                      client_cert.set_serial_number(random.randrange(100000))
-                      client_subj = client_cert.get_subject()
-                      client_subj.C = "US"
-                      client_subj.ST = "California"
-                      client_subj.L = "San Francisco"
-                      client_subj.O = "MyOrganization"
-                      client_subj.OU = "MyOrganizationalUnit"
-                      client_subj.CN = "example.com"
-                      client_cert.add_extensions([
-                          crypto.X509Extension(b"basicConstraints", False, b"CA:FALSE"),
-                          crypto.X509Extension(b"subjectKeyIdentifier", False, b"hash", subject=client_cert),
-                      ])
-                      client_cert.add_extensions([
-                          crypto.X509Extension(b"authorityKeyIdentifier", False, b"keyid:always", issuer=ca_cert),
-                          crypto.X509Extension(b"extendedKeyUsage", False, b"serverAuth"),
-                          crypto.X509Extension(b"keyUsage", False, b"digitalSignature"),
-                      ])
-                      client_cert.add_extensions([
-                          crypto.X509Extension(b'subjectAltName', False,
-                              ','.join([
-                                  'DNS:*.example.com'
-                      ]).encode())])
-                      client_cert.set_issuer(ca_subj)
-                      client_cert.set_pubkey(client_key)
-                      client_cert.gmtime_adj_notBefore(0)
-                      client_cert.gmtime_adj_notAfter(9*365*24*60*60)
-                      client_cert.sign(ca_key, 'sha256')
-                      certifictate_pem = crypto.dump_certificate(crypto.FILETYPE_PEM, client_cert).decode('utf-8')
-                      private_key_pem = crypto.dump_privatekey(crypto.FILETYPE_PEM, client_key).decode('utf-8')
-
-                      # Output
-
-                      response_data["Certificate"] = certifictate_pem
-                      response_data["PrivateKey"] = private_key_pem
-
-                  logger.info("Response: {0}".format(json.dumps(response, cls=DateTimeEncoder)))
-
-              except Exception as e:
-                  logger.error(e)
-                  traceback.print_exc()
-                  result = cfnresponse.FAILED
-              finally:
-                  cfnresponse.send(event, context, result, response_data)
-
-      Description: Wait for SSL certificate to become available.
+        ImageUri: "docker.io/senzing/self-signed-certificates:latest"
+      Description: Generate self-signed certificate.
       FunctionName: !Sub "${AWS::StackName}-lambda-generate-self-signed-certificate"
-      Handler: index.handler
+      PackageType: Image
       Role: !GetAtt IamRoleLambda.Arn
-      Runtime: python3.8
       Tags:
         - Key: Name
           Value: !Sub "${AWS::StackName}-lambda-generate-self-signed-certificate"
@@ -505,25 +333,15 @@ Resources:
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/template-custom-resources.html
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-cfn-customresource.html
 
-  LambdaRunnerGenerateCertificateAuthority:
-    Properties:
-      ClusterId: !Ref EcsCluster
-      ServiceToken: !GetAtt LambdaFunctionGenerateCertificateAuthority.Arn
-      Tags:
-        - Key: Name
-          Value: !Sub "${AWS::StackName}-lambda-runner-generate-certificate-authority"
-    Type: Custom::LambdaRunnerGenerateCertificateAuthority
-
-
   LambdaRunnerGenerateSelfSignedCertificate:
     Properties:
       ClusterId: !Ref EcsCluster
+      MJD: MJD was here
       ServiceToken: !GetAtt LambdaFunctionGenerateSelfSignedCertificate.Arn
       Tags:
         - Key: Name
           Value: !Sub "${AWS::StackName}-lambda-runner-generate-self-signed-certificate"
     Type: Custom::LambdaRunnerGenerateSelfSignedCertificate
-
 
 # -- Load balancing -----------------------------------------------------------
 
@@ -705,6 +523,3 @@ Outputs:
 
   PrivateKey:
     Value: !GetAtt LambdaRunnerGenerateSelfSignedCertificate.PrivateKey
-
-  CertificateChain:
-    Value: !GetAtt LambdaRunnerGenerateCertificateAuthority.CertificateChain
