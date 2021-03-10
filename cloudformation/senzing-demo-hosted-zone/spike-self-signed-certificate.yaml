@@ -71,26 +71,6 @@ Resources:
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-iam-role.html
 
-  IamRoleRootCa:
-    Properties:
-      AssumeRolePolicyDocument:
-        Statement:
-          -
-            Action:
-              - sts:AssumeRole
-            Effect: Allow
-            Principal:
-              Service:
-                - ecs-tasks.amazonaws.com
-                - acm-pca.amazonaws.com
-        Version: '2012-10-17'
-      Description: !Sub "${AWS::StackName}-iam-role-root-ca"
-      Tags:
-        - Key: Name
-          Value: !Sub "${AWS::StackName}-iam-role-root-ca"
-    Type: AWS::IAM::Role
-
-
   IamRoleLambda:
     Properties:
       AssumeRolePolicyDocument:
@@ -168,86 +148,6 @@ Resources:
        - !Ref IamRoleSwagger
     Type: AWS::IAM::Policy
 
-
-  IamPolicyRootCa:
-    Properties:
-      PolicyName: !Sub "${AWS::StackName}-iam-policy-root-ca"
-      PolicyDocument:
-        Statement:
-          -
-            Action:
-              - acm-pca:CreateCertificateAuthority
-              - acm-pca:GetCertificate
-            Effect: Allow
-            Resource:
-              - '*'
-        Version: '2012-10-17'
-      Roles:
-       - !Ref IamRoleLambda
-       - !Ref IamRoleRootCa
-    Type: AWS::IAM::Policy
-
-# -- Self-signed certificate --------------------------------------------------
-
-# https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-acmpca-certificateauthority.html
-
-  InternalRootCA:
-    Properties:
-      KeyAlgorithm: RSA_2048
-      RevocationConfiguration:
-        CrlConfiguration:
-          Enabled: false
-      SigningAlgorithm: SHA256WITHRSA
-      Subject:
-        CommonName: My own Root CA
-        Country: US
-        Locality: San Francisco
-        Organization: MyOrganization
-        OrganizationalUnit: MyOrganizationalUnit
-        SerialNumber: '12345678'
-        State: California
-      Tags:
-        - Key: Name
-          Value: !Sub "${AWS::StackName}-internal-root-ca"
-      Type: ROOT
-    Type: 'AWS::ACMPCA::CertificateAuthority'
-
-# https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-acmpca-certificate.html
-
-  InternalRootCACertificate:
-    Properties:
-      CertificateAuthorityArn: !Ref InternalRootCA
-      CertificateSigningRequest: !GetAtt InternalRootCA.CertificateSigningRequest
-      SigningAlgorithm: SHA256WITHRSA
-      TemplateArn: 'arn:aws:acm-pca:::template/RootCACertificate/V1'
-      Validity:
-        Type: YEARS
-        Value: 5
-    Type: 'AWS::ACMPCA::Certificate'
-
-# https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-acmpca-certificateauthorityactivation.html
-
-  InternalRootCAActivation:
-    Properties:
-      Certificate: !GetAtt InternalRootCACertificate.Certificate
-      CertificateAuthorityArn: !Ref InternalRootCA
-      Status: ACTIVE
-    Type: 'AWS::ACMPCA::CertificateAuthorityActivation'
-
-# https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-certificatemanager-certificate.html
-
-  ACMInternalCertificate:
-    DependsOn:
-     - InternalRootCAActivation
-     - LambdaRunnerWaitForCertificate
-    Properties:
-      CertificateAuthorityArn: !Ref InternalRootCA
-      DomainName: !GetAtt LoadBalancerPublic.DNSName
-      Tags:
-        - Key: Name
-          Value: !Sub "${AWS::StackName}-certificate-manager-internal-certificate"
-    Type: AWS::CertificateManager::Certificate
-
 # -- Logging ------------------------------------------------------------------
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-logs-loggroup.html
@@ -259,10 +159,14 @@ Resources:
         - StackName: !FindInMap [Constants, Stack, Name]
     Type: AWS::Logs::LogGroup
 
-
-  LogsLogGroupLambdaWaitForCertificate:
+  LogsLogGroupLambdaGenerateCertificateAuthority:
     Properties:
-      LogGroupName: !Sub "/aws/lambda/${AWS::StackName}-lambda-wait-for-certificate"
+      LogGroupName: !Sub "/aws/lambda/${AWS::StackName}-lambda-generate-certificate-authority"
+    Type: AWS::Logs::LogGroup
+
+  LogsLogGroupLambdaGenerateSelfSignedCertificate:
+    Properties:
+      LogGroupName: !Sub "/aws/lambda/${AWS::StackName}-lambda-generate-self-signed-certificate"
     Type: AWS::Logs::LogGroup
 
 # -- Cloud, subnets, routing --------------------------------------------------
@@ -414,7 +318,7 @@ Resources:
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-lambda-function.html
 
-  LambdaFunctionWaitForCertificate:
+  LambdaFunctionGenerateCertificateAuthority:
     Properties:
       Code:
         ZipFile: |
@@ -425,7 +329,9 @@ Resources:
           import datetime
           import json
           import logging
+          import random
           import traceback
+          from OpenSSL import crypto
           from json import JSONEncoder
 
           logger = logging.getLogger()
@@ -438,27 +344,47 @@ Resources:
 
           def handler(event, context):
               result = cfnresponse.SUCCESS
-              response = {}
+              response_data = {}
               try:
                   logger.info("Event: {0}".format(json.dumps(event)))
                   if event['RequestType'] in ['Create', 'Update']:
-                      properties = event.get('ResourceProperties', {})
-                      certificate_authority_arn = properties.get('CertificateAuthorityArn')
-                      certificate_arn = properties.get('CertificateArn')
 
-                      # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/acm-pca.html
+                      # Inspired by https://pillpall.github.io/aws/2020/08/27/Create-Self-Signed-Certificate-with-Cloudformation.html
 
-                      acmpca = boto3.client('acm-pca')
+                      # Create Certificate Authority
 
-                      # Wait for certificate availability.
-                      # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/acm-pca.html#ACMPCA.Waiter.CertificateIssued
+                      ca_key = crypto.PKey()
+                      ca_key.generate_key(crypto.TYPE_RSA, 2048)
+                      ca_cert = crypto.X509()
+                      ca_cert.set_version(2)
+                      ca_cert.set_serial_number(random.randrange(100000))
+                      ca_subj = ca_cert.get_subject()
+                      ca_subj.C = "US"
+                      ca_subj.ST = "California"
+                      ca_subj.L = "San Francisco"
+                      ca_subj.O = "MyOrganization"
+                      ca_subj.OU = "MyOrganizationalUnit"
+                      ca_subj.CN = "My own Root CA"
+                      ca_cert.add_extensions([
+                          crypto.X509Extension(b"subjectKeyIdentifier", False, b"hash", subject=ca_cert),
+                      ])
+                      ca_cert.add_extensions([
+                          crypto.X509Extension(b"authorityKeyIdentifier", False, b"keyid:always", issuer=ca_cert),
+                      ])
+                      ca_cert.add_extensions([
+                          crypto.X509Extension(b"basicConstraints", False, b"CA:TRUE"),
+                          crypto.X509Extension(b"keyUsage", False, b"keyCertSign, cRLSign"),
+                      ])
+                      ca_cert.set_issuer(ca_subj)
+                      ca_cert.set_pubkey(ca_key)
+                      ca_cert.sign(ca_key, 'sha256')
+                      ca_cert.gmtime_adj_notBefore(0)
+                      ca_cert.gmtime_adj_notAfter(10*365*24*60*60)
 
-                      waiter = acmpca.get_waiter('certificate_issued')
-                      logger.info("Wait for CertificateAuthorityArn: {0}; CertificateArn: {1} ".format(certificate_authority_arn, certificate_arn))
-                      waiter.wait(
-                          CertificateAuthorityArn=certificate_authority_arn,
-                          CertificateArn=certificate_arn
-                      )
+                      # Output
+
+                      response_data["CertificateChain"] = crypto.dump_certificate(crypto.FILETYPE_PEM, ca_cert).decode('utf-8')
+
                   logger.info("Response: {0}".format(json.dumps(response, cls=DateTimeEncoder)))
 
               except Exception as e:
@@ -466,16 +392,111 @@ Resources:
                   traceback.print_exc()
                   result = cfnresponse.FAILED
               finally:
-                  cfnresponse.send(event, context, result, {})
+                  cfnresponse.send(event, context, result, response_data)
 
-      Description: Wait for SSL certificate to become available.
-      FunctionName: !Sub "${AWS::StackName}-lambda-wait-for-certificate"
+      Description: Generate a Certificate Authority.
+      FunctionName: !Sub "${AWS::StackName}-lambda-generate-certificate-authority"
       Handler: index.handler
       Role: !GetAtt IamRoleLambda.Arn
       Runtime: python3.8
       Tags:
         - Key: Name
-          Value: !Sub "${AWS::StackName}-lambda-wait-for-certificate"
+          Value: !Sub "${AWS::StackName}-lambda-generate-certificate-authority"
+      Timeout: 600
+    Type: AWS::Lambda::Function
+
+
+  LambdaFunctionGenerateSelfSignedCertificate:
+    Properties:
+      Code:
+        ZipFile: |
+          #!/usr/bin/env python3
+
+          import boto3
+          import cfnresponse
+          import datetime
+          import json
+          import logging
+          import random
+          import traceback
+          from OpenSSL import crypto
+          from json import JSONEncoder
+
+          logger = logging.getLogger()
+          logger.setLevel(logging.INFO)
+
+          class DateTimeEncoder(JSONEncoder):
+              def default(self, obj):
+                  if isinstance(obj, (datetime.date, datetime.datetime)):
+                      return obj.isoformat()
+
+          def handler(event, context):
+              result = cfnresponse.SUCCESS
+              response_data = {}
+              try:
+                  logger.info("Event: {0}".format(json.dumps(event)))
+                  if event['RequestType'] in ['Create', 'Update']:
+
+                      # Inspired by https://pillpall.github.io/aws/2020/08/27/Create-Self-Signed-Certificate-with-Cloudformation.html
+
+                      # Create Self-Signed Certificate
+
+                      client_key = crypto.PKey()
+                      client_key.generate_key(crypto.TYPE_RSA, 2048)
+                      client_cert = crypto.X509()
+                      client_cert.set_version(2)
+                      client_cert.set_serial_number(random.randrange(100000))
+                      client_subj = client_cert.get_subject()
+                      client_subj.C = "US"
+                      client_subj.ST = "California"
+                      client_subj.L = "San Francisco"
+                      client_subj.O = "MyOrganization"
+                      client_subj.OU = "MyOrganizationalUnit"
+                      client_subj.CN = "example.com"
+                      client_cert.add_extensions([
+                          crypto.X509Extension(b"basicConstraints", False, b"CA:FALSE"),
+                          crypto.X509Extension(b"subjectKeyIdentifier", False, b"hash", subject=client_cert),
+                      ])
+                      client_cert.add_extensions([
+                          crypto.X509Extension(b"authorityKeyIdentifier", False, b"keyid:always", issuer=ca_cert),
+                          crypto.X509Extension(b"extendedKeyUsage", False, b"serverAuth"),
+                          crypto.X509Extension(b"keyUsage", False, b"digitalSignature"),
+                      ])
+                      client_cert.add_extensions([
+                          crypto.X509Extension(b'subjectAltName', False,
+                              ','.join([
+                                  'DNS:*.example.com'
+                      ]).encode())])
+                      client_cert.set_issuer(ca_subj)
+                      client_cert.set_pubkey(client_key)
+                      client_cert.gmtime_adj_notBefore(0)
+                      client_cert.gmtime_adj_notAfter(9*365*24*60*60)
+                      client_cert.sign(ca_key, 'sha256')
+                      certifictate_pem = crypto.dump_certificate(crypto.FILETYPE_PEM, client_cert).decode('utf-8')
+                      private_key_pem = crypto.dump_privatekey(crypto.FILETYPE_PEM, client_key).decode('utf-8')
+
+                      # Output
+
+                      response_data["Certificate"] = certifictate_pem
+                      response_data["PrivateKey"] = private_key_pem
+
+                  logger.info("Response: {0}".format(json.dumps(response, cls=DateTimeEncoder)))
+
+              except Exception as e:
+                  logger.error(e)
+                  traceback.print_exc()
+                  result = cfnresponse.FAILED
+              finally:
+                  cfnresponse.send(event, context, result, response_data)
+
+      Description: Wait for SSL certificate to become available.
+      FunctionName: !Sub "${AWS::StackName}-lambda-generate-self-signed-certificate"
+      Handler: index.handler
+      Role: !GetAtt IamRoleLambda.Arn
+      Runtime: python3.8
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-lambda-generate-self-signed-certificate"
       Timeout: 600
     Type: AWS::Lambda::Function
 
@@ -484,16 +505,25 @@ Resources:
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/template-custom-resources.html
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-cfn-customresource.html
 
-  LambdaRunnerWaitForCertificate:
+  LambdaRunnerGenerateCertificateAuthority:
     Properties:
       ClusterId: !Ref EcsCluster
-      CertificateAuthorityArn: !Ref InternalRootCA
-      CertificateArn: !GetAtt InternalRootCACertificate.Arn
-      ServiceToken: !GetAtt LambdaFunctionWaitForCertificate.Arn
+      ServiceToken: !GetAtt LambdaFunctionGenerateCertificateAuthority.Arn
       Tags:
         - Key: Name
-          Value: !Sub "${AWS::StackName}-lambda-runner-wait-for-certificate"
-    Type: Custom::LambdaRunnerWaitForCertificate
+          Value: !Sub "${AWS::StackName}-lambda-runner-generate-certificate-authority"
+    Type: Custom::LambdaRunnerGenerateCertificateAuthority
+
+
+  LambdaRunnerGenerateSelfSignedCertificate:
+    Properties:
+      ClusterId: !Ref EcsCluster
+      ServiceToken: !GetAtt LambdaFunctionGenerateSelfSignedCertificate.Arn
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-lambda-runner-generate-self-signed-certificate"
+    Type: Custom::LambdaRunnerGenerateSelfSignedCertificate
+
 
 # -- Load balancing -----------------------------------------------------------
 
@@ -542,11 +572,9 @@ Resources:
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-elasticloadbalancingv2-listener.html
 
   ListenerSwaggerHttps:
-    DependsOn:
-     - LambdaRunnerWaitForCertificate
     Properties:
       Certificates:
-        - CertificateArn: !GetAtt InternalRootCACertificate.Arn
+        - CertificateArn: !GetAtt LambdaRunnerGenerateSelfSignedCertificate.CertificateArn
       DefaultActions:
         - TargetGroupArn: !Ref TargetGroupSwagger
           Type: forward
@@ -602,7 +630,7 @@ Resources:
   EcsServiceSwagger:
     DependsOn:
      - ListenerSwaggerHttps
-     - LambdaRunnerWaitForCertificate
+     - LambdaRunnerGenerateSelfSignedCertificate
     Properties:
       Cluster: !Ref EcsCluster
       DesiredCount: 1
@@ -641,10 +669,6 @@ Outputs:
     Description: 'The accountID'
     Value: !Sub "${AWS::AccountId}"
 
-  CertificateArn:
-    Description: 'ARN of the SSL certificate. Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#certificatearn'
-    Value: !Ref InternalRootCA
-
   Ec2Vpc:
     Description: 'The ID of the VPC. Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#ec2vpc'
     Export:
@@ -672,3 +696,15 @@ Outputs:
   UrlSwaggerHttps:
     Description: 'URL for Swagger. Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#urlswagger'
     Value: !Sub "https//${LoadBalancerPublic.DNSName}:8081"
+
+  CertificateArn:
+    Value: !GetAtt LambdaRunnerGenerateSelfSignedCertificate.CertificateArn
+
+  Certificate:
+    Value: !GetAtt LambdaRunnerGenerateSelfSignedCertificate.Certificate
+
+  PrivateKey:
+    Value: !GetAtt LambdaRunnerGenerateSelfSignedCertificate.PrivateKey
+
+  CertificateChain:
+    Value: !GetAtt LambdaRunnerGenerateCertificateAuthority.CertificateChain
