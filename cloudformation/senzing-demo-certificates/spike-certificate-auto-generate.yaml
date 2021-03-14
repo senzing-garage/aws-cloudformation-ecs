@@ -318,39 +318,14 @@ Resources:
     Properties:
       Code:
         ZipFile: |
-          const crypto = require('crypto')
           var response = require('cfn-response');
-
-          function arrayBufferToBase64(arrayBuffer) {
-              var byteArray = new Uint8Array(arrayBuffer);
-              var byteString = '';
-              for(var i=0; i < byteArray.byteLength; i++) {
-                  byteString += String.fromCharCode(byteArray[i]);
-              }
-              var base64 = Buffer.from(byteString).toString('base64')
-              return base64;
-          }
-
-          function addNewLines(str) {
-              var finalString = '';
-              while(str.length > 0) {
-                  finalString += str.substring(0, 64) + '\n';
-                  str = str.substring(64);
-              }
-              return finalString;
-          }
-
-          function toPem(title, key) {
-              var b64 = addNewLines(arrayBufferToBase64(key));
-              var pem = "-----BEGIN " + title + "-----\n" + b64 + "-----END " + title + "-----";
-             return pem;
-          }
+          const { generateKeyPairSync } = require('crypto');
 
           exports.handler = function(event, context) {
               console.log("REQUEST RECEIVED:\n" + JSON.stringify(event));
 
               var responseStatus = response.FAILED;
-              var responseData = {}
+              var responseData = {};
 
               // For Delete requests, immediately send a SUCCESS response.
 
@@ -359,34 +334,25 @@ Resources:
                   return;
               }
 
-              // https://nodejs.org/api/crypto.html#crypto_crypto_generatekeypair_type_options_callback
+              // https://stackoverflow.com/questions/51942824/nodejs-generate-valid-pem-keys-for-signing-and-verifying-messages
 
-              crypto.generateKeyPair('rsa', {
-                 modulusLength: 2048,
-                 publicKeyEncoding: {
-                   type: 'spki',
-                   format: 'pem'
-                 },
-                 privateKeyEncoding: {
-                   type: 'pkcs8',
-                   format: 'pem'
-                   // cipher: 'aes256',
-                   // passphrase: 'GeeksforGeeks is a CS-Portal!'
-                 }
-               }, (err, publicKey, privateKey) => { // Callback function
-                      if(!err) {
-                        responseStatus = response.SUCCESS;
-                        // responseData['PublicKey'] = toPem("CERTIFICATE", publicKey);
-                        // responseData['PrivateKey'] = toPem("PRIVATE KEY", privateKey);
+              const { publicKey, privateKey } = generateKeyPairSync('rsa', {
+                  modulusLength: 2048,
+                  publicKeyEncoding: {
+                      type: 'spki',
+                      format: 'pem'
+                  },
+                  privateKeyEncoding: {
+                      type: 'pkcs8',
+                      format: 'pem',
+                      cipher: 'aes-256-cbc',
+                  }
+              });
 
-                        responseData['PublicKey'] = publicKey;
-                        responseData['PrivateKey'] = privateKey;
-
-                      } else {
-                        responseData['Error'] = err;
-                      }
-                      response.send(event, context, responseStatus, responseData);
-               });
+              responseData['PublicKey'] = publicKey;
+              responseData['PrivateKey'] = privateKey;
+              responseStatus = response.SUCCESS;
+              response.send(event, context, responseStatus, responseData);
           }
 
       Description: Generate Public/Private key pair.
