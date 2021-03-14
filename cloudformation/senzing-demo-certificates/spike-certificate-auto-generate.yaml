@@ -318,14 +318,39 @@ Resources:
     Properties:
       Code:
         ZipFile: |
-          // Reference: https://github.com/awsdocs/aws-doc-sdk-examples/blob/master/javascript/example_code/ec2/ec2_createkeypair.js
-
-          var AWS = require('aws-sdk');
+          const crypto = require('crypto')
           var response = require('cfn-response');
 
-          exports.handler = function(event, context) {
+          function arrayBufferToBase64(arrayBuffer) {
+              var byteArray = new Uint8Array(arrayBuffer);
+              var byteString = '';
+              for(var i=0; i < byteArray.byteLength; i++) {
+                  byteString += String.fromCharCode(byteArray[i]);
+              }
+              var base64 = Buffer.from(byteString).toString('base64')
+              return base64;
+          }
 
+          function addNewLines(str) {
+              var finalString = '';
+              while(str.length > 0) {
+                  finalString += str.substring(0, 64) + '\n';
+                  str = str.substring(64);
+              }
+              return finalString;
+          }
+
+          function toPem(title, key) {
+              var b64 = addNewLines(arrayBufferToBase64(key));
+              var pem = "-----BEGIN " + title + "-----\n" + b64 + "-----END " + title + "-----";
+             return pem;
+          }
+
+          exports.handler = function(event, context) {
               console.log("REQUEST RECEIVED:\n" + JSON.stringify(event));
+
+              var responseStatus = response.FAILED;
+              var responseData = {}
 
               // For Delete requests, immediately send a SUCCESS response.
 
@@ -334,18 +359,29 @@ Resources:
                   return;
               }
 
-              console.log("Step 1");
-
-
-              var responseStatus = "FAILED";
-              var responseData = {
-                 PublicKey: "BobPublicKey",
-                 PrivateKey: "BobPrivateKey"
-              };
-              responseStatus = response.SUCCESS;
-              console.log("Step 2");
-
-              response.send(event, context, responseStatus, responseData);
+              crypto.generateKeyPair('rsa', {
+                 modulusLength: 530,    // options
+                 publicExponent: 0x10101,
+                 publicKeyEncoding: {
+                   type: 'pkcs1',
+                   format: 'der'
+                 },
+                 privateKeyEncoding: {
+                   type: 'pkcs8',
+                   format: 'der',
+                   cipher: 'aes-192-cbc',
+                   passphrase: 'GeeksforGeeks is a CS-Portal!'
+                 }
+               }, (err, publicKey, privateKey) => { // Callback function
+                      if(!err) {
+                        responseStatus = response.SUCCESS;
+                        responseData['PublicKey'] = toPem("CERTIFICATE", publicKey);
+                        responseData['PrivateKey'] = toPem("PRIVATE KEY", privateKey);
+                      } else {
+                        responseData['Error'] = err;
+                      }
+                      response.send(event, context, responseStatus, responseData);
+               });
           }
 
       Description: Generate Public/Private key pair.
@@ -403,7 +439,9 @@ Outputs:
     Value: !Ref Ec2SubnetPublic2
 
   PublicKey:
+    Description: 'Public key used: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#publickey'
     Value: !GetAtt LambdaRunnerGeneratePublicPrivateKeys.PublicKey
 
   PrivateKey:
+    Description: 'Private key used: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#privatekey'
     Value: !GetAtt LambdaRunnerGeneratePublicPrivateKeys.PrivateKey
