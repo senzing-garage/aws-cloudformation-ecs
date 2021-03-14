@@ -359,24 +359,29 @@ Resources:
                   return;
               }
 
+              // https://nodejs.org/api/crypto.html#crypto_crypto_generatekeypair_type_options_callback
+
               crypto.generateKeyPair('rsa', {
-                 modulusLength: 530,    // options
-                 publicExponent: 0x10101,
+                 modulusLength: 2048,
                  publicKeyEncoding: {
-                   type: 'pkcs1',
-                   format: 'der'
+                   type: 'spki',
+                   format: 'pem'
                  },
                  privateKeyEncoding: {
                    type: 'pkcs8',
-                   format: 'der',
-                   cipher: 'aes-192-cbc',
-                   passphrase: 'GeeksforGeeks is a CS-Portal!'
+                   format: 'pem'
+                   // cipher: 'aes256',
+                   // passphrase: 'GeeksforGeeks is a CS-Portal!'
                  }
                }, (err, publicKey, privateKey) => { // Callback function
                       if(!err) {
                         responseStatus = response.SUCCESS;
-                        responseData['PublicKey'] = toPem("CERTIFICATE", publicKey);
-                        responseData['PrivateKey'] = toPem("PRIVATE KEY", privateKey);
+                        // responseData['PublicKey'] = toPem("CERTIFICATE", publicKey);
+                        // responseData['PrivateKey'] = toPem("PRIVATE KEY", privateKey);
+
+                        responseData['PublicKey'] = publicKey;
+                        responseData['PrivateKey'] = privateKey;
+
                       } else {
                         responseData['Error'] = err;
                       }
