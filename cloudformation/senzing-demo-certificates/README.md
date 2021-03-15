@@ -1,6 +1,8 @@
+# Senzing Demo Certificates
+
+## Spikes
 
 ### spike-certificate-with-ec2
-
 
 ### spike-certificate-with-node
 
