@@ -3,7 +3,7 @@ AWSTemplateFormatVersion: 2010-09-09
 # File format follows https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/template-anatomy.html
 
 Description: >-
-  Senzing aws-cloudformation-ecs/senzing-demo-hosted-zone/spike-certificate-certificate-manager Version: 0.1.0
+  Senzing aws-cloudformation-ecs/senzing-demo-hosted-zone/spike-certificate-with-python Version: 0.1.0
   For more information see https://github.com/Senzing/aws-cloudformation-ecs
 
 # -----------------------------------------------------------------------------
@@ -159,6 +159,11 @@ Resources:
         - StackName: !FindInMap [Constants, Stack, Name]
     Type: AWS::Logs::LogGroup
 
+  LogsLogGroupLambdaGeneratePublicPrivateKeys:
+    Properties:
+      LogGroupName: !Sub "/aws/lambda/${AWS::StackName}-lambda-generate-public-private-keys"
+    Type: AWS::Logs::LogGroup
+
 # -- Cloud, subnets, routing --------------------------------------------------
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-vpc.html
@@ -304,150 +309,73 @@ Resources:
           Value: !Sub "${AWS::StackName}-ecs-cluster"
     Type: AWS::ECS::Cluster
 
-# -- Certificates -------------------------------------------------------------
+# -- LambdaFunction -----------------------------------------------------------
 
-# https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-certificatemanager-certificate.html
+# https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-lambda-function.html
 
-  Certificate:
+  LambdaFunctionGeneratePublicPrivateKeys:
     Properties:
-      DomainName: example.com
-      DomainValidationOptions:
-        - DomainName: example.com
-          ValidationDomain: example.com
-    Type: AWS::CertificateManager::Certificate
+      Code:
+        ZipFile: |
+          #!/usr/bin/env python3
 
-# -- Load balancing -----------------------------------------------------------
+          import boto3
+          import cfnresponse
+          import datetime
+          import json
+          import logging
+          import random
+          import traceback
+          from OpenSSL import crypto
+          from json import JSONEncoder
 
-# https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-elasticloadbalancingv2-loadbalancer.html
+          logger = logging.getLogger()
+          logger.setLevel(logging.INFO)
 
-  LoadBalancerPublic:
-    Properties:
-      Scheme: internet-facing
-      SecurityGroups:
-        - !Ref Ec2SecurityGroupLoadBalancerPublic
-      Subnets:
-        - !Ref Ec2SubnetPublic1
-        - !Ref Ec2SubnetPublic2
+          class DateTimeEncoder(JSONEncoder):
+              def default(self, obj):
+                  if isinstance(obj, (datetime.date, datetime.datetime)):
+                      return obj.isoformat()
+
+          def handler(event, context):
+              result = cfnresponse.SUCCESS
+              response_data = {}
+              try:
+                  logger.info("Event: {0}".format(json.dumps(event)))
+
+                  logger.info("Response: {0}".format(json.dumps(response, cls=DateTimeEncoder)))
+
+              except Exception as e:
+                  logger.error(e)
+                  traceback.print_exc()
+                  result = cfnresponse.FAILED
+              finally:
+                  cfnresponse.send(event, context, result, response_data)
+
+      Description: Generate Public/Private key pair.
+      FunctionName: !Sub "${AWS::StackName}-lambda-generate-public-private-keys"
+      Handler: index.handler
+      Role: !GetAtt IamRoleLambda.Arn
+      Runtime: python3.8
       Tags:
         - Key: Name
-          Value: !Sub "${AWS::StackName}-load-balancer-public"
-      Type: application
-    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+          Value: !Sub "${AWS::StackName}-lambda-generate-public-private-keys"
+      Timeout: 600
+    Type: AWS::Lambda::Function
 
-# https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-elasticloadbalancingv2-targetgroup.html
+# -- Run ECS tasks-------------------------------------------------------------
 
-  TargetGroupSwagger:
-    DependsOn:
-     - LoadBalancerPublic
+# https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/template-custom-resources.html
+# https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-cfn-customresource.html
+
+  LambdaRunnerGeneratePublicPrivateKeys:
     Properties:
-      HealthCheckIntervalSeconds: 80
-      HealthCheckPath: '/'
-      HealthCheckProtocol: HTTP
-      HealthCheckTimeoutSeconds: 50
-      HealthyThresholdCount: 2
-      Matcher:
-        HttpCode: 200-299
-      Port: 8080
-      Protocol: HTTP
+      ClusterId: !Ref EcsCluster
+      ServiceToken: !GetAtt LambdaFunctionGeneratePublicPrivateKeys.Arn
       Tags:
         - Key: Name
-          Value: !Sub "${AWS::StackName}-target-group-swagger"
-      TargetGroupAttributes:
-      - Key: deregistration_delay.timeout_seconds
-        Value: '60'
-      TargetType: ip
-      UnhealthyThresholdCount: 5
-      VpcId: !Ref Ec2Vpc
-    Type: AWS::ElasticLoadBalancingV2::TargetGroup
-
-# https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-elasticloadbalancingv2-listener.html
-
-  ListenerSwaggerHttps:
-    Properties:
-      Certificates:
-        - CertificateArn: !Ref Certificate
-      DefaultActions:
-        - TargetGroupArn: !Ref TargetGroupSwagger
-          Type: forward
-      LoadBalancerArn: !Ref LoadBalancerPublic
-      Port: 8081
-      Protocol: HTTPS
-    Type: AWS::ElasticLoadBalancingV2::Listener
-
-# -- EcsTaskDefinition --------------------------------------------------------
-
-# https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ecs-taskdefinition.html
-
-  EcsTaskDefinitionSwagger:
-    Properties:
-      ContainerDefinitions:
-        -
-          Environment:
-            -
-              Name: URL
-              Value: "https://raw.githubusercontent.com/Senzing/senzing-rest-api-specification/master/senzing-rest-api.yaml"
-          Essential: true
-          Image: public.ecr.aws/senzing/swagger-ui:latest
-          LogConfiguration:
-            LogDriver: awslogs
-            Options:
-              awslogs-group: !Ref LogsLogGroupMain
-              awslogs-region: !Ref AWS::Region
-              awslogs-stream-prefix: service
-          Name: swagger
-          PortMappings:
-            - ContainerPort: 8080
-              HostPort: 8080
-              Protocol: tcp
-          Privileged: false
-          ReadonlyRootFilesystem: false
-      Cpu: '1024'
-      ExecutionRoleArn: !GetAtt IamRoleSwagger.Arn
-      Family: !Sub "${AWS::StackName}-task-definition-swagger"
-      Memory: '8192'
-      NetworkMode: awsvpc
-      RequiresCompatibilities:
-        - FARGATE
-      Tags:
-        - Key: Name
-          Value: !Sub "${AWS::StackName}-ecs-task-definition-swagger"
-      TaskRoleArn: !GetAtt IamRoleSwagger.Arn
-    Type: AWS::ECS::TaskDefinition
-
-# -- EcsService ---------------------------------------------------------------
-
-# https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ecs-service.html
-
-  EcsServiceSwagger:
-    DependsOn:
-     - ListenerSwaggerHttps
-     - Certificate
-    Properties:
-      Cluster: !Ref EcsCluster
-      DesiredCount: 1
-      EnableECSManagedTags: true
-      LaunchType: FARGATE
-      LoadBalancers:
-        -
-          ContainerPort: 8080
-          ContainerName: swagger
-          TargetGroupArn: !Ref TargetGroupSwagger
-      NetworkConfiguration:
-        AwsvpcConfiguration:
-          AssignPublicIp: ENABLED
-          SecurityGroups:
-            - !Ref Ec2SecurityGroupLoadBalancerPublic
-          Subnets:
-            - !Ref Ec2SubnetPublic1
-            - !Ref Ec2SubnetPublic2
-      PlatformVersion: 1.4.0
-      PropagateTags: TASK_DEFINITION
-      ServiceName: swagger
-      Tags:
-        - Key: Name
-          Value: !Sub "${AWS::StackName}-ecs-service-swagger"
-      TaskDefinition: !Ref EcsTaskDefinitionSwagger
-    Type: AWS::ECS::Service
+          Value: !Sub "${AWS::StackName}-lambda-runner-generate-public-private-keys"
+    Type: Custom::LambdaRunnerDbPassword
 
 # -----------------------------------------------------------------------------
 # Outputs
@@ -466,12 +394,6 @@ Outputs:
       Name: !Sub "${AWS::StackName}-ec2-VpcId"
     Value: !Ref Ec2Vpc
 
-  Host:
-    Description: 'Host name of public services. Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#host'
-    Export:
-      Name: !Sub "${AWS::StackName}-host"
-    Value: !GetAtt LoadBalancerPublic.DNSName
-
   SubnetPublic1:
     Description: 'The ID of public subnet 1. Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#subnetpublic1'
     Export:
@@ -484,9 +406,10 @@ Outputs:
       Name: !Sub "${AWS::StackName}-subnet-public-2"
     Value: !Ref Ec2SubnetPublic2
 
-  UrlSwaggerHttps:
-    Description: 'URL for Swagger. Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#urlswagger'
-    Value: !Sub "https//${LoadBalancerPublic.DNSName}:8081"
+  PublicKey:
+    Description: 'Public key used: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#publickey'
+    Value: !GetAtt LambdaRunnerGeneratePublicPrivateKeys.PublicKey
 
-  Certificate:
-    Value: !Ref Certificate
+  PrivateKey:
+    Description: 'Private key used: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#privatekey'
+    Value: !GetAtt LambdaRunnerGeneratePublicPrivateKeys.PrivateKey
