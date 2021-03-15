@@ -327,6 +327,11 @@ Resources:
               var responseStatus = response.FAILED;
               var responseData = {};
 
+
+              console.log('Generating 1024-bit key-pair...');
+              var keys = forge.pki.rsa.generateKeyPair(1024);
+              console.log('Key-pair created.');
+
               // For Delete requests, immediately send a SUCCESS response.
 
               if (event.RequestType == "Delete") {
