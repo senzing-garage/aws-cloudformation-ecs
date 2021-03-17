@@ -7,7 +7,7 @@ AWSTemplateFormatVersion: 2010-09-09
 #     aws cloudformation validate-template: https://awscli.amazonaws.com/v2/documentation/api/latest/reference/cloudformation/validate-template.html
 
 Description: >-
-  Senzing aws-cloudformation-ecs Version: 0.1.0
+  Senzing aws-cloudformation-ecs Version: 0.2.0
   For more information see https://github.com/Senzing/aws-cloudformation-ecs
 
 # -----------------------------------------------------------------------------
@@ -18,6 +18,11 @@ Description: >-
 Metadata:
   AWS::CloudFormation::Interface:
     ParameterGroups:
+      -
+        Label:
+          default: Acknowledge insecure system
+        Parameters:
+          - AcknowledgeInsecureSystem
       -
         Label:
           default: Senzing installation
@@ -56,14 +61,18 @@ Metadata:
           - RunVpcFlowLogs
           - RunWebApp
           - RunXterm
-
-
     ParameterLabels:
       AcceptEula:
         default: >-
           Required: If you accept the Senzing End User License Agreements at
           https://senzing.com/end-user-license-agreement,
           enter 'I_ACCEPT_THE_SENZING_EULA'.
+      AcknowledgeInsecureSystem:
+        default: >-
+          A default deployment of this template is for public demonstration only.
+          Before using authentic PII, ensure the security of your deployment.
+          The security of this deployment is your responsibility.
+          To acknowledge your understanding and acceptance of the foregoing, type “I AGREE”.
       CidrInbound:
         default: 'Required: Allowed inbound connections using CIDR notation.'
       RunApiServer:
@@ -77,7 +86,7 @@ Metadata:
       RunStreamLoader:
         default: 'Optional: Would you like to run stream-producer service?'
       RunStreamProducer:
-        default: 'Optional: Would you like to run stream-producer job?'
+        default: 'Optional: Would you like to have sample data imported?'
       RunSwagger:
         default: 'Optional: Would you like to run Swagger service?'
       RunVpcFlowLogs:
@@ -127,6 +136,13 @@ Parameters:
     Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs/#accepteula'
     Type: String
 
+  AcknowledgeInsecureSystem:
+    AllowedPattern: '.+|^I AGREE$'
+    ConstraintDescription: AcknowledgeInsecureSystem parameter must be 'I AGREE'
+    Default: '_'
+    Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#acknowledgeinsecuresystem'
+    Type: String
+
   CidrInbound:
     AllowedPattern: '(?:\d{1,3}\.){3}\d{1,3}(?:/\d\d?)?'
     ConstraintDescription: Inbound CIDR must be in the format n.n.n.n/n
@@ -139,7 +155,7 @@ Parameters:
       - 'No'
       - 'Yes'
     Default: 'Yes'
-    Description: 'Help: http://senzing.github.io/aws-cloudformation-ecs/senzing-demo-full-stack#runapiserver'
+    Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-full-stack#runapiserver'
     Type: String
 
   RunJupyter:
@@ -147,7 +163,7 @@ Parameters:
       - 'No'
       - 'Yes'
     Default: 'No'
-    Description: 'Help: http://senzing.github.io/aws-cloudformation-ecs/senzing-demo-full-stack#runjupyter'
+    Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-full-stack#runjupyter'
     Type: String
 
   RunRedoer:
@@ -155,7 +171,7 @@ Parameters:
       - 'No'
       - 'Yes'
     Default: 'Yes'
-    Description: 'Help: http://senzing.github.io/aws-cloudformation-ecs/senzing-demo-full-stack#runredoer'
+    Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-full-stack#runredoer'
     Type: String
 
   RunSshd:
@@ -163,7 +179,7 @@ Parameters:
       - 'No'
       - 'Yes'
     Default: 'Yes'
-    Description: 'Help: http://senzing.github.io/aws-cloudformation-ecs/senzing-demo-full-stack#runsshd'
+    Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-full-stack#runsshd'
     Type: String
 
   RunStreamLoader:
@@ -171,7 +187,7 @@ Parameters:
       - 'No'
       - 'Yes'
     Default: 'Yes'
-    Description: 'Help: http://senzing.github.io/aws-cloudformation-ecs/senzing-demo-full-stack#runstreamloader'
+    Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-full-stack#runstreamloader'
     Type: String
 
   RunStreamProducer:
@@ -179,7 +195,7 @@ Parameters:
       - 'No'
       - 'Yes'
     Default: 'Yes'
-    Description: 'Help: http://senzing.github.io/aws-cloudformation-ecs/senzing-demo-full-stack#runstreamproducer'
+    Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-full-stack#runstreamproducer'
     Type: String
 
   RunSwagger:
@@ -187,7 +203,7 @@ Parameters:
       - 'No'
       - 'Yes'
     Default: 'Yes'
-    Description: 'Help: http://senzing.github.io/aws-cloudformation-ecs/senzing-demo-full-stack#runswagger'
+    Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-full-stack#runswagger'
     Type: String
 
   RunVpcFlowLogs:
@@ -195,7 +211,7 @@ Parameters:
       - 'No'
       - 'Yes'
     Default: 'No'
-    Description: 'Help: http://senzing.github.io/aws-cloudformation-ecs/senzing-demo-full-stack#runvpcflowlogs'
+    Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-full-stack#runvpcflowlogs'
     Type: String
 
   RunWebApp:
@@ -203,7 +219,7 @@ Parameters:
       - 'No'
       - 'Yes'
     Default: 'Yes'
-    Description: 'Help: http://senzing.github.io/aws-cloudformation-ecs/senzing-demo-full-stack#runwebapp'
+    Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-full-stack#runwebapp'
     Type: String
 
   RunXterm:
@@ -211,34 +227,34 @@ Parameters:
       - 'No'
       - 'Yes'
     Default: 'Yes'
-    Description: 'Help: http://senzing.github.io/aws-cloudformation-ecs/senzing-demo-full-stack#xterm'
+    Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-full-stack#xterm'
     Type: String
 
   SenzingInputUrl:
-    Default: https://public-read-access.s3.amazonaws.com/TestDataSets/test-dataset-100m.json.gz
-    Description: 'Help: http://senzing.github.io/aws-cloudformation-ecs/senzing-demo-full-stack#senzinginputurl'
+    Default: https://s3.amazonaws.com/public-read-access/TestDataSets/SenzingTruthSet/truth-set.json
+    Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-full-stack#senzinginputurl'
     Type: String
 
   SenzingLicenseAsBase64:
 #   AllowedPattern: ' ^$|[^-A-Za-z0-9+\/=\s]|=[^=]|={3,}$'
-    ConstraintDescription: 'Must contain only Base64 characters. see http://senzing.github.io/aws-cloudformation-ecs/senzing-demo-full-stack#senzinglicenseasbase64'
+    ConstraintDescription: 'Must contain only Base64 characters. see http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/senzing-demo-full-stack#senzinglicenseasbase64'
     Default: ' '
-    Description: 'Help: http://senzing.github.io/aws-cloudformation/senzing-demo-full-stack#senzinglicenseasbase64'
+    Description: 'Help: http://hub.senzing.com/aws-cloudformation/senzing-demo-full-stack#senzinglicenseasbase64'
     Type: String
 
   SenzingRecordMax:
-    Default: 100000
-    Description: 'Help: http://senzing.github.io/aws-cloudformation-ecs/senzing-demo-full-stack#senzingrecordmax'
+    Default: 0
+    Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-full-stack#senzingrecordmax'
     Type: Number
 
   SenzingRecordMin:
     Default: 0
-    Description: 'Help: http://senzing.github.io/aws-cloudformation-ecs/senzing-demo-full-stack#senzingrecordmin'
+    Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-full-stack#senzingrecordmin'
     Type: Number
 
   VpcAvailabilityZones:
     Default: ''
-    Description: 'Help: http://senzing.github.io/aws-cloudformation-ecs/senzing-demo-full-stack#vpcavailabilityzones'
+    Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-full-stack#vpcavailabilityzones'
     Type: CommaDelimitedList
 
   VpcId:
@@ -247,7 +263,7 @@ Parameters:
       VPC Id must begin with 'vpc-' followed by either an 8 or 17 character
       identifier, or leave blank to have a new VPC created
     Default: ''
-    Description: 'Help: http://senzing.github.io/aws-cloudformation-ecs/senzing-demo-full-stack#vpcid'
+    Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-full-stack#vpcid'
     Type: String
 
 # -----------------------------------------------------------------------------
@@ -267,6 +283,12 @@ Rules:
           - !Ref AcceptEula
           - I_ACCEPT_THE_SENZING_EULA
         AssertDescription: 'EULA acceptance incorrect.  Enter "I_ACCEPT_THE_SENZING_EULA"'
+  ConfirmAcknowledgeInsecureSystem:
+    Assertions:
+      - Assert: !Equals
+          - !Ref AcknowledgeInsecureSystem
+          - 'I AGREE'
+        AssertDescription: 'Entering "I AGREE" is required to proceed.'
 
 # -----------------------------------------------------------------------------
 # Mappings
@@ -281,6 +303,9 @@ Mappings:
       Username: senzing
     Stack:
       Name: experimental
+    StreamProducer:
+      DataSource: TEST
+      EntityType: GENERIC
 
   VpcCidrs:
     vpc:
@@ -417,6 +442,25 @@ Resources:
       Tags:
         - Key: Name
           Value: !Sub "${AWS::StackName}-iam-role-flow-log"
+    Type: AWS::IAM::Role
+
+
+  IamRoleG2ConfigTool:
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          -
+            Action:
+              - sts:AssumeRole
+            Effect: Allow
+            Principal:
+              Service:
+                - ecs-tasks.amazonaws.com
+        Version: '2012-10-17'
+      Description: !Sub "${AWS::StackName}-iam-role-g2configtool"
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-iam-role-g2configtool"
     Type: AWS::IAM::Role
 
 
@@ -726,6 +770,7 @@ Resources:
       Roles:
        - !Ref IamRoleApiServer
        - !Ref IamRoleFlowLog
+       - !Ref IamRoleG2ConfigTool
        - !Ref IamRoleInitEfs
        - !Ref IamRoleInitPostgres
        - !Ref IamRoleInitSenzing
@@ -756,6 +801,7 @@ Resources:
         Version: '2012-10-17'
       Roles:
        - !Ref IamRoleFlowLog
+       - !Ref IamRoleG2ConfigTool
        - !Ref IamRoleInitEfs
        - !Ref IamRoleLambda
        - !Ref IamRoleStreamProducer
@@ -777,6 +823,7 @@ Resources:
         Version: '2012-10-17'
       Roles:
        - !Ref IamRoleApiServer
+       - !Ref IamRoleG2ConfigTool
        - !Ref IamRoleJupyter
        - !Ref IamRoleLambda
        - !Ref IamRoleRedoer
@@ -818,9 +865,11 @@ Resources:
             Effect: Allow
             Resource:
               - !GetAtt SqsQueue.Arn
+              - !GetAtt SqsQueueInfo.Arn
               - !GetAtt SqsQueueDeadLetter.Arn
         Version: '2012-10-17'
       Roles:
+       - !Ref IamRoleStreamLoader
        - !Ref IamRoleStreamProducer
     Type: AWS::IAM::Policy
 
@@ -835,25 +884,30 @@ Resources:
         - StackName: !FindInMap [Constants, Stack, Name]
     Type: AWS::Logs::LogGroup
 
+
   LogsLogGroupLambdaRandomString:
     Properties:
       LogGroupName: !Sub "/aws/lambda/${AWS::StackName}-lambda-random-string"
     Type: AWS::Logs::LogGroup
+
 
   LogsLogGroupLambdaRunTask:
     Properties:
       LogGroupName: !Sub "/aws/lambda/${AWS::StackName}-lambda-run-task"
     Type: AWS::Logs::LogGroup
 
+
   LogsLogGroupLambdaRunTaskAndWait:
     Properties:
       LogGroupName: !Sub "/aws/lambda/${AWS::StackName}-lambda-run-task-and-wait"
     Type: AWS::Logs::LogGroup
 
+
   LogsLogGroupLambdaStringToLower:
     Properties:
       LogGroupName: !Sub "/aws/lambda/${AWS::StackName}-lambda-string-to-lower"
     Type: AWS::Logs::LogGroup
+
 
   LogsLogGroupDbClusterCore:
     Properties:
@@ -862,6 +916,7 @@ Resources:
         - StackNameAsLower: !GetAtt LambdaRunnerStackNameAsLower.OutputString
     Type: AWS::Logs::LogGroup
 
+
   LogsLogGroupDbClusterLibfeat:
     Properties:
       LogGroupName: !Sub
@@ -869,12 +924,14 @@ Resources:
         - StackNameAsLower: !GetAtt LambdaRunnerStackNameAsLower.OutputString
     Type: AWS::Logs::LogGroup
 
+
   LogsLogGroupDbClusterRes:
     Properties:
       LogGroupName: !Sub
         - "/aws/rds/cluster/${StackNameAsLower}-aurora-senzing-cluster-res/postgresql"
         - StackNameAsLower: !GetAtt LambdaRunnerStackNameAsLower.OutputString
     Type: AWS::Logs::LogGroup
+
 
   LogsLogGroupLambdaWaitForEfs:
     Properties:
@@ -1188,7 +1245,7 @@ Resources:
           ToPort: 8250
       Tags:
         - Key: Name
-          Value: !Sub "${AWS::StackName}-ec2-security-group-load-balancer-private"
+          Value: !Sub "${AWS::StackName}-ec2-security-group-alb-private"
       VpcId: !If
         - IfCreateVpcResources
         - !Ref Ec2Vpc
@@ -1206,7 +1263,7 @@ Resources:
           IpProtocol: '-1'
       Tags:
         - Key: Name
-          Value: !Sub "${AWS::StackName}-ec2-security-group-load-balancer-public"
+          Value: !Sub "${AWS::StackName}-ec2-security-group-alb-public"
       VpcId: !If
         - IfCreateVpcResources
         - !Ref Ec2Vpc
@@ -1633,6 +1690,21 @@ Resources:
       Tags:
         - Key: Name
           Value: !Sub "${AWS::StackName}-sqs-queue"
+      VisibilityTimeout: 300
+    Type: AWS::SQS::Queue
+
+
+  SqsQueueInfo:
+    Properties:
+      DelaySeconds: 0
+      KmsMasterKeyId: alias/aws/sqs
+      MaximumMessageSize: 262144
+      MessageRetentionPeriod: 1209600
+      QueueName: !Sub "${AWS::StackName}-sqs-queue-info"
+      ReceiveMessageWaitTimeSeconds: 0
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-sqs-queue-info"
       VisibilityTimeout: 300
     Type: AWS::SQS::Queue
 
@@ -2153,6 +2225,36 @@ Resources:
     Type: Custom::LambdaRunnerDbPassword
 
 
+  LambdaRunnerG2ConfigTool:
+    DependsOn:
+     - LambdaRunnerInitSenzing
+    Properties:
+      ClusterId: !Ref EcsCluster
+      RunTaskParameters:
+        # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/ecs.html#ECS.Client.run_task
+        cluster: !Ref EcsCluster
+        count: 1
+        launchType: FARGATE
+        networkConfiguration:
+          awsvpcConfiguration:
+            assignPublicIp: DISABLED
+            securityGroups:
+              - !Ref Ec2SecurityGroupLambdaRunner
+            subnets:
+              - !Ref Ec2SubnetPrivate1
+              - !Ref Ec2SubnetPrivate2
+        platformVersion: 1.4.0
+        tags:
+          - key: Name
+            value: !Sub "${AWS::StackName}-lambda-runner-g2configtool-run-task-parameters"
+        taskDefinition: !Ref EcsTaskDefinitionG2ConfigTool
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-lambda-runner-g2configtool"
+      ServiceToken: !GetAtt LambdaFunctionRunTaskAndWait.Arn
+    Type: Custom::LambdaRunnerG2ConfigTool
+
+
   LambdaRunnerInitEfs:
     DependsOn:
      - LambdaRunnerWaitForEfsMountTarget1
@@ -2433,7 +2535,7 @@ Resources:
 #       -
 #         Key: access_logs.s3.prefix
 #         Value: "senzing-fsd"
-#     Name: !Sub "${AWS::StackName}-load-balancer"
+      Name: !Sub "${AWS::StackName}-alb-public"
       Scheme: internet-facing
       SecurityGroups:
         - !Ref Ec2SecurityGroupLoadBalancerPublic
@@ -2442,13 +2544,14 @@ Resources:
         - !Ref Ec2SubnetPublic2
       Tags:
         - Key: Name
-          Value: !Sub "${AWS::StackName}-load-balancer-public"
+          Value: !Sub "${AWS::StackName}-alb-public"
       Type: application
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
 
 
   LoadBalancerPrivate:
     Properties:
+      Name: !Sub "${AWS::StackName}-alb-private"
       Scheme: internal
       SecurityGroups:
         - !Ref Ec2SecurityGroupLoadBalancerPrivate
@@ -2457,7 +2560,7 @@ Resources:
         - !Ref Ec2SubnetPrivate2
       Tags:
         - Key: Name
-          Value: !Sub "${AWS::StackName}-load-balancer-private"
+          Value: !Sub "${AWS::StackName}-alb-private"
       Type: application
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
 
@@ -2483,6 +2586,8 @@ Resources:
       TargetGroupAttributes:
         - Key: deregistration_delay.timeout_seconds
           Value: '60'
+        - Key: slow_start.duration_seconds
+          Value: '120'
       TargetType: ip
       UnhealthyThresholdCount: 5
       VpcId: !If
@@ -2512,6 +2617,8 @@ Resources:
       TargetGroupAttributes:
         - Key: deregistration_delay.timeout_seconds
           Value: '60'
+        - Key: slow_start.duration_seconds
+          Value: '120'
       TargetType: ip
       UnhealthyThresholdCount: 5
       VpcId: !If
@@ -2749,7 +2856,7 @@ Resources:
             - '*'
             - -enableAdmin
           Essential: true
-          Image: public.ecr.aws/senzing/senzing-api-server:2.3.1
+          Image: public.ecr.aws/senzing/senzing-api-server:2.3.2
           LogConfiguration:
             LogDriver: awslogs
             Options:
@@ -2820,6 +2927,72 @@ Resources:
               FilesystemId:
                 Ref: EfsFileSystem
               RootDirectory: /var
+    Type: AWS::ECS::TaskDefinition
+
+
+  EcsTaskDefinitionG2ConfigTool:
+    Properties:
+      ContainerDefinitions:
+        -
+          Command:
+            - -f
+            - /etc/opt/senzing/G2Config.gtc
+          Essential: true
+          Image: public.ecr.aws/senzing/g2configtool:1.4.2
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: !Ref LogsLogGroupMain
+              awslogs-region: !Ref AWS::Region
+              awslogs-stream-prefix: job
+          MountPoints:
+            -
+              SourceVolume: senzing-data-version-dir
+              ContainerPath: /opt/senzing/data
+              ReadOnly: true
+            -
+              SourceVolume: senzing-etc-dir
+              ContainerPath: /etc/opt/senzing
+              ReadOnly: true
+            -
+              SourceVolume: senzing-g2-dir
+              ContainerPath: /opt/senzing/g2
+              ReadOnly: true
+          Name: g2configtool
+          Privileged: false
+          ReadonlyRootFilesystem: false
+      Cpu: '1024'
+      ExecutionRoleArn: !GetAtt IamRoleG2ConfigTool.Arn
+      Family: !Sub "${AWS::StackName}-task-definition-g2configtool"
+      Memory: '8192'
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-ecs-task-definition-g2configtool"
+      Volumes:
+        -
+          Name: senzing-data-version-dir
+          EFSVolumeConfiguration:
+              AuthorizationConfig: {}
+              FilesystemId:
+                Ref: EfsFileSystem
+              RootDirectory: /data/1.0.0
+        -
+          Name: senzing-etc-dir
+          EFSVolumeConfiguration:
+              AuthorizationConfig: {}
+              FilesystemId:
+                Ref: EfsFileSystem
+              RootDirectory: /etc
+        -
+          Name: senzing-g2-dir
+          EFSVolumeConfiguration:
+              AuthorizationConfig: {}
+              FilesystemId:
+                Ref: EfsFileSystem
+              RootDirectory: /g2
     Type: AWS::ECS::TaskDefinition
 
 
@@ -3050,7 +3223,34 @@ Resources:
             -
               Name: SENZING_ENGINE_CONFIGURATION_JSON
               Value: !Sub
-                - '{"PIPELINE": {"CONFIGPATH": "/etc/opt/senzing","RESOURCEPATH": "/opt/senzing/g2/resources","SUPPORTPATH": "/opt/senzing/data"},"SQL": {"BACKEND": "HYBRID","CONNECTION":"postgresql://${DatabaseUsername}:${DatabasePassword}@${DatabaseHostCore}:${DatabasePortCore}:${DatabaseName}"},"C1": {"CLUSTER_SIZE": "1","DB_1": "postgresql://${DatabaseUsername}:${DatabasePassword}@${DatabaseHostRes}:${DatabasePortRes}:${DatabaseName}"},"C2": {"CLUSTER_SIZE": "1","DB_1": "postgresql://${DatabaseUsername}:${DatabasePassword}@${DatabaseHostLibfeat}:${DatabasePortLibfeat}:${DatabaseName}"},"HYBRID": {"RES_FEAT": "C1","RES_FEAT_EKEY": "C1","RES_FEAT_LKEY": "C1","RES_FEAT_STAT": "C1","LIB_FEAT": "C2","LIB_FEAT_HKEY": "C2"}}'
+                - >-
+                  {
+                      "PIPELINE": {
+                          "CONFIGPATH": "/etc/opt/senzing",
+                          "RESOURCEPATH": "/opt/senzing/g2/resources",
+                          "SUPPORTPATH": "/opt/senzing/data"
+                      },
+                      "SQL": {
+                          "BACKEND": "HYBRID",
+                          "CONNECTION":"postgresql://${DatabaseUsername}:${DatabasePassword}@${DatabaseHostCore}:${DatabasePortCore}:${DatabaseName}"
+                      },
+                      "C1": {
+                          "CLUSTER_SIZE": "1",
+                          "DB_1": "postgresql://${DatabaseUsername}:${DatabasePassword}@${DatabaseHostRes}:${DatabasePortRes}:${DatabaseName}"
+                      },
+                      "C2": {
+                          "CLUSTER_SIZE": "1",
+                          "DB_1": "postgresql://${DatabaseUsername}:${DatabasePassword}@${DatabaseHostLibfeat}:${DatabasePortLibfeat}:${DatabaseName}"
+                      },
+                      "HYBRID": {
+                          "LIB_FEAT": "C2",
+                          "LIB_FEAT_HKEY": "C2",
+                          "RES_FEAT": "C1",
+                          "RES_FEAT_EKEY": "C1",
+                          "RES_FEAT_LKEY": "C1",
+                          "RES_FEAT_STAT": "C1"
+                      }
+                  }
                 - DatabaseHostLibfeat: !GetAtt RdsDbClusterLibfeat.Endpoint.Address
                   DatabaseHostCore: !GetAtt RdsDbClusterCore.Endpoint.Address
                   DatabaseHostRes: !GetAtt RdsDbClusterRes.Endpoint.Address
@@ -3061,10 +3261,16 @@ Resources:
                   DatabasePortRes: !GetAtt RdsDbClusterRes.Endpoint.Port
                   DatabaseUsername: !FindInMap [Constants, Database, Username]
             -
+              Name: SENZING_G2CONFIG_GTC
+              Value: |
+                addDataSource TRUTH-SET1
+                addDataSource TRUTH-SET2
+                save
+            -
               Name: SENZING_LICENSE_BASE64_ENCODED
               Value: !Sub "${SenzingLicenseAsBase64}"
           Essential: true
-          Image: public.ecr.aws/senzing/init-container:1.6.5
+          Image: public.ecr.aws/senzing/init-container:1.6.8
           LogConfiguration:
             LogDriver: awslogs
             Options:
@@ -3130,13 +3336,13 @@ Resources:
           Command:
             - '-y'
             - 'install'
-            - 'senzingapi-2.3.0-20342'
+            - 'senzingapi-2.4.1-21064'
           Environment:
             -
               Name: SENZING_ACCEPT_EULA
               Value: !Ref AcceptEula
           Essential: true
-          Image: public.ecr.aws/senzing/yum:1.1.3
+          Image: public.ecr.aws/senzing/yum:1.1.4
           LogConfiguration:
             LogDriver: awslogs
             Options:
@@ -3198,7 +3404,34 @@ Resources:
             -
               Name: SENZING_ENGINE_CONFIGURATION_JSON
               Value: !Sub
-                - '{"PIPELINE": {"CONFIGPATH": "/etc/opt/senzing","RESOURCEPATH": "/opt/senzing/g2/resources","SUPPORTPATH": "/opt/senzing/data"},"SQL": {"BACKEND": "HYBRID","CONNECTION":"postgresql://${DatabaseUsername}:${DatabasePassword}@${DatabaseHostCore}:${DatabasePortCore}:${DatabaseName}"},"C1": {"CLUSTER_SIZE": "1","DB_1": "postgresql://${DatabaseUsername}:${DatabasePassword}@${DatabaseHostRes}:${DatabasePortRes}:${DatabaseName}"},"C2": {"CLUSTER_SIZE": "1","DB_1": "postgresql://${DatabaseUsername}:${DatabasePassword}@${DatabaseHostLibfeat}:${DatabasePortLibfeat}:${DatabaseName}"},"HYBRID": {"RES_FEAT": "C1","RES_FEAT_EKEY": "C1","RES_FEAT_LKEY": "C1","RES_FEAT_STAT": "C1","LIB_FEAT": "C2","LIB_FEAT_HKEY": "C2"}}'
+                - >-
+                  {
+                      "PIPELINE": {
+                          "CONFIGPATH": "/etc/opt/senzing",
+                          "RESOURCEPATH": "/opt/senzing/g2/resources",
+                          "SUPPORTPATH": "/opt/senzing/data"
+                      },
+                      "SQL": {
+                          "BACKEND": "HYBRID",
+                          "CONNECTION":"postgresql://${DatabaseUsername}:${DatabasePassword}@${DatabaseHostCore}:${DatabasePortCore}:${DatabaseName}"
+                      },
+                      "C1": {
+                          "CLUSTER_SIZE": "1",
+                          "DB_1": "postgresql://${DatabaseUsername}:${DatabasePassword}@${DatabaseHostRes}:${DatabasePortRes}:${DatabaseName}"
+                      },
+                      "C2": {
+                          "CLUSTER_SIZE": "1",
+                          "DB_1": "postgresql://${DatabaseUsername}:${DatabasePassword}@${DatabaseHostLibfeat}:${DatabasePortLibfeat}:${DatabaseName}"
+                      },
+                      "HYBRID": {
+                          "LIB_FEAT": "C2",
+                          "LIB_FEAT_HKEY": "C2",
+                          "RES_FEAT": "C1",
+                          "RES_FEAT_EKEY": "C1",
+                          "RES_FEAT_LKEY": "C1",
+                          "RES_FEAT_STAT": "C1"
+                      }
+                  }
                 - DatabaseHostLibfeat: !GetAtt RdsDbClusterLibfeat.Endpoint.Address
                   DatabaseHostCore: !GetAtt RdsDbClusterCore.Endpoint.Address
                   DatabaseHostRes: !GetAtt RdsDbClusterRes.Endpoint.Address
@@ -3291,7 +3524,34 @@ Resources:
             -
               Name: SENZING_ENGINE_CONFIGURATION_JSON
               Value: !Sub
-                - '{"PIPELINE": {"CONFIGPATH": "/etc/opt/senzing","RESOURCEPATH": "/opt/senzing/g2/resources","SUPPORTPATH": "/opt/senzing/data"},"SQL": {"BACKEND": "HYBRID","CONNECTION":"postgresql://${DatabaseUsername}:${DatabasePassword}@${DatabaseHostCore}:${DatabasePortCore}:${DatabaseName}"},"C1": {"CLUSTER_SIZE": "1","DB_1": "postgresql://${DatabaseUsername}:${DatabasePassword}@${DatabaseHostRes}:${DatabasePortRes}:${DatabaseName}"},"C2": {"CLUSTER_SIZE": "1","DB_1": "postgresql://${DatabaseUsername}:${DatabasePassword}@${DatabaseHostLibfeat}:${DatabasePortLibfeat}:${DatabaseName}"},"HYBRID": {"RES_FEAT": "C1","RES_FEAT_EKEY": "C1","RES_FEAT_LKEY": "C1","RES_FEAT_STAT": "C1","LIB_FEAT": "C2","LIB_FEAT_HKEY": "C2"}}'
+                - >-
+                  {
+                      "PIPELINE": {
+                          "CONFIGPATH": "/etc/opt/senzing",
+                          "RESOURCEPATH": "/opt/senzing/g2/resources",
+                          "SUPPORTPATH": "/opt/senzing/data"
+                      },
+                      "SQL": {
+                          "BACKEND": "HYBRID",
+                          "CONNECTION":"postgresql://${DatabaseUsername}:${DatabasePassword}@${DatabaseHostCore}:${DatabasePortCore}:${DatabaseName}"
+                      },
+                      "C1": {
+                          "CLUSTER_SIZE": "1",
+                          "DB_1": "postgresql://${DatabaseUsername}:${DatabasePassword}@${DatabaseHostRes}:${DatabasePortRes}:${DatabaseName}"
+                      },
+                      "C2": {
+                          "CLUSTER_SIZE": "1",
+                          "DB_1": "postgresql://${DatabaseUsername}:${DatabasePassword}@${DatabaseHostLibfeat}:${DatabasePortLibfeat}:${DatabaseName}"
+                      },
+                      "HYBRID": {
+                          "LIB_FEAT": "C2",
+                          "LIB_FEAT_HKEY": "C2",
+                          "RES_FEAT": "C1",
+                          "RES_FEAT_EKEY": "C1",
+                          "RES_FEAT_LKEY": "C1",
+                          "RES_FEAT_STAT": "C1"
+                      }
+                  }
                 - DatabaseHostLibfeat: !GetAtt RdsDbClusterLibfeat.Endpoint.Address
                   DatabaseHostCore: !GetAtt RdsDbClusterCore.Endpoint.Address
                   DatabaseHostRes: !GetAtt RdsDbClusterRes.Endpoint.Address
@@ -3320,7 +3580,7 @@ Resources:
               Name: SENZING_SUBCOMMAND
               Value: redo
           Essential: true
-          Image: public.ecr.aws/senzing/redoer:1.3.4
+          Image: public.ecr.aws/senzing/redoer:1.3.5
           LogConfiguration:
             LogDriver: awslogs
             Options:
@@ -3402,7 +3662,7 @@ Resources:
               Name: SENZING_SKIP_DATABASE_PERFORMANCE_TEST
               Value: 'true'
           Essential: true
-          Image: public.ecr.aws/senzing/sshd:1.0.3
+          Image: public.ecr.aws/senzing/sshd:1.1.0
           LinuxParameters:
             Capabilities:
               Add:
@@ -3483,7 +3743,34 @@ Resources:
             -
               Name: SENZING_ENGINE_CONFIGURATION_JSON
               Value: !Sub
-                - '{"PIPELINE": {"CONFIGPATH": "/etc/opt/senzing","RESOURCEPATH": "/opt/senzing/g2/resources","SUPPORTPATH": "/opt/senzing/data"},"SQL": {"BACKEND": "HYBRID","CONNECTION":"postgresql://${DatabaseUsername}:${DatabasePassword}@${DatabaseHostCore}:${DatabasePortCore}:${DatabaseName}"},"C1": {"CLUSTER_SIZE": "1","DB_1": "postgresql://${DatabaseUsername}:${DatabasePassword}@${DatabaseHostRes}:${DatabasePortRes}:${DatabaseName}"},"C2": {"CLUSTER_SIZE": "1","DB_1": "postgresql://${DatabaseUsername}:${DatabasePassword}@${DatabaseHostLibfeat}:${DatabasePortLibfeat}:${DatabaseName}"},"HYBRID": {"RES_FEAT": "C1","RES_FEAT_EKEY": "C1","RES_FEAT_LKEY": "C1","RES_FEAT_STAT": "C1","LIB_FEAT": "C2","LIB_FEAT_HKEY": "C2"}}'
+                - >-
+                  {
+                      "PIPELINE": {
+                          "CONFIGPATH": "/etc/opt/senzing",
+                          "RESOURCEPATH": "/opt/senzing/g2/resources",
+                          "SUPPORTPATH": "/opt/senzing/data"
+                      },
+                      "SQL": {
+                          "BACKEND": "HYBRID",
+                          "CONNECTION":"postgresql://${DatabaseUsername}:${DatabasePassword}@${DatabaseHostCore}:${DatabasePortCore}:${DatabaseName}"
+                      },
+                      "C1": {
+                          "CLUSTER_SIZE": "1",
+                          "DB_1": "postgresql://${DatabaseUsername}:${DatabasePassword}@${DatabaseHostRes}:${DatabasePortRes}:${DatabaseName}"
+                      },
+                      "C2": {
+                          "CLUSTER_SIZE": "1",
+                          "DB_1": "postgresql://${DatabaseUsername}:${DatabasePassword}@${DatabaseHostLibfeat}:${DatabasePortLibfeat}:${DatabaseName}"
+                      },
+                      "HYBRID": {
+                          "LIB_FEAT": "C2",
+                          "LIB_FEAT_HKEY": "C2",
+                          "RES_FEAT": "C1",
+                          "RES_FEAT_EKEY": "C1",
+                          "RES_FEAT_LKEY": "C1",
+                          "RES_FEAT_STAT": "C1"
+                      }
+                  }
                 - DatabaseHostLibfeat: !GetAtt RdsDbClusterLibfeat.Endpoint.Address
                   DatabaseHostCore: !GetAtt RdsDbClusterCore.Endpoint.Address
                   DatabaseHostRes: !GetAtt RdsDbClusterRes.Endpoint.Address
@@ -3494,17 +3781,11 @@ Resources:
                   DatabasePortRes: !GetAtt RdsDbClusterRes.Endpoint.Port
                   DatabaseUsername: !FindInMap [Constants, Database, Username]
             -
-              Name: SENZING_DATA_SOURCE
-              Value: TEST
-            -
               Name: SENZING_DELAY_IN_SECONDS
               Value: '900'
             -
               Name: SENZING_DELAY_RANDOMIZED
               Value: 'true'
-            -
-              Name: SENZING_ENTITY_TYPE
-              Value: GENERIC
             -
               Name: SENZING_GOVERNOR_CHECK_TIME_INTERVAL_IN_SECONDS
               Value: '600'
@@ -3524,13 +3805,16 @@ Resources:
               Name: SENZING_SQS_QUEUE_URL
               Value: !Sub "https://sqs.${AWS::Region}.amazonaws.com/${AWS::AccountId}/${SqsQueue.QueueName}"
             -
+              Name: SENZING_SQS_INFO_QUEUE_URL
+              Value: !Sub "https://sqs.${AWS::Region}.amazonaws.com/${AWS::AccountId}/${SqsQueueInfo.QueueName}"
+            -
               Name: SENZING_SUBCOMMAND
-              Value: sqs
+              Value: sqs-withinfo
             -
               Name: SENZING_THREADS_PER_PROCESS
               Value: '8'
           Essential: true
-          Image: public.ecr.aws/senzing/stream-loader:1.7.0
+          Image: public.ecr.aws/senzing/stream-loader:1.7.2
           LogConfiguration:
             LogDriver: awslogs
             Options:
@@ -3606,6 +3890,12 @@ Resources:
         -
           Environment:
             -
+              Name: SENZING_DEFAULT_DATA_SOURCE
+              Value: !FindInMap [Constants, StreamProducer, DataSource]
+            -
+              Name: SENZING_DEFAULT_ENTITY_TYPE
+              Value: !FindInMap [Constants, StreamProducer, EntityType]
+            -
               Name: SENZING_INPUT_URL
               Value: !Sub "${SenzingInputUrl}"
             -
@@ -3628,12 +3918,12 @@ Resources:
               Value: !Sub "https://sqs.${AWS::Region}.amazonaws.com/${AWS::AccountId}/${SqsQueue.QueueName}"
             -
               Name: SENZING_SUBCOMMAND
-              Value: gzipped-json-to-sqs-batch
+              Value: json-to-sqs
             -
               Name: SENZING_THREADS_PER_PRINT
               Value: '30'
           Essential: true
-          Image: public.ecr.aws/senzing/stream-producer:1.3.1
+          Image: public.ecr.aws/senzing/stream-producer:1.4.0
           LogConfiguration:
             LogDriver: awslogs
             Options:
@@ -3756,7 +4046,7 @@ Resources:
               Name: SENZING_SKIP_DATABASE_PERFORMANCE_TEST
               Value: 'true'
           Essential: true
-          Image: public.ecr.aws/senzing/xterm:1.0.3
+          Image: public.ecr.aws/senzing/xterm:1.1.0
           LinuxParameters:
             Capabilities:
               Add:
@@ -3842,6 +4132,7 @@ Resources:
      - LambdaRunnerInitSenzing
      - ListenerApiServerPublic
      - ListenerApiServerPrivate
+     - LambdaRunnerG2ConfigTool
     Properties:
       Cluster: !Ref EcsCluster
       DesiredCount: 1
@@ -3879,6 +4170,7 @@ Resources:
     DependsOn:
      - LambdaRunnerInitSenzing
      - ListenerJupyter
+     - LambdaRunnerG2ConfigTool
     Properties:
       Cluster: !Ref EcsCluster
       DesiredCount: 1
@@ -3910,7 +4202,7 @@ Resources:
   EcsServiceRedoer:
     Condition: IfRunRedoer
     DependsOn:
-     - LambdaRunnerInitSenzing
+     - LambdaRunnerG2ConfigTool
     Properties:
       Cluster: !Ref EcsCluster
       DesiredCount: 1
@@ -3964,7 +4256,7 @@ Resources:
   EcsServiceStreamLoader:
     Condition: IfRunStreamLoader
     DependsOn:
-     - LambdaRunnerInitSenzing
+     - LambdaRunnerG2ConfigTool
     Properties:
       Cluster: !Ref EcsCluster
       DesiredCount: 8
