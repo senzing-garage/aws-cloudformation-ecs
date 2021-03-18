@@ -12,6 +12,7 @@ Description: >-
 # -----------------------------------------------------------------------------
 
 Metadata:
+
   AWS::CloudFormation::Interface:
     ParameterGroups:
       -
@@ -43,9 +44,11 @@ Parameters:
     Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#cidrinbound'
     Type: String
 
+
   CognitoAdminEmail:
     Type: String
     Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#cognitoadminemail'
+
 
   Route53HostedZoneId:
     Default: ''
@@ -229,15 +232,14 @@ Resources:
     Type: AWS::IAM::Policy
 
 
-  IamPolicyTaskRunner:
+  IamPolicyRoute53:
     Properties:
-      PolicyName: !Sub "${AWS::StackName}-iam-policy-task-runner"
+      PolicyName: !Sub "${AWS::StackName}-iam-policy-route53"
       PolicyDocument:
         Statement:
           -
             Action:
-              - ecs:DescribeTasks
-              - ecs:RunTask
+              - route53:GetHostedZone
             Effect: Allow
             Resource:
               - '*'
@@ -249,14 +251,15 @@ Resources:
     Type: AWS::IAM::Policy
 
 
-  IamPolicyRoute53:
+  IamPolicyTaskRunner:
     Properties:
-      PolicyName: !Sub "${AWS::StackName}-iam-policy-route53"
+      PolicyName: !Sub "${AWS::StackName}-iam-policy-task-runner"
       PolicyDocument:
         Statement:
           -
             Action:
-              - route53:GetHostedZone
+              - ecs:DescribeTasks
+              - ecs:RunTask
             Effect: Allow
             Resource:
               - '*'

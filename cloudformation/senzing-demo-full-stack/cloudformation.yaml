@@ -953,6 +953,7 @@ Resources:
        - !Ref IamRoleStreamProducer
     Type: AWS::IAM::Policy
 
+
   IamPolicyTaskRunner:
     Properties:
       PolicyName: !Sub "${AWS::StackName}-iam-policy-task-runner"
@@ -1095,6 +1096,46 @@ Resources:
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-subnet.html
 
+  Ec2SubnetPrivate1:
+    Properties:
+      AvailabilityZone: !Select
+          - '0'
+          - !GetAZs
+            Ref: AWS::Region
+      CidrBlock: !FindInMap
+        - VpcCidrs
+        - privsubnet1
+        - cidr
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-ec2-subnet-private-1"
+      VpcId: !If
+        - IfCreateVpcResources
+        - !Ref Ec2Vpc
+        - !Ref VpcId
+    Type: AWS::EC2::Subnet
+
+
+  Ec2SubnetPrivate2:
+    Properties:
+      AvailabilityZone: !Select
+          - '1'
+          - !GetAZs
+            Ref: AWS::Region
+      CidrBlock: !FindInMap
+        - VpcCidrs
+        - privsubnet2
+        - cidr
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-ec2-subnet-private-2"
+      VpcId: !If
+        - IfCreateVpcResources
+        - !Ref Ec2Vpc
+        - !Ref VpcId
+    Type: AWS::EC2::Subnet
+
+
   Ec2SubnetPublic1:
     Properties:
       AvailabilityZone: !If
@@ -1144,45 +1185,6 @@ Resources:
         - !Ref VpcId
     Type: AWS::EC2::Subnet
 
-
-  Ec2SubnetPrivate1:
-    Properties:
-      AvailabilityZone: !Select
-          - '0'
-          - !GetAZs
-            Ref: AWS::Region
-      CidrBlock: !FindInMap
-        - VpcCidrs
-        - privsubnet1
-        - cidr
-      Tags:
-        - Key: Name
-          Value: !Sub "${AWS::StackName}-ec2-subnet-private-1"
-      VpcId: !If
-        - IfCreateVpcResources
-        - !Ref Ec2Vpc
-        - !Ref VpcId
-    Type: AWS::EC2::Subnet
-
-
-  Ec2SubnetPrivate2:
-    Properties:
-      AvailabilityZone: !Select
-          - '1'
-          - !GetAZs
-            Ref: AWS::Region
-      CidrBlock: !FindInMap
-        - VpcCidrs
-        - privsubnet2
-        - cidr
-      Tags:
-        - Key: Name
-          Value: !Sub "${AWS::StackName}-ec2-subnet-private-2"
-      VpcId: !If
-        - IfCreateVpcResources
-        - !Ref Ec2Vpc
-        - !Ref VpcId
-    Type: AWS::EC2::Subnet
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-ec2-eip.html
 
@@ -1458,11 +1460,11 @@ Resources:
   Ec2SecurityGroupIngressSwagger:
     Condition: IfRunSwagger
     Properties:
-      CidrIp: !Ref CidrInbound
-      Description: Swagger UI
+      Description: Allow Health Check on Container 8080 from ALB
       FromPort: 8080
       GroupId: !Ref Ec2SecurityGroupLoadBalancerPublic
       IpProtocol: tcp
+      SourceSecurityGroupId: !GetAtt Ec2SecurityGroupLoadBalancerPublic.GroupId
       ToPort: 8080
     Type: AWS::EC2::SecurityGroupIngress
 
@@ -1482,11 +1484,11 @@ Resources:
   Ec2SecurityGroupIngressXterm:
     Condition: IfRunXterm
     Properties:
-      CidrIp: !Ref CidrInbound
-      Description: Senzing X-term
+      Description: Allow Health Check on Container 5000 from ALB
       FromPort: 5000
       GroupId: !Ref Ec2SecurityGroupLoadBalancerPublic
       IpProtocol: tcp
+      SourceSecurityGroupId: !GetAtt Ec2SecurityGroupLoadBalancerPublic.GroupId
       ToPort: 5000
     Type: AWS::EC2::SecurityGroupIngress
 
@@ -1556,20 +1558,6 @@ Resources:
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-subnet-route-table-assoc.html
 
-  Ec2SubnetRouteTableAssociationPublic1:
-    Properties:
-      RouteTableId: !Ref Ec2RouteTablePublic
-      SubnetId: !Ref Ec2SubnetPublic1
-    Type: AWS::EC2::SubnetRouteTableAssociation
-
-
-  Ec2SubnetRouteTableAssociationPublic2:
-    Properties:
-      RouteTableId: !Ref Ec2RouteTablePublic
-      SubnetId: !Ref Ec2SubnetPublic2
-    Type: AWS::EC2::SubnetRouteTableAssociation
-
-
   Ec2SubnetRouteTableAssociationPrivate1:
     Properties:
       RouteTableId: !Ref Ec2RouteTablePrivate
@@ -1581,6 +1569,20 @@ Resources:
     Properties:
       RouteTableId: !Ref Ec2RouteTablePrivate
       SubnetId: !Ref Ec2SubnetPrivate2
+    Type: AWS::EC2::SubnetRouteTableAssociation
+
+
+  Ec2SubnetRouteTableAssociationPublic1:
+    Properties:
+      RouteTableId: !Ref Ec2RouteTablePublic
+      SubnetId: !Ref Ec2SubnetPublic1
+    Type: AWS::EC2::SubnetRouteTableAssociation
+
+
+  Ec2SubnetRouteTableAssociationPublic2:
+    Properties:
+      RouteTableId: !Ref Ec2RouteTablePublic
+      SubnetId: !Ref Ec2SubnetPublic2
     Type: AWS::EC2::SubnetRouteTableAssociation
 
 # -- Elastic File System ------------------------------------------------------
@@ -3047,7 +3049,7 @@ Resources:
       HealthyThresholdCount: 2
       Matcher:
         HttpCode: 200-299
-#     Name: !Sub "${AWS::StackName}-target-group-swagger"
+      Name: !Sub "${AWS::StackName}-target-group-swagger"
       Port: 8080
       Protocol: HTTP
       Tags:
@@ -3106,7 +3108,7 @@ Resources:
       HealthyThresholdCount: 2
       Matcher:
         HttpCode: 200-299
-#     Name: !Sub "${AWS::StackName}-target-group-xterm"
+      Name: !Sub "${AWS::StackName}-target-group-xterm"
       Port: 5000
       Protocol: HTTP
       Tags:
@@ -3189,17 +3191,24 @@ Resources:
       Protocol: HTTPS
     Type: AWS::ElasticLoadBalancingV2::Listener
 
+# https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-elasticloadbalancingv2-listenerrule.html
 
-  ListenerSwagger:
+  ListenerRuleSwagger:
     Condition: IfRunSwagger
     Properties:
-      DefaultActions:
-        - TargetGroupArn: !Ref TargetGroupSwagger
-          Type: forward
-      LoadBalancerArn: !Ref LoadBalancerPublic
-      Port: 8080
-      Protocol: HTTP
-    Type: AWS::ElasticLoadBalancingV2::Listener
+      Actions:
+        -
+          Type: "forward"
+          TargetGroupArn: !Ref TargetGroupSwagger
+          Order: 1
+      Conditions:
+        -
+          Field: "path-pattern"
+          Values:
+            - "/swagger/*"
+      ListenerArn: !Ref ListenerPort443
+      Priority: 2
+    Type: "AWS::ElasticLoadBalancingV2::ListenerRule"
 
 
   ListenerWebApp:
@@ -3214,16 +3223,22 @@ Resources:
     Type: AWS::ElasticLoadBalancingV2::Listener
 
 
-  ListenerXterm:
+  ListenerRuleXterm:
     Condition: IfRunXterm
     Properties:
-      DefaultActions:
-        - TargetGroupArn: !Ref TargetGroupXterm
-          Type: forward
-      LoadBalancerArn: !Ref LoadBalancerPublic
-      Port: 5000
-      Protocol: HTTP
-    Type: AWS::ElasticLoadBalancingV2::Listener
+      Actions:
+        -
+          Type: "forward"
+          TargetGroupArn: !Ref TargetGroupXterm
+          Order: 1
+      Conditions:
+        -
+          Field: "path-pattern"
+          Values:
+            - "/xterm/*"
+      ListenerArn: !Ref ListenerPort443
+      Priority: 3
+    Type: "AWS::ElasticLoadBalancingV2::ListenerRule"
 
 # -- Route53RecordSet ---------------------------------------------------------
 
@@ -4450,6 +4465,9 @@ Resources:
         -
           Environment:
             -
+              Name: BASE_URL
+              Value: /swagger
+            -
               Name: URL
               Value: "https://raw.githubusercontent.com/Senzing/senzing-rest-api-specification/master/senzing-rest-api.yaml"
           Essential: true
@@ -4526,6 +4544,9 @@ Resources:
       ContainerDefinitions:
         -
           Environment:
+            -
+              Name: SENZING_BASE_URL_XTERM
+              Value: /xterm/
             -
               Name: SENZING_SKIP_DATABASE_PERFORMANCE_TEST
               Value: 'true'
@@ -4769,7 +4790,7 @@ Resources:
     Condition: IfRunSwagger
     DependsOn:
      - ListenerPort443
-     - ListenerSwagger
+     - ListenerRuleSwagger
     Properties:
       Cluster: !Ref EcsCluster
       DesiredCount: 1
@@ -4777,17 +4798,17 @@ Resources:
       LaunchType: FARGATE
       LoadBalancers:
         -
-          ContainerPort: 8080
           ContainerName: swagger
+          ContainerPort: 8080
           TargetGroupArn: !Ref TargetGroupSwagger
       NetworkConfiguration:
         AwsvpcConfiguration:
-          AssignPublicIp: DISABLED
+          AssignPublicIp: ENABLED
           SecurityGroups:
-            - !Ref Ec2SecurityGroupInternal
+            - !Ref Ec2SecurityGroupLoadBalancerPublic
           Subnets:
-            - !Ref Ec2SubnetPrivate1
-            - !Ref Ec2SubnetPrivate2
+            - !Ref Ec2SubnetPublic1
+            - !Ref Ec2SubnetPublic2
       PlatformVersion: 1.4.0
       PropagateTags: TASK_DEFINITION
       ServiceName: swagger
@@ -4836,7 +4857,7 @@ Resources:
     DependsOn:
      - LambdaRunnerInitSenzing
      - ListenerPort443
-     - ListenerXterm
+     - ListenerRuleXterm
     Properties:
       Cluster: !Ref EcsCluster
       DesiredCount: 1
@@ -4844,17 +4865,17 @@ Resources:
       LaunchType: FARGATE
       LoadBalancers:
         -
-          ContainerPort: 5000
           ContainerName: xterm
+          ContainerPort: 5000
           TargetGroupArn: !Ref TargetGroupXterm
       NetworkConfiguration:
         AwsvpcConfiguration:
-          AssignPublicIp: DISABLED
+          AssignPublicIp: ENABLED
           SecurityGroups:
-            - !Ref Ec2SecurityGroupInternal
+            - !Ref Ec2SecurityGroupLoadBalancerPublic
           Subnets:
-            - !Ref Ec2SubnetPrivate1
-            - !Ref Ec2SubnetPrivate2
+            - !Ref Ec2SubnetPublic1
+            - !Ref Ec2SubnetPublic2
       PlatformVersion: 1.4.0
       PropagateTags: TASK_DEFINITION
       ServiceName: xterm
@@ -5089,8 +5110,10 @@ Outputs:
 
   UrlSwagger:
     Condition: IfRunSwagger
-    Description: 'URL for Swagger. Help: http://hub.senzing.com/aws-cloudformation-ecs/#urlswagger'
-    Value: !Sub "http://${LoadBalancerPublic.DNSName}:8080"
+    Description: 'HTTPS URL for Swagger. Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#urlswagger'
+    Value: !Sub
+      - "https://${AWS::StackName}.${DomainName}/swagger/"
+      - DomainName: !GetAtt LambdaRunnerFindDomainName.DomainName
 
   UrlWebApp:
     Condition: IfRunWebApp
@@ -5099,8 +5122,10 @@ Outputs:
 
   UrlXterm:
     Condition: IfRunXterm
-    Description: 'URL for Senzing X-Term. Help: http://hub.senzing.com/aws-cloudformation-ecs/#urlxterm'
-    Value: !Sub "http://${LoadBalancerPublic.DNSName}:5000"
+    Description: 'HTTPS URL for Xterm. Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#urlxterm'
+    Value: !Sub
+      - "https://${AWS::StackName}.${DomainName}/xterm/"
+      - DomainName: !GetAtt LambdaRunnerFindDomainName.DomainName
 
   WebOneTimePassword:
     Description: 'One time password for web access. Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#webpassword'

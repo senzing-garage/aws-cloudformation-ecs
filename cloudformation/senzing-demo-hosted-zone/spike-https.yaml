@@ -12,6 +12,7 @@ Description: >-
 # -----------------------------------------------------------------------------
 
 Metadata:
+
   AWS::CloudFormation::Interface:
     ParameterGroups:
       -
@@ -40,6 +41,7 @@ Parameters:
     Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#cidrinbound'
     Type: String
 
+
   Route53HostedZoneId:
     Default: ''
     Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#route53hostedzoneid'
@@ -58,6 +60,7 @@ Mappings:
     Run:
       Swagger: Yes
       Xterm: Yes
+
 
   VpcCidrs:
     vpc:
@@ -254,17 +257,18 @@ Resources:
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-logs-loggroup.html
 
+  LogsLogGroupLambdaFindDomainName:
+    Condition: IfRoute53HostedZoneId
+    Properties:
+      LogGroupName: !Sub "/aws/lambda/${AWS::StackName}-lambda-find-domain-name"
+    Type: AWS::Logs::LogGroup
+
+
   LogsLogGroupMain:
     Properties:
       LogGroupName: !Sub
         - "/senzing/${StackName}/${AWS::StackName}"
         - StackName: !FindInMap [Constants, Stack, Name]
-    Type: AWS::Logs::LogGroup
-
-  LogsLogGroupLambdaFindDomainName:
-    Condition: IfRoute53HostedZoneId
-    Properties:
-      LogGroupName: !Sub "/aws/lambda/${AWS::StackName}-lambda-find-domain-name"
     Type: AWS::Logs::LogGroup
 
 # -- Cloud, subnets, routing --------------------------------------------------
@@ -337,7 +341,7 @@ Resources:
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-ec2-security-group-ingress.html
 
-  Ec2SecurityGroupHttps:
+  Ec2SecurityGroupIngressHttps:
     Condition: IfRoute53HostedZoneId
     Properties:
       CidrIp: !Ref CidrInbound
@@ -349,7 +353,7 @@ Resources:
     Type: AWS::EC2::SecurityGroupIngress
 
 
-  Ec2SecurityGroupIngresSwagger:
+  Ec2SecurityGroupIngressSwagger:
     Condition: IfRunSwaggerHttps
     Properties:
       Description: Allow Health Check on Container 8080 from ALB
@@ -361,7 +365,7 @@ Resources:
     Type: AWS::EC2::SecurityGroupIngress
 
 
-  Ec2SecurityGroupIngresXterm:
+  Ec2SecurityGroupIngressXterm:
     Condition: IfRunXtermHttps
     Properties:
       Description: Allow Health Check on Container 5000 from ALB
