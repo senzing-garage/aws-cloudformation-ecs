@@ -276,7 +276,7 @@ Parameters:
 
 
   SenzingRecordMax:
-    Default: 0
+    Default: 100
     Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-full-stack#senzingrecordmax'
     Type: Number
 
