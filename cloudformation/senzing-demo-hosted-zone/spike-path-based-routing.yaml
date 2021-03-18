@@ -173,15 +173,14 @@ Resources:
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-iam-policy.html
 
-  IamPolicyLoggingCreateStream:
+  IamPolicyCertificateManager:
     Properties:
-      PolicyName: !Sub "${AWS::StackName}-iam-policy-logging-create-stream"
+      PolicyName: !Sub "${AWS::StackName}-iam-policy-certificate-manager"
       PolicyDocument:
         Statement:
           -
             Action:
-              - logs:CreateLogStream
-              - logs:PutLogEvents
+              - acm:ListCertificates
             Effect: Allow
             Resource:
               - '*'
@@ -193,15 +192,15 @@ Resources:
     Type: AWS::IAM::Policy
 
 
-  IamPolicyTaskRunner:
+  IamPolicyLoggingCreateStream:
     Properties:
-      PolicyName: !Sub "${AWS::StackName}-iam-policy-task-runner"
+      PolicyName: !Sub "${AWS::StackName}-iam-policy-logging-create-stream"
       PolicyDocument:
         Statement:
           -
             Action:
-              - ecs:DescribeTasks
-              - ecs:RunTask
+              - logs:CreateLogStream
+              - logs:PutLogEvents
             Effect: Allow
             Resource:
               - '*'
@@ -232,14 +231,15 @@ Resources:
     Type: AWS::IAM::Policy
 
 
-  IamPolicyCertificateManager:
+  IamPolicyTaskRunner:
     Properties:
-      PolicyName: !Sub "${AWS::StackName}-iam-policy-certificate-manager"
+      PolicyName: !Sub "${AWS::StackName}-iam-policy-task-runner"
       PolicyDocument:
         Statement:
           -
             Action:
-              - acm:ListCertificates
+              - ecs:DescribeTasks
+              - ecs:RunTask
             Effect: Allow
             Resource:
               - '*'
@@ -574,9 +574,9 @@ Resources:
       HealthCheckProtocol: HTTP
       HealthCheckTimeoutSeconds: 50
       HealthyThresholdCount: 2
-      Name: !Sub "${AWS::StackName}-target-group-swagger"
       Matcher:
         HttpCode: 200-299
+      Name: !Sub "${AWS::StackName}-target-group-swagger"
       Port: 8080
       Protocol: HTTP
       Tags:
@@ -601,9 +601,9 @@ Resources:
       HealthCheckProtocol: HTTP
       HealthCheckTimeoutSeconds: 50
       HealthyThresholdCount: 2
-      Name: !Sub "${AWS::StackName}-target-group-xterm"
       Matcher:
         HttpCode: 200-299
+      Name: !Sub "${AWS::StackName}-target-group-xterm"
       Port: 5000
       Protocol: HTTP
       Tags:
@@ -717,11 +717,11 @@ Resources:
         -
           Environment:
             -
-              Name: URL
-              Value: "https://raw.githubusercontent.com/Senzing/senzing-rest-api-specification/master/senzing-rest-api.yaml"
-            -
               Name: BASE_URL
               Value: /swagger
+            -
+              Name: URL
+              Value: "https://raw.githubusercontent.com/Senzing/senzing-rest-api-specification/master/senzing-rest-api.yaml"
           Essential: true
           Image: public.ecr.aws/senzing/swagger-ui:latest
           LogConfiguration:

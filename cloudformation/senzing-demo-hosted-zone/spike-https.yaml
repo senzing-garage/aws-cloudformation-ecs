@@ -191,6 +191,7 @@ Resources:
        - !Ref IamRoleXterm
     Type: AWS::IAM::Policy
 
+
   IamPolicyLoggingCreateStream:
     Properties:
       PolicyName: !Sub "${AWS::StackName}-iam-policy-logging-create-stream"
