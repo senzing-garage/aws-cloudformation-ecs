@@ -3058,7 +3058,7 @@ Resources:
       TargetGroupAttributes:
       - Key: deregistration_delay.timeout_seconds
         Value: '60'
-      TargetType: ip
+#     TargetType: ip
       UnhealthyThresholdCount: 5
       VpcId: !If
         - IfCreateVpcResources
@@ -3762,8 +3762,8 @@ Resources:
             -
               Name: SENZING_G2CONFIG_GTC
               Value: |
-                addDataSource TRUTH-SET1
-                addDataSource TRUTH-SET2
+                addDataSource CUSTOMER
+                addDataSource WATCHLIST
                 save
             -
               Name: SENZING_LICENSE_BASE64_ENCODED
