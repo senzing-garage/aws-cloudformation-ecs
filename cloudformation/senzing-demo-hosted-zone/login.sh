@@ -1,12 +1,11 @@
 #!/bin/bash
 
-EMAIL="chiahui@senzing.com"
-EMAIL="chiahuitesting@gmail.com"
-PASSWORD="7l8Uf0p6xPloiCNf!@2!"
+EMAIL=""
+PASSWORD=""
 
-CLIENT_ID="239qrgp08hc7g9f8r23eb6ne64"
-POOL_ID="us-east-1_D0dhRENWk"
-API_URL="https://hnpmkypdw3.execute-api.us-east-1.amazonaws.com/swagger"
+CLIENT_ID=""
+POOL_ID=""
+API_URL=""
 
 echo "sign up new user"
 aws cognito-idp sign-up \

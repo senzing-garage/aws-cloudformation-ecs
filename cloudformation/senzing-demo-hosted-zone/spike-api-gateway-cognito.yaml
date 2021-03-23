@@ -275,31 +275,13 @@ Resources:
       VpcId: !Ref Ec2Vpc
     Type: AWS::EC2::SecurityGroup
 
-
-# https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-internetgateway.html
-
-  Ec2InternetGateway:
-    Properties:
-      Tags:
-        - Key: Name
-          Value: !Sub "${AWS::StackName}-ec2-internet-gateway"
-    Type: AWS::EC2::InternetGateway
-
-# https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-vpc-gateway-attachment.html
-
-  Ec2VpcGatewayAttachment:
-    Properties:
-      InternetGatewayId: !Ref Ec2InternetGateway
-      VpcId: !Ref Ec2Vpc
-    Type: AWS::EC2::VPCGatewayAttachment
-
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-route-table.html
 
-  Ec2RouteTablePublic:
+  Ec2RouteTablePrivate:
     Properties:
       Tags:
         - Key: Name
-          Value: !Sub "${AWS::StackName}-ec2-route-table-public"
+          Value: !Sub "${AWS::StackName}-ec2-route-table"
       VpcId: !Ref Ec2Vpc
     Type: AWS::EC2::RouteTable
 
@@ -311,7 +293,7 @@ Resources:
     Properties:
       DestinationCidrBlock: 0.0.0.0/0
       GatewayId: !Ref Ec2InternetGateway
-      RouteTableId: !Ref Ec2RouteTablePublic
+      RouteTableId: !Ref Ec2RouteTablePrivate
     Type: AWS::EC2::Route
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-subnet-route-table-assoc.html
