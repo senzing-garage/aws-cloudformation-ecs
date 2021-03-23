@@ -49,7 +49,7 @@ Mappings:
     Stack:
       Name: spike-api-gateway-cognito
     Run:
-      API_Gateway: Yes
+      ApiGateway: Yes
 
   VpcCidrs:
     vpc:
@@ -64,17 +64,6 @@ Mappings:
       cidr: 10.0.4.0/24
 
 # -----------------------------------------------------------------------------
-# Conditions
-# https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/conditions-section-structure.html
-# -----------------------------------------------------------------------------
-
-Conditions:
-
-  IfRunApiGateway: !Equals
-    - !FindInMap [Constants, Run, API_Gateway]
-    - Yes
-
-# -----------------------------------------------------------------------------
 # Resources
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/resources-section-structure.html
 # -----------------------------------------------------------------------------
@@ -85,7 +74,7 @@ Resources:
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-iam-role.html
 
-  IamRoleSampleService:
+  IamRoleSwagger:
     Properties:
       AssumeRolePolicyDocument:
         Statement:
@@ -97,10 +86,10 @@ Resources:
               Service:
                 - ecs-tasks.amazonaws.com
         Version: '2012-10-17'
-      Description: !Sub "${AWS::StackName}-iam-role-sample-service"
+      Description: !Sub "${AWS::StackName}-iam-role-swagger"
       Tags:
         - Key: Name
-          Value: !Sub "${AWS::StackName}-iam-role-sample-service"
+          Value: !Sub "${AWS::StackName}-iam-role-swagger"
     Type: AWS::IAM::Role
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-iam-policy.html
@@ -119,7 +108,7 @@ Resources:
               - '*'
         Version: '2012-10-17'
       Roles:
-       - !Ref IamRoleSampleService
+       - !Ref IamRoleSwagger
     Type: AWS::IAM::Policy
 
 
@@ -137,7 +126,7 @@ Resources:
               - '*'
         Version: '2012-10-17'
       Roles:
-       - !Ref IamRoleSampleService
+       - !Ref IamRoleSwagger
     Type: AWS::IAM::Policy
 
 # -- Logging ------------------------------------------------------------------
@@ -153,36 +142,248 @@ Resources:
 
 # -- API Gateway --------------------------------------------------
 
-# https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-apigateway-restapi.html
+# https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-apigatewayv2-api.html
 
-  RestApi:
-    Type: AWS::ApiGateway::RestApi
+  MyHTTPApi:
+    Type: AWS::ApiGatewayV2::Api
     Properties:
-      Description: Example API Gateway
-      EndpointConfiguration:
-        Types:
-          - REGIONAL
-      Name: !Sub "${AWS::StackName}-api-gateway"
+      Description: Example HTTP API Gateway
+      ProtocolType: HTTP
+      Name: !Sub "${AWS::StackName}-http-api-gateway"
   
-  # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-apigateway-authorizer.html
+# https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-apigateway-authorizer.html
   
-  ApiAuthorizer:
-    Type: AWS::ApiGateway::Authorizer
+  MyAuthorizer:
+    Type: 'AWS::ApiGatewayV2::Authorizer'
     Properties:
-    Type: COGNITO_USER_POOLS
-      IdentitySource: method.request.header.authorization
-      Name: CognitoAuthorizer
-      ProviderARNs: !GetAtt UserPool.Arn
-      RestApiId: !Ref RestApi
+      ApiId: !Ref MyHTTPApi
+      AuthorizerType: JWT
+      IdentitySource: $request.header.Authorization
+      JWTConfiguration:
+        Audience: 
+          - !Ref UserPoolClient
+        Issuer: 
+          - !Sub "https://cognito-idp.${AWS::Region}.amazonaws.com/${UserPoolId}"
+          - { UserPoolId: !Ref UserPool }
+      Name: !Sub "${AWS::StackName}-http-api-authorizer"
 
-  # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-apigateway-resource.html
-
-  ApiResource:
-    Type: AWS::ApiGateway::Resource
+#https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-apigatewayv2-integration.html
+  
+  MyIntegration:
+    Type: AWS::ApiGatewayV2::Integration
     Properties:
-      RestApiId: !Ref RestApi
-      PathPart: test
-      ParentId: !GetAtt RestApi.RootResourceId
+      ApiId: !Ref MyHTTPApi
+      ConnectionId: !Ref MyVpcLink
+      Description: HTTP API and ALB integration
+      IntegrationType: HTTP_PROXY
+      IntegrationMethod: ANY
+      IntegrationUri: !Ref ListenerSwaggerHttp
+      PayloadFormatVersion: 1.0
+  
+#https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-apigatewayv2-vpclink.html
+
+  MyVpcLink:
+    Type: AWS::ApiGatewayV2::VpcLink
+      Properties: 
+        Name: !Sub "${AWS::StackName}-http-api-vpc-link"
+        SecurityGroupIds: 
+          - !Ref Ec2SecurityGroupLoadBalancerPrivate
+        SubnetIds: 
+          - !Ref Ec2SubnetPrivate1
+          - !Ref Ec2SubnetPrivate2
+
+#https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-apigatewayv2-route.html
+
+  MyApiRoute:
+  Type: AWS::ApiGatewayV2::Route
+  Properties:
+    ApiId: !Ref MyHTTPApi
+    RouteKey: 'GET /swagger'
+    AuthorizerId: !Ref MyApiAuthorizer
+    AuthorizationType: JWT
+    RouteKey: $default
+    Target: !Join
+      - /
+      - - integrations
+        - !Ref MyIntegration
+
+# -- Cloud, subnets, routing --------------------------------------------------
+
+# https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-vpc.html
+
+  Ec2Vpc:
+    Properties:
+      CidrBlock: !FindInMap
+        - VpcCidrs
+        - vpc
+        - cidr
+      EnableDnsHostnames: true
+      EnableDnsSupport: true
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-ec2-vpc"
+    Type: AWS::EC2::VPC
+
+# https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-subnet.html
+
+  Ec2SubnetPrivate1:
+    Properties:
+      AvailabilityZone: !Select
+          - '0'
+          - !GetAZs
+            Ref: AWS::Region
+      CidrBlock: !FindInMap
+        - VpcCidrs
+        - pubsubnet1
+        - cidr
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-ec2-subnet-public-1"
+      VpcId: !Ref Ec2Vpc
+    Type: AWS::EC2::Subnet
+
+
+  Ec2SubnetPrivate2:
+    Properties:
+      AvailabilityZone: !Select
+          - '1'
+          - !GetAZs
+            Ref: AWS::Region
+      CidrBlock: !FindInMap
+        - VpcCidrs
+        - pubsubnet2
+        - cidr
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-ec2-subnet-public-2"
+      VpcId: !Ref Ec2Vpc
+    Type: AWS::EC2::Subnet
+
+# https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-ec2-security-group.html
+
+  Ec2SecurityGroupLoadBalancerPrivate:
+    Properties:
+      GroupDescription: !Sub "${AWS::StackName} - Public load balancer open ports."
+      SecurityGroupEgress:
+        -
+          CidrIp: 0.0.0.0/0
+          Description: All
+          IpProtocol: '-1'
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-ec2-security-group-load-balancer-public"
+      VpcId: !Ref Ec2Vpc
+    Type: AWS::EC2::SecurityGroup
+
+
+# https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-internetgateway.html
+
+  Ec2InternetGateway:
+    Properties:
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-ec2-internet-gateway"
+    Type: AWS::EC2::InternetGateway
+
+# https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-vpc-gateway-attachment.html
+
+  Ec2VpcGatewayAttachment:
+    Properties:
+      InternetGatewayId: !Ref Ec2InternetGateway
+      VpcId: !Ref Ec2Vpc
+    Type: AWS::EC2::VPCGatewayAttachment
+
+# https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-route-table.html
+
+  Ec2RouteTablePublic:
+    Properties:
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-ec2-route-table-public"
+      VpcId: !Ref Ec2Vpc
+    Type: AWS::EC2::RouteTable
+
+# https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-route.html
+
+  Ec2RoutePublic:
+    DependsOn:
+     - Ec2VpcGatewayAttachment
+    Properties:
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref Ec2InternetGateway
+      RouteTableId: !Ref Ec2RouteTablePublic
+    Type: AWS::EC2::Route
+
+# https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-subnet-route-table-assoc.html
+
+  Ec2SubnetRouteTableAssociationPublic1:
+    Properties:
+      RouteTableId: !Ref Ec2RouteTablePublic
+      SubnetId: !Ref Ec2SubnetPublic1
+    Type: AWS::EC2::SubnetRouteTableAssociation
+
+
+  Ec2SubnetRouteTableAssociationPublic2:
+    Properties:
+      RouteTableId: !Ref Ec2RouteTablePublic
+      SubnetId: !Ref Ec2SubnetPublic2
+    Type: AWS::EC2::SubnetRouteTableAssociation
+
+# https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-elasticloadbalancingv2-loadbalancer.html
+
+  LoadBalancerPrivate:
+    Properties:
+      Name: !Sub "${AWS::StackName}-load-balancer-public"
+      Scheme: internet-facing
+      SecurityGroups:
+        - !Ref Ec2SecurityGroupLoadBalancerPublic
+      Subnets:
+        - !Ref Ec2SubnetPublic1
+        - !Ref Ec2SubnetPublic2
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-load-balancer-public"
+      Type: application
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+
+# https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-elasticloadbalancingv2-targetgroup.html
+
+  TargetGroupSwagger:
+    DependsOn:
+     - LoadBalancerPublic
+    Properties:
+      HealthCheckIntervalSeconds: 80
+      HealthCheckPath: '/'
+      HealthCheckProtocol: HTTP
+      HealthCheckTimeoutSeconds: 50
+      HealthyThresholdCount: 2
+      Name: !Sub "${AWS::StackName}-target-group-swagger"
+      Matcher:
+        HttpCode: 200-299
+      Port: 8080
+      Protocol: HTTP
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-target-group-swagger"
+      TargetGroupAttributes:
+      - Key: deregistration_delay.timeout_seconds
+        Value: '60'
+      TargetType: ip
+      UnhealthyThresholdCount: 5
+      VpcId: !Ref Ec2Vpc
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+
+# https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-elasticloadbalancingv2-listener.html
+
+  ListenerSwaggerHttp:
+    Properties:
+      DefaultActions:
+        - TargetGroupArn: !Ref TargetGroupSwagger
+          Type: forward
+      LoadBalancerArn: !Ref LoadBalancerPublic
+      Port: 8080
+      Protocol: HTTP
+    Type: AWS::ElasticLoadBalancingV2::Listener
 
 # -- Cognito --------------------------------------------------------------
 
@@ -221,9 +422,6 @@ Resources:
     Properties:
       AllowedOAuthFlows:
         - client_credentials # Required for machine to machine auth
-      AllowedOAuthFlowsUserPoolClient: true
-      AllowedOAuthScopes:
-        - openid
       GenerateSecret: true
       SupportedIdentityProviders: # Optional: add providers for identity federation
         - COGNITO
@@ -285,58 +483,11 @@ Resources:
       TaskRoleArn: !GetAtt IamRoleSwagger.Arn
     Type: AWS::ECS::TaskDefinition
 
-
-  EcsTaskDefinitionXterm:
-    Properties:
-      ContainerDefinitions:
-        -
-          Environment:
-            -
-              Name: SENZING_BASE_URL_XTERM
-              Value: /xterm/
-            -
-              Name: SENZING_SKIP_DATABASE_PERFORMANCE_TEST
-              Value: 'true'
-          Essential: true
-          Image: public.ecr.aws/senzing/xterm:1.1.0
-          LinuxParameters:
-            Capabilities:
-              Add:
-                - SYS_PTRACE
-          LogConfiguration:
-            LogDriver: awslogs
-            Options:
-              awslogs-group: !Ref LogsLogGroupMain
-              awslogs-region: !Ref AWS::Region
-              awslogs-stream-prefix: service
-          Name: xterm
-          PortMappings:
-            - ContainerPort: 5000
-              HostPort: 5000
-              Protocol: tcp
-          Privileged: false
-          ReadonlyRootFilesystem: false
-      Cpu: '1024'
-      ExecutionRoleArn: !GetAtt IamRoleXterm.Arn
-      Family: !Sub "${AWS::StackName}-task-definition-xterm"
-      Memory: '8192'
-      NetworkMode: awsvpc
-      RequiresCompatibilities:
-        - FARGATE
-      Tags:
-        - Key: Name
-          Value: !Sub "${AWS::StackName}-ecs-task-definition-xterm"
-    Type: AWS::ECS::TaskDefinition
-
 # -- EcsService ---------------------------------------------------------------
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ecs-service.html
 
   EcsServiceSwagger:
-    Condition: IfRunSwaggerHttps
-    DependsOn:
-     - ListenerPort443
-     - ListenerRuleSwagger
     Properties:
       Cluster: !Ref EcsCluster
       DesiredCount: 1
@@ -364,39 +515,6 @@ Resources:
       TaskDefinition: !Ref EcsTaskDefinitionSwagger
     Type: AWS::ECS::Service
 
-
-  EcsServiceXterm:
-    Condition: IfRunXtermHttps
-    DependsOn:
-     - ListenerPort443
-     - ListenerRuleXterm
-    Properties:
-      Cluster: !Ref EcsCluster
-      DesiredCount: 1
-      EnableECSManagedTags: true
-      LaunchType: FARGATE
-      LoadBalancers:
-        -
-          ContainerName: xterm
-          ContainerPort: 5000
-          TargetGroupArn: !Ref TargetGroupXterm
-      NetworkConfiguration:
-        AwsvpcConfiguration:
-          AssignPublicIp: ENABLED
-          SecurityGroups:
-            - !Ref Ec2SecurityGroupLoadBalancerPublic
-          Subnets:
-            - !Ref Ec2SubnetPublic1
-            - !Ref Ec2SubnetPublic2
-      PlatformVersion: 1.4.0
-      PropagateTags: TASK_DEFINITION
-      ServiceName: xterm
-      Tags:
-        - Key: Name
-          Value: !Sub "${AWS::StackName}-ecs-service-xterm"
-      TaskDefinition: !Ref EcsTaskDefinitionXterm
-    Type: AWS::ECS::Service
-
 # -----------------------------------------------------------------------------
 # Outputs
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/outputs-section-structure.html
@@ -410,12 +528,6 @@ Outputs:
       Name: !Sub "${AWS::StackName}-ec2-VpcId"
     Value: !Ref Ec2Vpc
 
-  Host:
-    Description: 'Host name of public services. Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#host'
-    Export:
-      Name: !Sub "${AWS::StackName}-host"
-    Value: !GetAtt LoadBalancerPublic.DNSName
-
   SubnetPublic1:
     Description: 'The ID of public subnet 1. Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#subnetpublic1'
     Export:
@@ -428,16 +540,3 @@ Outputs:
       Name: !Sub "${AWS::StackName}-subnet-public-2"
     Value: !Ref Ec2SubnetPublic2
 
-  UrlSwagger:
-    Condition: IfRunSwaggerHttps
-    Description: 'HTTPS URL for Swagger. Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#urlswagger'
-    Value: !Sub
-      - "https://${AWS::StackName}.${DomainName}/swagger/"
-      - DomainName: !GetAtt LambdaRunnerFindDomainName.DomainName
-
-  UrlXterm:
-    Condition: IfRunXtermHttps
-    Description: 'HTTPS URL for Xterm. Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#urlxterm'
-    Value: !Sub
-      - "https://${AWS::StackName}.${DomainName}/xterm/"
-      - DomainName: !GetAtt LambdaRunnerFindDomainName.DomainName
