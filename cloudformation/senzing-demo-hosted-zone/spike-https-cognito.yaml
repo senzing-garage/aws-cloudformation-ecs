@@ -1194,8 +1194,12 @@ Outputs:
 
   WebInitPassword:
     Description: 'One time password for web access. Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#webpassword'
+    Export:
+      Name: !Sub "${AWS::StackName}-web-init-password"
     Value: !GetAtt LambdaRunnerWebPassword.RandomPassword
 
   WebUsername:
     Description: 'Username for web access. Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#webusername'
+    Export:
+      Name: !Sub "${AWS::StackName}-web-username"
     Value: !Ref CognitoAdminEmail
