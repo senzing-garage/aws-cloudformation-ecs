@@ -869,13 +869,6 @@ Resources:
           Order: 1
           Type: authenticate-cognito
         -
-#         ForwardConfig:
-#           TargetGroups:
-#             -
-#               TargetGroupArn: !Ref TargetGroupXterm
-#               Weight: 1
-#           TargetGroupStickinessConfig:
-#               Enabled: true
           Order: 2
           TargetGroupArn: !Ref TargetGroupXterm
           Type: "forward"
