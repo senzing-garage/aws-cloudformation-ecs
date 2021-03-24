@@ -64,7 +64,9 @@ Mappings:
     Stack:
       Name: spike-https
     Run:
+      Swagger: Yes
       Xterm: Yes
+
 
   VpcCidrs:
     vpc:
@@ -89,6 +91,22 @@ Conditions:
     - !Equals
       - !Ref Route53HostedZoneId
       - ''
+
+  IfRunSwagger: !Equals
+    - !FindInMap [Constants, Run, Swagger]
+    - Yes
+
+  IfRunSwaggerHttps: !And
+    - !Condition IfRoute53HostedZoneId
+    - !Condition IfRunSwagger
+
+  IfRunXterm: !Equals
+    - !FindInMap [Constants, Run, Xterm]
+    - Yes
+
+  IfRunXtermHttps: !And
+    - !Condition IfRoute53HostedZoneId
+    - !Condition IfRunXterm
 
 # -----------------------------------------------------------------------------
 # Resources
@@ -349,7 +367,7 @@ Resources:
           IpProtocol: '-1'
       Tags:
         - Key: Name
-          Value: !Sub "${AWS::StackName}-ec2-security-group-load-balancer-public"
+          Value: !Sub "${AWS::StackName}-ec2-security-group-alb-public"
       VpcId: !Ref Ec2Vpc
     Type: AWS::EC2::SecurityGroup
 
@@ -368,13 +386,26 @@ Resources:
 
 
   Ec2SecurityGroupIngressSwagger:
+    Condition: IfRunSwaggerHttps
     Properties:
-      CidrIp: !Ref CidrInbound
-      Description: Swagger UI
+      Description: Allow Health Check on Container 8080 from ALB
       FromPort: 8080
       GroupId: !Ref Ec2SecurityGroupLoadBalancerPublic
       IpProtocol: tcp
+      SourceSecurityGroupId: !GetAtt Ec2SecurityGroupLoadBalancerPublic.GroupId
       ToPort: 8080
+    Type: AWS::EC2::SecurityGroupIngress
+
+
+  Ec2SecurityGroupIngressXterm:
+    Condition: IfRunXtermHttps
+    Properties:
+      Description: Allow Health Check on Container 5000 from ALB
+      FromPort: 5000
+      GroupId: !Ref Ec2SecurityGroupLoadBalancerPublic
+      IpProtocol: tcp
+      SourceSecurityGroupId: !GetAtt Ec2SecurityGroupLoadBalancerPublic.GroupId
+      ToPort: 5000
     Type: AWS::EC2::SecurityGroupIngress
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-internetgateway.html
@@ -714,6 +745,7 @@ Resources:
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-elasticloadbalancingv2-targetgroup.html
 
   TargetGroupSwagger:
+    Condition: IfRunSwaggerHttps
     DependsOn:
      - LoadBalancerPublic
     Properties:
@@ -740,6 +772,7 @@ Resources:
 
 
   TargetGroupXterm:
+    Condition: IfRunXtermHttps
     DependsOn:
      - LoadBalancerPublic
     Properties:
@@ -798,7 +831,7 @@ Resources:
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-elasticloadbalancingv2-listenerrule.html
 
   ListenerRuleSwagger:
-    Condition: IfRoute53HostedZoneId
+    Condition: IfRunSwaggerHttps
     Properties:
       Actions:
         - AuthenticateCognitoConfig:
@@ -824,7 +857,7 @@ Resources:
 
 
   ListenerRuleXterm:
-    Condition: IfRoute53HostedZoneId
+    Condition: IfRunXtermHttps
     Properties:
       Actions:
         - AuthenticateCognitoConfig:
@@ -1045,7 +1078,7 @@ Resources:
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ecs-service.html
 
   EcsServiceSwagger:
-    Condition: IfRoute53HostedZoneId
+    Condition: IfRunSwaggerHttps
     DependsOn:
      - ListenerPort443
      - ListenerRuleSwagger
@@ -1056,8 +1089,8 @@ Resources:
       LaunchType: FARGATE
       LoadBalancers:
         -
-          ContainerPort: 8080
           ContainerName: swagger
+          ContainerPort: 8080
           TargetGroupArn: !Ref TargetGroupSwagger
       NetworkConfiguration:
         AwsvpcConfiguration:
@@ -1078,7 +1111,7 @@ Resources:
 
 
   EcsServiceXterm:
-    Condition: IfRoute53HostedZoneId
+    Condition: IfRunXtermHttps
     DependsOn:
      - ListenerPort443
      - ListenerRuleXterm
@@ -1089,8 +1122,8 @@ Resources:
       LaunchType: FARGATE
       LoadBalancers:
         -
-          ContainerPort: 5000
           ContainerName: xterm
+          ContainerPort: 5000
           TargetGroupArn: !Ref TargetGroupXterm
       NetworkConfiguration:
         AwsvpcConfiguration:
@@ -1152,14 +1185,14 @@ Outputs:
     Value: !Ref Ec2SubnetPublic2
 
   UrlSwagger:
-    Condition: IfRoute53HostedZoneId
-    Description: 'HTTPS URL for Swagger. Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#urlswaggerhttps'
+    Condition: IfRunSwaggerHttps
+    Description: 'HTTPS URL for Swagger. Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#urlswagger'
     Value: !Sub
       - "https://${AWS::StackName}.${DomainName}/swagger/"
       - DomainName: !GetAtt LambdaRunnerFindDomainName.DomainName
 
   UrlXterm:
-    Condition: IfRoute53HostedZoneId
+    Condition: IfRunXtermHttps
     Description: 'HTTPS URL for Xterm. Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#urlxterm'
     Value: !Sub
       - "https://${AWS::StackName}.${DomainName}/xterm/"
