@@ -23,10 +23,10 @@ Metadata:
           - CidrInbound
           - Route53HostedZoneId
     ParameterLabels:
-      CognitoAdminEmail:
-        default: 'Required: Email address for initial user.'
       CidrInbound:
         default: 'Required: Allowed inbound connections using CIDR notation.'
+      CognitoAdminEmail:
+        default: 'Required: Email address for initial user.'
       Route53HostedZoneId:
         default: 'Optional: Specifing a hosted zone enables HTTPS.'
 
@@ -37,16 +37,18 @@ Metadata:
 
 Parameters:
 
-  CognitoAdminEmail:
-    Type: String
-    Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#cognitoadminemail'
-
   CidrInbound:
     AllowedPattern: '(?:\d{1,3}\.){3}\d{1,3}(?:/\d\d?)?'
     ConstraintDescription: Inbound CIDR must be in the format n.n.n.n/n
     Default: 0.0.0.0/0
     Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#cidrinbound'
     Type: String
+
+
+  CognitoAdminEmail:
+    Type: String
+    Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#cognitoadminemail'
+
 
   Route53HostedZoneId:
     Default: ''
@@ -61,12 +63,11 @@ Parameters:
 Mappings:
 
   Constants:
-    Stack:
-      Name: spike-https
     Run:
       Swagger: Yes
       Xterm: Yes
-
+    Stack:
+      Name: spike-https
 
   VpcCidrs:
     vpc:
@@ -817,10 +818,10 @@ Resources:
       DefaultActions:
         - Order: 1
           RedirectConfig:
-            Protocol: HTTPS
-            Port: '443'
             Host: hub.senzing.com
             Path: /aws-cloudformation-ecs-poc-simple/
+            Port: '443'
+            Protocol: HTTPS
             StatusCode: HTTP_301
           Type: redirect
       LoadBalancerArn: !Ref LoadBalancerPublic
@@ -921,7 +922,7 @@ Resources:
                   use these credentials:
                   <ul>
                       <li><b>Username:</b>  {username}</li>
-                      <li><b>Password:</b>  {####}</li>
+                      <li><b>OneTime Password:</b>  {####}</li>
                   </ul>
               </p>
               <p>
@@ -1191,7 +1192,7 @@ Outputs:
       - "https://${AWS::StackName}.${DomainName}/xterm/"
       - DomainName: !GetAtt LambdaRunnerFindDomainName.DomainName
 
-  WebOneTimePassword:
+  WebInitPassword:
     Description: 'One time password for web access. Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#webpassword'
     Value: !GetAtt LambdaRunnerWebPassword.RandomPassword
 
