@@ -3,7 +3,7 @@ AWSTemplateFormatVersion: 2010-09-09
 # File format follows https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/template-anatomy.html
 
 Description: >-
-  Senzing aws-cloudformation-ecs/senzing-demo-hosted-zone/spike-https Version: 0.1.0
+  Senzing aws-cloudformation-ecs/senzing-demo-hosted-zone/spike-https-cognito Version: 0.1.0
   For more information see https://github.com/Senzing/aws-cloudformation-ecs
 
 # -----------------------------------------------------------------------------
@@ -355,17 +355,6 @@ Resources:
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-ec2-security-group-ingress.html
 
-  Ec2SecurityGroupIngressSwagger:
-    Properties:
-      CidrIp: !Ref CidrInbound
-      Description: Swagger UI
-      FromPort: 8080
-      GroupId: !Ref Ec2SecurityGroupLoadBalancerPublic
-      IpProtocol: tcp
-      ToPort: 8081
-    Type: AWS::EC2::SecurityGroupIngress
-
-
   Ec2SecurityGroupIngressHttps:
     Condition: IfRoute53HostedZoneId
     Properties:
@@ -375,6 +364,17 @@ Resources:
       GroupId: !Ref Ec2SecurityGroupLoadBalancerPublic
       IpProtocol: tcp
       ToPort: 443
+    Type: AWS::EC2::SecurityGroupIngress
+
+
+  Ec2SecurityGroupIngressSwagger:
+    Properties:
+      CidrIp: !Ref CidrInbound
+      Description: Swagger UI
+      FromPort: 8080
+      GroupId: !Ref Ec2SecurityGroupLoadBalancerPublic
+      IpProtocol: tcp
+      ToPort: 8080
     Type: AWS::EC2::SecurityGroupIngress
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-internetgateway.html
@@ -739,40 +739,40 @@ Resources:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
 
 
-# TargetGroupXterm:
-#   DependsOn:
-#    - LoadBalancerPublic
-#   Properties:
-#     HealthCheckIntervalSeconds: 80
-#     HealthCheckPath: '/'
-#     HealthCheckProtocol: HTTP
-#     HealthCheckTimeoutSeconds: 50
-#     HealthyThresholdCount: 2
-#     Matcher:
-#       HttpCode: 200-299
-#     Name: !Sub "${AWS::StackName}-target-group-xterm"
-#     Port: 5000
-#     Protocol: HTTP
-#     Tags:
-#       - Key: Name
-#         Value: !Sub "${AWS::StackName}-target-group-xterm"
-#     TargetGroupAttributes:
-#     -
-#       Key: deregistration_delay.timeout_seconds
-#       Value: '60'
-#     -
-#       Key: stickiness.enabled
-#       Value: 'true'
-#     -
-#       Key: stickiness.type
-#       Value: lb_cookie
-#     -
-#       Key: stickiness.lb_cookie.duration_seconds
-#       Value: '86400'
-#     TargetType: ip
-#     UnhealthyThresholdCount: 5
-#     VpcId: !Ref Ec2Vpc
-#   Type: AWS::ElasticLoadBalancingV2::TargetGroup
+  TargetGroupXterm:
+    DependsOn:
+     - LoadBalancerPublic
+    Properties:
+      HealthCheckIntervalSeconds: 80
+      HealthCheckPath: '/'
+      HealthCheckProtocol: HTTP
+      HealthCheckTimeoutSeconds: 50
+      HealthyThresholdCount: 2
+      Matcher:
+        HttpCode: 200-299
+      Name: !Sub "${AWS::StackName}-target-group-xterm"
+      Port: 5000
+      Protocol: HTTP
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-target-group-xterm"
+      TargetGroupAttributes:
+      -
+        Key: deregistration_delay.timeout_seconds
+        Value: '60'
+      -
+        Key: stickiness.enabled
+        Value: 'true'
+      -
+        Key: stickiness.type
+        Value: lb_cookie
+      -
+        Key: stickiness.lb_cookie.duration_seconds
+        Value: '86400'
+      TargetType: ip
+      UnhealthyThresholdCount: 5
+      VpcId: !Ref Ec2Vpc
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-elasticloadbalancingv2-listener.html
 
@@ -795,28 +795,6 @@ Resources:
       Protocol: HTTPS
     Type: AWS::ElasticLoadBalancingV2::Listener
 
-# ListenerSwaggerHttp:
-#   Properties:
-#     DefaultActions:
-#       - TargetGroupArn: !Ref TargetGroupSwagger
-#         Type: forward
-#     LoadBalancerArn: !Ref LoadBalancerPublic
-#     Port: 8080
-#     Protocol: HTTP
-#   Type: AWS::ElasticLoadBalancingV2::Listener
-
-
-# ListenerXterm:
-#   Condition: IfRunXterm
-#   Properties:
-#     DefaultActions:
-#       - TargetGroupArn: !Ref TargetGroupXterm
-#         Type: forward
-#     LoadBalancerArn: !Ref LoadBalancerPublic
-#     Port: 5000
-#     Protocol: HTTP
-#   Type: AWS::ElasticLoadBalancingV2::Listener
-
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-elasticloadbalancingv2-listenerrule.html
 
   ListenerRuleSwagger:
@@ -832,9 +810,9 @@ Resources:
           Order: 1
           Type: authenticate-cognito
         -
-          Type: "forward"
-          TargetGroupArn: !Ref TargetGroupSwagger
           Order: 2
+          TargetGroupArn: !Ref TargetGroupSwagger
+          Type: "forward"
       Conditions:
         -
           Field: "path-pattern"
@@ -845,19 +823,19 @@ Resources:
     Type: "AWS::ElasticLoadBalancingV2::ListenerRule"
 
 
-# ListenerRuleXterm:
-#   Condition: IfRoute53HostedZoneId
-#   Properties:
-#     Actions:
-#       - AuthenticateCognitoConfig:
-#           OnUnauthenticatedRequest: authenticate
-#           Scope: openid
-#           UserPoolArn: !GetAtt 'UserPool.Arn'
-#           UserPoolClientId: !Ref UserPoolClient
-#           UserPoolDomain: !Ref UserPoolDomain
-#         Order: 1
-#         Type: authenticate-cognito
-#       -
+  ListenerRuleXterm:
+    Condition: IfRoute53HostedZoneId
+    Properties:
+      Actions:
+        - AuthenticateCognitoConfig:
+            OnUnauthenticatedRequest: authenticate
+            Scope: openid
+            UserPoolArn: !GetAtt 'UserPool.Arn'
+            UserPoolClientId: !Ref UserPoolClient
+            UserPoolDomain: !Ref UserPoolDomain
+          Order: 1
+          Type: authenticate-cognito
+        -
 #         ForwardConfig:
 #           TargetGroups:
 #             -
@@ -865,16 +843,17 @@ Resources:
 #               Weight: 1
 #           TargetGroupStickinessConfig:
 #               Enabled: true
-#         Type: "forward"
-#         Order: 3
-#     Conditions:
-#       -
-#         Field: "path-pattern"
-#         Values:
-#           - "/xterm/*"
-#     ListenerArn: !Ref ListenerPort443
-#     Priority: 3
-#   Type: "AWS::ElasticLoadBalancingV2::ListenerRule"
+          Order: 2
+          TargetGroupArn: !Ref TargetGroupXterm
+          Type: "forward"
+      Conditions:
+        -
+          Field: "path-pattern"
+          Values:
+            - "/xterm/*"
+      ListenerArn: !Ref ListenerPort443
+      Priority: 3
+    Type: "AWS::ElasticLoadBalancingV2::ListenerRule"
 
 # -- Route53RecordSet ---------------------------------------------------------
 
@@ -1098,37 +1077,37 @@ Resources:
     Type: AWS::ECS::Service
 
 
-# EcsServiceXterm:
-#   Condition: IfRoute53HostedZoneId
-#   DependsOn:
-#    - ListenerPort443
-#    - ListenerRuleXterm
-#   Properties:
-#     Cluster: !Ref EcsCluster
-#     DesiredCount: 1
-#     EnableECSManagedTags: true
-#     LaunchType: FARGATE
-#     LoadBalancers:
-#       -
-#         ContainerPort: 5000
-#         ContainerName: xterm
-#         TargetGroupArn: !Ref TargetGroupXterm
-#     NetworkConfiguration:
-#       AwsvpcConfiguration:
-#         AssignPublicIp: ENABLED
-#         SecurityGroups:
-#           - !Ref Ec2SecurityGroupLoadBalancerPublic
-#         Subnets:
-#           - !Ref Ec2SubnetPublic1
-#           - !Ref Ec2SubnetPublic2
-#     PlatformVersion: 1.4.0
-#     PropagateTags: TASK_DEFINITION
-#     ServiceName: xterm
-#     Tags:
-#       - Key: Name
-#         Value: !Sub "${AWS::StackName}-ecs-service-xterm"
-#     TaskDefinition: !Ref EcsTaskDefinitionXterm
-#   Type: AWS::ECS::Service
+  EcsServiceXterm:
+    Condition: IfRoute53HostedZoneId
+    DependsOn:
+     - ListenerPort443
+     - ListenerRuleXterm
+    Properties:
+      Cluster: !Ref EcsCluster
+      DesiredCount: 1
+      EnableECSManagedTags: true
+      LaunchType: FARGATE
+      LoadBalancers:
+        -
+          ContainerPort: 5000
+          ContainerName: xterm
+          TargetGroupArn: !Ref TargetGroupXterm
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: ENABLED
+          SecurityGroups:
+            - !Ref Ec2SecurityGroupLoadBalancerPublic
+          Subnets:
+            - !Ref Ec2SubnetPublic1
+            - !Ref Ec2SubnetPublic2
+      PlatformVersion: 1.4.0
+      PropagateTags: TASK_DEFINITION
+      ServiceName: xterm
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-ecs-service-xterm"
+      TaskDefinition: !Ref EcsTaskDefinitionXterm
+    Type: AWS::ECS::Service
 
 # -----------------------------------------------------------------------------
 # Outputs
@@ -1179,12 +1158,12 @@ Outputs:
       - "https://${AWS::StackName}.${DomainName}/swagger/"
       - DomainName: !GetAtt LambdaRunnerFindDomainName.DomainName
 
-# UrlXterm:
-#   Condition: IfRoute53HostedZoneId
-#   Description: 'HTTPS URL for Xterm. Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#urlxterm'
-#   Value: !Sub
-#     - "https://${AWS::StackName}.${DomainName}/xterm/"
-#     - DomainName: !GetAtt LambdaRunnerFindDomainName.DomainName
+  UrlXterm:
+    Condition: IfRoute53HostedZoneId
+    Description: 'HTTPS URL for Xterm. Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#urlxterm'
+    Value: !Sub
+      - "https://${AWS::StackName}.${DomainName}/xterm/"
+      - DomainName: !GetAtt LambdaRunnerFindDomainName.DomainName
 
   WebOneTimePassword:
     Description: 'One time password for web access. Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#webpassword'
