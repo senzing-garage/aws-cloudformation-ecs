@@ -2168,17 +2168,6 @@ Resources:
       WebUsername: !Ref CognitoAdminEmail
     Type: Custom::LambdaRunnerCognitoCreateUser
 
-  LambdaRunnerFindDomainName:
-    Condition: IfRoute53HostedZoneId
-    Properties:
-      ClusterId: !Ref EcsCluster
-      HostedZoneId: !Ref Route53HostedZoneId
-      ServiceToken: !GetAtt LambdaFunctionFindDomainName.Arn
-      Tags:
-        - Key: Name
-          Value: !Sub "${AWS::StackName}-lambda-runner-find-domain-name"
-    Type: Custom::LambdaRunnerFindDomainName
-
 
   LambdaRunnerDbPassword:
     Properties:
@@ -2189,6 +2178,18 @@ Resources:
         - Key: Name
           Value: !Sub "${AWS::StackName}-lambda-runner-db-password"
     Type: Custom::LambdaRunnerDbPassword
+
+
+  LambdaRunnerFindDomainName:
+    Condition: IfRoute53HostedZoneId
+    Properties:
+      ClusterId: !Ref EcsCluster
+      HostedZoneId: !Ref Route53HostedZoneId
+      ServiceToken: !GetAtt LambdaFunctionFindDomainName.Arn
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-lambda-runner-find-domain-name"
+    Type: Custom::LambdaRunnerFindDomainName
 
 
   LambdaRunnerG2ConfigTool:
@@ -2219,18 +2220,6 @@ Resources:
           Value: !Sub "${AWS::StackName}-lambda-runner-g2configtool"
       ServiceToken: !GetAtt LambdaFunctionRunTaskAndWait.Arn
     Type: Custom::LambdaRunnerG2ConfigTool
-
-
-  LambdaRunnerFindDomainName:
-    Condition: IfRoute53HostedZoneId
-    Properties:
-      ClusterId: !Ref EcsCluster
-      HostedZoneId: !Ref Route53HostedZoneId
-      ServiceToken: !GetAtt LambdaFunctionFindDomainName.Arn
-      Tags:
-        - Key: Name
-          Value: !Sub "${AWS::StackName}-lambda-runner-find-domain-name"
-    Type: Custom::LambdaRunnerFindDomainName
 
 
   LambdaRunnerInitEfs:
@@ -2739,6 +2728,7 @@ Resources:
       Protocol: HTTP
     Type: AWS::ElasticLoadBalancingV2::Listener
 
+
   ListenerPort443:
     Condition: IfRoute53HostedZoneId
     Properties:
@@ -2774,7 +2764,7 @@ Resources:
           Values:
             - "/api/*"
       ListenerArn: !Ref ListenerPort443
-      Priority: 3
+      Priority: 2
     Type: "AWS::ElasticLoadBalancingV2::ListenerRule"
 
 
@@ -2792,7 +2782,7 @@ Resources:
           Values:
             - "/jupyter/*"
       ListenerArn: !Ref ListenerPort443
-      Priority: 6
+      Priority: 3
     Type: "AWS::ElasticLoadBalancingV2::ListenerRule"
 
 
@@ -2818,7 +2808,7 @@ Resources:
           Values:
             - "/swagger/*"
       ListenerArn: !Ref ListenerPort443
-      Priority: 2
+      Priority: 4
     Type: "AWS::ElasticLoadBalancingV2::ListenerRule"
 
 
@@ -2836,7 +2826,7 @@ Resources:
           Values:
             - "/app/*"
       ListenerArn: !Ref ListenerPort443
-      Priority: 2
+      Priority: 5
     Type: "AWS::ElasticLoadBalancingV2::ListenerRule"
 
 
@@ -2972,19 +2962,33 @@ Resources:
     Properties:
       ContainerDefinitions:
         -
-          Command:
-            - -httpPort
-            - '8250'
-            - -bindAddr
-            - all
-            - -iniFile
-            - /etc/opt/senzing/G2Module.ini
-            - -allowedOrigins
-            - '*'
-            - -enableAdmin
-            - -skipStartupPerf
+          Environment:
+            -
+              Name: SENZING_API_SERVER_ALLOWED_ORIGINS
+              Value: "*"
+            -
+              Name: SENZING_API_SERVER_BIND_ADDR
+              Value: all
+            -
+              Name: SENZING_API_SERVER_ENABLE_ADMIN
+              Value: 'true'
+            -
+              Name: SENZING_API_SERVER_INI_FILE
+              Value: /etc/opt/senzing/G2Module.ini
+            -
+              Name: SENZING_API_SERVER_PORT
+              Value: "8250"
+            -
+              Name: SENZING_API_SERVER_SKIP_ENGINE_PRIMING
+              Value: 'true'
+            -
+              Name: SENZING_API_SERVER_SKIP_STARTUP_PERF
+              Value: 'true'
+            -
+              Name: SENZING_API_SERVER_URL_BASE_PATH
+              Value: /api
           Essential: true
-          Image: public.ecr.aws/senzing/senzing-api-server:2.3.2
+          Image: public.ecr.aws/senzing/senzing-api-server:2.5.0
           LogConfiguration:
             LogDriver: awslogs
             Options:
@@ -4278,7 +4282,7 @@ Resources:
           TargetGroupArn: !Ref TargetGroupApiServerPublic
       NetworkConfiguration:
         AwsvpcConfiguration:
-          AssignPublicIp: DISABLED
+          AssignPublicIp: ENABLED
           SecurityGroups:
             - !Ref Ec2SecurityGroupLoadBalancerPublic
           Subnets:
