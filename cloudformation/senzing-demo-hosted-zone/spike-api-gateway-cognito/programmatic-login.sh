@@ -28,5 +28,5 @@ TOKEN=$(aws cognito-idp initiate-auth \
     --query 'AuthenticationResult.AccessToken' \
     --output text)
 
-echo "Get swagger home page"
+echo "Send Get request to api url"
 curl -v -H "Authorization: Bearer $TOKEN" $API_URL

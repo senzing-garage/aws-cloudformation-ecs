@@ -154,17 +154,16 @@ Resources:
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-apigateway-authorizer.html
   
   MyAuthorizer:
-    Type: 'AWS::ApiGatewayV2::Authorizer'
+    Type: AWS::ApiGatewayV2::Authorizer
     Properties:
       ApiId: !Ref MyHTTPApi
       AuthorizerType: JWT
-      IdentitySource: $request.header.Authorization
-      JWTConfiguration:
+      IdentitySource: 
+        - "$request.header.Authorization"
+      JwtConfiguration:
         Audience: 
           - !Ref UserPoolClient
-        Issuer: 
-          - !Sub "https://cognito-idp.${AWS::Region}.amazonaws.com/${UserPoolId}"
-          - { UserPoolId: !Ref UserPool }
+        Issuer: !Sub "https://cognito-idp.${AWS::Region}.amazonaws.com/${UserPool}"
       Name: !Sub "${AWS::StackName}-http-api-authorizer"
 
 #https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-apigatewayv2-integration.html
@@ -174,38 +173,41 @@ Resources:
     Properties:
       ApiId: !Ref MyHTTPApi
       ConnectionId: !Ref MyVpcLink
-      Description: HTTP API and ALB integration
+      Description: HTTP API and ALB private integration
       IntegrationType: HTTP_PROXY
       IntegrationMethod: ANY
-      IntegrationUri: !Ref ListenerSwaggerHttp
+      IntegrationUri:
+        !Ref ListenerSwaggerHttp
+      ConnectionType: VPC_LINK
+      ConnectionId: 
+        !Ref MyVpcLink
       PayloadFormatVersion: 1.0
   
 #https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-apigatewayv2-vpclink.html
 
   MyVpcLink:
     Type: AWS::ApiGatewayV2::VpcLink
-      Properties: 
-        Name: !Sub "${AWS::StackName}-http-api-vpc-link"
-        SecurityGroupIds: 
-          - !Ref Ec2SecurityGroupLoadBalancerPrivate
-        SubnetIds: 
-          - !Ref Ec2SubnetPrivate1
-          - !Ref Ec2SubnetPrivate2
+    Properties: 
+      Name: !Sub "${AWS::StackName}-http-api-vpc-link"
+      SecurityGroupIds: 
+        - !Ref Ec2SecurityGroupLoadBalancerPrivate
+      SubnetIds: 
+        - !Ref Ec2SubnetPrivate1
+        - !Ref Ec2SubnetPrivate2
 
 #https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-apigatewayv2-route.html
 
   MyApiRoute:
-  Type: AWS::ApiGatewayV2::Route
-  Properties:
-    ApiId: !Ref MyHTTPApi
-    RouteKey: 'GET /swagger'
-    AuthorizerId: !Ref MyApiAuthorizer
-    AuthorizationType: JWT
-    RouteKey: $default
-    Target: !Join
-      - /
-      - - integrations
-        - !Ref MyIntegration
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref MyHTTPApi
+      RouteKey: "GET /swagger"
+      AuthorizerId: !Ref MyAuthorizer
+      AuthorizationType: JWT
+      Target: !Join
+        - /
+        - - integrations
+          - !Ref MyIntegration
 
 # -- Cloud, subnets, routing --------------------------------------------------
 
@@ -223,8 +225,64 @@ Resources:
         - Key: Name
           Value: !Sub "${AWS::StackName}-ec2-vpc"
     Type: AWS::EC2::VPC
+  
+# https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-internetgateway.html
+
+  Ec2InternetGateway:
+    Properties:
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-ec2-internet-gateway"
+    Type: AWS::EC2::InternetGateway
+
+# https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-vpc-gateway-attachment.html
+
+  GatewayAttachement:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref Ec2Vpc
+      InternetGatewayId: !Ref Ec2InternetGateway
+
+# https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-ec2-eip.html
+
+  Ec2Eip:
+    DependsOn: GatewayAttachement
+    Properties:
+      Domain: vpc
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-ec2-eip"
+    Type: AWS::EC2::EIP
+
+# https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-natgateway.html
+
+  Ec2NatGateway:
+    Properties:
+      AllocationId: !GetAtt Ec2Eip.AllocationId
+      SubnetId: !Ref Ec2SubnetPublic1
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-ec2-nat-gateway"
+    Type: AWS::EC2::NatGateway
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-subnet.html
+
+  Ec2SubnetPublic1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone:
+         Fn::Select:
+         - 0
+         - Fn::GetAZs: {Ref: 'AWS::Region'}
+      VpcId: !Ref Ec2Vpc
+      CidrBlock: !FindInMap
+        - VpcCidrs
+        - pubsubnet1
+        - cidr
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-ec2-subnet-public-1"
 
   Ec2SubnetPrivate1:
     Properties:
@@ -234,14 +292,13 @@ Resources:
             Ref: AWS::Region
       CidrBlock: !FindInMap
         - VpcCidrs
-        - pubsubnet1
+        - privsubnet1
         - cidr
       Tags:
         - Key: Name
           Value: !Sub "${AWS::StackName}-ec2-subnet-public-1"
       VpcId: !Ref Ec2Vpc
     Type: AWS::EC2::Subnet
-
 
   Ec2SubnetPrivate2:
     Properties:
@@ -251,7 +308,7 @@ Resources:
             Ref: AWS::Region
       CidrBlock: !FindInMap
         - VpcCidrs
-        - pubsubnet2
+        - privsubnet2
         - cidr
       Tags:
         - Key: Name
@@ -263,15 +320,25 @@ Resources:
 
   Ec2SecurityGroupLoadBalancerPrivate:
     Properties:
-      GroupDescription: !Sub "${AWS::StackName} - Public load balancer open ports."
+      GroupDescription: !Sub "${AWS::StackName} - Private load balancer open ports."
       SecurityGroupEgress:
         -
           CidrIp: 0.0.0.0/0
           Description: All
           IpProtocol: '-1'
+      SecurityGroupIngress:
+        -
+          CidrIp: !FindInMap
+            - VpcCidrs
+            - vpc
+            - cidr
+          Description: Senzing API server security group
+          FromPort: 8080
+          IpProtocol: tcp
+          ToPort: 8080
       Tags:
         - Key: Name
-          Value: !Sub "${AWS::StackName}-ec2-security-group-load-balancer-public"
+          Value: !Sub "${AWS::StackName}-ec2-security-group-load-balancer-private"
       VpcId: !Ref Ec2Vpc
     Type: AWS::EC2::SecurityGroup
 
@@ -287,52 +354,48 @@ Resources:
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-route.html
 
-  Ec2RoutePublic:
-    DependsOn:
-     - Ec2VpcGatewayAttachment
+  Ec2RoutePrivate:
     Properties:
       DestinationCidrBlock: 0.0.0.0/0
-      GatewayId: !Ref Ec2InternetGateway
+      NatGatewayId: !Ref Ec2NatGateway
       RouteTableId: !Ref Ec2RouteTablePrivate
     Type: AWS::EC2::Route
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-subnet-route-table-assoc.html
 
-  Ec2SubnetRouteTableAssociationPublic1:
+  Ec2SubnetRouteTableAssociationPrivate1:
     Properties:
-      RouteTableId: !Ref Ec2RouteTablePublic
-      SubnetId: !Ref Ec2SubnetPublic1
+      RouteTableId: !Ref Ec2RouteTablePrivate
+      SubnetId: !Ref Ec2SubnetPrivate1
     Type: AWS::EC2::SubnetRouteTableAssociation
 
-
-  Ec2SubnetRouteTableAssociationPublic2:
+  Ec2SubnetRouteTableAssociationPrivate2:
     Properties:
-      RouteTableId: !Ref Ec2RouteTablePublic
-      SubnetId: !Ref Ec2SubnetPublic2
+      RouteTableId: !Ref Ec2RouteTablePrivate
+      SubnetId: !Ref Ec2SubnetPrivate2
     Type: AWS::EC2::SubnetRouteTableAssociation
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-elasticloadbalancingv2-loadbalancer.html
 
   LoadBalancerPrivate:
     Properties:
-      Name: !Sub "${AWS::StackName}-load-balancer-public"
-      Scheme: internet-facing
+      Name: !Sub "${AWS::StackName}-load-balancer-private"
+      Scheme: internal
       SecurityGroups:
-        - !Ref Ec2SecurityGroupLoadBalancerPublic
+        - !Ref Ec2SecurityGroupLoadBalancerPrivate
       Subnets:
-        - !Ref Ec2SubnetPublic1
-        - !Ref Ec2SubnetPublic2
+        - !Ref Ec2SubnetPrivate1
+        - !Ref Ec2SubnetPrivate2
       Tags:
         - Key: Name
-          Value: !Sub "${AWS::StackName}-load-balancer-public"
-      Type: application
+          Value: !Sub "${AWS::StackName}-load-balancer-private"
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-elasticloadbalancingv2-targetgroup.html
 
   TargetGroupSwagger:
     DependsOn:
-     - LoadBalancerPublic
+     - LoadBalancerPrivate
     Properties:
       HealthCheckIntervalSeconds: 80
       HealthCheckPath: '/'
@@ -362,7 +425,7 @@ Resources:
       DefaultActions:
         - TargetGroupArn: !Ref TargetGroupSwagger
           Type: forward
-      LoadBalancerArn: !Ref LoadBalancerPublic
+      LoadBalancerArn: !Ref LoadBalancerPrivate
       Port: 8080
       Protocol: HTTP
     Type: AWS::ElasticLoadBalancingV2::Listener
@@ -470,6 +533,8 @@ Resources:
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ecs-service.html
 
   EcsServiceSwagger:
+    DependsOn:
+      - ListenerSwaggerHttp
     Properties:
       Cluster: !Ref EcsCluster
       DesiredCount: 1
@@ -484,10 +549,10 @@ Resources:
         AwsvpcConfiguration:
           AssignPublicIp: ENABLED
           SecurityGroups:
-            - !Ref Ec2SecurityGroupLoadBalancerPublic
+            - !Ref Ec2SecurityGroupLoadBalancerPrivate
           Subnets:
-            - !Ref Ec2SubnetPublic1
-            - !Ref Ec2SubnetPublic2
+            - !Ref Ec2SubnetPrivate1
+            - !Ref Ec2SubnetPrivate2
       PlatformVersion: 1.4.0
       PropagateTags: TASK_DEFINITION
       ServiceName: swagger
@@ -510,15 +575,8 @@ Outputs:
       Name: !Sub "${AWS::StackName}-ec2-VpcId"
     Value: !Ref Ec2Vpc
 
-  SubnetPublic1:
-    Description: 'The ID of public subnet 1. Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#subnetpublic1'
+  HttpApiGateway:
+    Description: 'the http gateway url'
     Export:
-      Name: !Sub "${AWS::StackName}-subnet-public-1"
-    Value: !Ref Ec2SubnetPublic1
-
-  SubnetPublic2:
-    Description: 'The ID of public subnet 2. Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#subnetpublic2'
-    Export:
-      Name: !Sub "${AWS::StackName}-subnet-public-2"
-    Value: !Ref Ec2SubnetPublic2
-
+      Name: !Sub "${AWS::StackName}-http-api-gateway"
+    Value: !GetAtt MyHTTPApi.ApiEndpoint
