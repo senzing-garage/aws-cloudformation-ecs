@@ -173,6 +173,8 @@ Mappings:
       VpcFlowLogs: No
       WebApp: Yes
       Xterm: Yes
+    Senzing:
+      Version: senzingapi-2.4.1-21064
     Stack:
       Name: hosted-zone
     StreamProducer:
@@ -1003,7 +1005,6 @@ Resources:
           Value: !Sub "${AWS::StackName}-ec2-subnet-public-2"
       VpcId: !Ref Ec2Vpc
     Type: AWS::EC2::Subnet
-
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-ec2-eip.html
 
@@ -2754,10 +2755,18 @@ Resources:
     Condition: IfRunApiServerHttps
     Properties:
       Actions:
+        - AuthenticateCognitoConfig:
+            OnUnauthenticatedRequest: authenticate
+            Scope: openid
+            UserPoolArn: !GetAtt 'UserPool.Arn'
+            UserPoolClientId: !Ref UserPoolClient
+            UserPoolDomain: !Ref UserPoolDomain
+          Order: 1
+          Type: authenticate-cognito
         -
           Type: "forward"
           TargetGroupArn: !Ref TargetGroupApiServerPublic
-          Order: 1
+          Order: 2
       Conditions:
         -
           Field: "path-pattern"
@@ -2772,10 +2781,18 @@ Resources:
     Condition: IfRunJupyterHttps
     Properties:
       Actions:
+        - AuthenticateCognitoConfig:
+            OnUnauthenticatedRequest: authenticate
+            Scope: openid
+            UserPoolArn: !GetAtt 'UserPool.Arn'
+            UserPoolClientId: !Ref UserPoolClient
+            UserPoolDomain: !Ref UserPoolDomain
+          Order: 1
+          Type: authenticate-cognito
         -
           Type: "forward"
           TargetGroupArn: !Ref TargetGroupJupyter
-          Order: 1
+          Order: 2
       Conditions:
         -
           Field: "path-pattern"
@@ -2816,10 +2833,18 @@ Resources:
     Condition: IfRunWebAppHttps
     Properties:
       Actions:
+        - AuthenticateCognitoConfig:
+            OnUnauthenticatedRequest: authenticate
+            Scope: openid
+            UserPoolArn: !GetAtt 'UserPool.Arn'
+            UserPoolClientId: !Ref UserPoolClient
+            UserPoolDomain: !Ref UserPoolDomain
+          Order: 1
+          Type: authenticate-cognito
         -
           Type: "forward"
           TargetGroupArn: !Ref TargetGroupWebApp
-          Order: 1
+          Order: 2
       Conditions:
         -
           Field: "path-pattern"
@@ -3468,7 +3493,7 @@ Resources:
           Command:
             - '-y'
             - 'install'
-            - 'senzingapi-2.4.1-21064'
+            - !FindInMap [Constants, Senzing, Version]
           Environment:
             -
               Name: SENZING_ACCEPT_EULA
@@ -3934,11 +3959,11 @@ Resources:
               Name: SENZING_SKIP_DATABASE_PERFORMANCE_TEST
               Value: 'true'
             -
-              Name: SENZING_SQS_QUEUE_URL
-              Value: !Sub "https://sqs.${AWS::Region}.amazonaws.com/${AWS::AccountId}/${SqsQueue.QueueName}"
-            -
               Name: SENZING_SQS_INFO_QUEUE_URL
               Value: !Sub "https://sqs.${AWS::Region}.amazonaws.com/${AWS::AccountId}/${SqsQueueInfo.QueueName}"
+            -
+              Name: SENZING_SQS_QUEUE_URL
+              Value: !Sub "https://sqs.${AWS::Region}.amazonaws.com/${AWS::AccountId}/${SqsQueue.QueueName}"
             -
               Name: SENZING_SUBCOMMAND
               Value: sqs-withinfo
@@ -4268,8 +4293,8 @@ Resources:
     Condition: IfRunApiServer
     DependsOn:
      - LambdaRunnerInitSenzing
-#    - ListenerRuleApiServerPublic
-#    - ListenerRuleApiServerPrivate
+     - ListenerPort443
+     - ListenerRuleApiServer
     Properties:
       Cluster: !Ref EcsCluster
       DesiredCount: 1
@@ -4279,10 +4304,14 @@ Resources:
         -
           ContainerPort: 8250
           ContainerName: api-server
+          TargetGroupArn: !Ref TargetGroupApiServerPrivate
+        -
+          ContainerPort: 8250
+          ContainerName: api-server
           TargetGroupArn: !Ref TargetGroupApiServerPublic
       NetworkConfiguration:
         AwsvpcConfiguration:
-          AssignPublicIp: ENABLED
+          AssignPublicIp: DISABLED
           SecurityGroups:
             - !Ref Ec2SecurityGroupLoadBalancerPublic
           Subnets:
@@ -4430,12 +4459,12 @@ Resources:
           TargetGroupArn: !Ref TargetGroupSwagger
       NetworkConfiguration:
         AwsvpcConfiguration:
-          AssignPublicIp: ENABLED
+          AssignPublicIp: DISABLED
           SecurityGroups:
             - !Ref Ec2SecurityGroupLoadBalancerPublic
           Subnets:
-            - !Ref Ec2SubnetPublic1
-            - !Ref Ec2SubnetPublic2
+            - !Ref Ec2SubnetPrivate1
+            - !Ref Ec2SubnetPrivate2
       PlatformVersion: 1.4.0
       PropagateTags: TASK_DEFINITION
       ServiceName: swagger
@@ -4497,12 +4526,12 @@ Resources:
           TargetGroupArn: !Ref TargetGroupXterm
       NetworkConfiguration:
         AwsvpcConfiguration:
-          AssignPublicIp: ENABLED
+          AssignPublicIp: DISABLED
           SecurityGroups:
             - !Ref Ec2SecurityGroupLoadBalancerPublic
           Subnets:
-            - !Ref Ec2SubnetPublic1
-            - !Ref Ec2SubnetPublic2
+            - !Ref Ec2SubnetPrivate1
+            - !Ref Ec2SubnetPrivate2
       PlatformVersion: 1.4.0
       PropagateTags: TASK_DEFINITION
       ServiceName: xterm
@@ -4704,6 +4733,12 @@ Outputs:
     Export:
       Name: !Sub "${AWS::StackName}-queue-info"
     Value: !Ref SqsQueueInfo
+
+  SenzingVersion:
+    Description: 'The Senzing Engine version installed. Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#senzingversion'
+    Export:
+      Name: !Sub "${AWS::StackName}-senzing-version"
+    Value: !FindInMap [Constants, Senzing, Version]
 
   SshPassword:
     Description: 'The randomly generated password for SSH access. Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#sshpassword'
