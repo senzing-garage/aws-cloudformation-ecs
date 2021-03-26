@@ -2772,6 +2772,7 @@ Resources:
           Field: "path-pattern"
           Values:
             - "/api/*"
+            - "/api"
       ListenerArn: !Ref ListenerPort443
       Priority: 2
     Type: "AWS::ElasticLoadBalancingV2::ListenerRule"
@@ -2798,6 +2799,7 @@ Resources:
           Field: "path-pattern"
           Values:
             - "/jupyter/*"
+            - "/jupyter"
       ListenerArn: !Ref ListenerPort443
       Priority: 3
     Type: "AWS::ElasticLoadBalancingV2::ListenerRule"
@@ -2824,6 +2826,7 @@ Resources:
           Field: "path-pattern"
           Values:
             - "/swagger/*"
+            - "/swagger"
       ListenerArn: !Ref ListenerPort443
       Priority: 4
     Type: "AWS::ElasticLoadBalancingV2::ListenerRule"
@@ -2850,6 +2853,7 @@ Resources:
           Field: "path-pattern"
           Values:
             - "/app/*"
+            - "/app"
       ListenerArn: !Ref ListenerPort443
       Priority: 5
     Type: "AWS::ElasticLoadBalancingV2::ListenerRule"
@@ -2876,6 +2880,7 @@ Resources:
           Field: "path-pattern"
           Values:
             - "/xterm/*"
+            - "/xterm"
       ListenerArn: !Ref ListenerPort443
       Priority: 3
     Type: "AWS::ElasticLoadBalancingV2::ListenerRule"
@@ -3427,7 +3432,7 @@ Resources:
               Name: SENZING_LICENSE_BASE64_ENCODED
               Value: !Sub "${SenzingLicenseAsBase64}"
           Essential: true
-          Image: public.ecr.aws/senzing/init-container:1.6.8
+          Image: public.ecr.aws/senzing/init-container:1.6.9
           LogConfiguration:
             LogDriver: awslogs
             Options:
@@ -3971,7 +3976,7 @@ Resources:
               Name: SENZING_THREADS_PER_PROCESS
               Value: '8'
           Essential: true
-          Image: public.ecr.aws/senzing/stream-loader:1.7.2
+          Image: public.ecr.aws/senzing/stream-loader:1.7.3
           LogConfiguration:
             LogDriver: awslogs
             Options:
@@ -4169,7 +4174,7 @@ Resources:
               Name: SENZING_WEB_SERVER_PORT
               Value: '8251'
           Essential: true
-          Image: public.ecr.aws/senzing/entity-search-web-app:2.2.1
+          Image: public.ecr.aws/senzing/entity-search-web-app:2.2.2
           LogConfiguration:
             LogDriver: awslogs
             Options:
@@ -4290,7 +4295,7 @@ Resources:
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ecs-service.html
 
   EcsServiceApiServer:
-    Condition: IfRunApiServer
+    Condition: IfRunApiServerHttps
     DependsOn:
      - LambdaRunnerInitSenzing
      - ListenerPort443
@@ -4641,6 +4646,8 @@ Outputs:
 
   AccountID:
     Description: 'The accountID'
+    Export:
+      Name: !Sub "${AWS::StackName}-account-id"
     Value: !Sub "${AWS::AccountId}"
 
   CertificateArn:
@@ -4711,10 +4718,13 @@ Outputs:
     Value: !Ref Ec2Vpc
 
   Host:
+    Condition: IfRoute53HostedZoneId
     Description: 'Host name of public services. Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#host'
     Export:
       Name: !Sub "${AWS::StackName}-host"
-    Value: !GetAtt LoadBalancerPublic.DNSName
+    Value: !Sub
+      - "${AWS::StackName}.${DomainName}"
+      - DomainName: !GetAtt LambdaRunnerFindDomainName.DomainName
 
   Queue:
     Description: 'URL of the input queue. Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#queue'
@@ -4752,6 +4762,18 @@ Outputs:
       Name: !Sub "${AWS::StackName}-ssh-username"
     Value: root
 
+  SubnetPrivate1:
+    Description: 'The ID of private subnet 1. Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#subnetprivate1'
+    Export:
+      Name: !Sub "${AWS::StackName}-subnet-private-1"
+    Value: !Ref Ec2SubnetPrivate1
+
+  SubnetPrivate2:
+    Description: 'The ID of private subnet 2. Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#subnetprivate2'
+    Export:
+      Name: !Sub "${AWS::StackName}-subnet-private-2"
+    Value: !Ref Ec2SubnetPrivate2
+
   SubnetPublic1:
     Description: 'The ID of public subnet 1. Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#subnetpublic1'
     Export:
@@ -4774,6 +4796,8 @@ Outputs:
   UrlJupyter:
     Condition: IfRunJupyterHttps
     Description: 'URL for Jupyter Notebooks. Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#urljupyter'
+    Export:
+      Name: !Sub "${AWS::StackName}-url-jupyter"
     Value: !Sub
       - "https://${AWS::StackName}.${DomainName}/jupyter/"
       - DomainName: !GetAtt LambdaRunnerFindDomainName.DomainName
@@ -4781,6 +4805,8 @@ Outputs:
   UrlSwagger:
     Condition: IfRunSwaggerHttps
     Description: 'HTTPS URL for Swagger. Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#urlswagger'
+    Export:
+      Name: !Sub "${AWS::StackName}-url-swagger"
     Value: !Sub
       - "https://${AWS::StackName}.${DomainName}/swagger/"
       - DomainName: !GetAtt LambdaRunnerFindDomainName.DomainName
@@ -4788,6 +4814,8 @@ Outputs:
   UrlWebApp:
     Condition: IfRunWebAppHttps
     Description: 'URL for Senzing Web App. Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#urlwebapp'
+    Export:
+      Name: !Sub "${AWS::StackName}-url-webapp"
     Value: !Sub
       - "https://${AWS::StackName}.${DomainName}/app/"
       - DomainName: !GetAtt LambdaRunnerFindDomainName.DomainName
@@ -4795,6 +4823,8 @@ Outputs:
   UrlXterm:
     Condition: IfRunXtermHttps
     Description: 'HTTPS URL for Xterm. Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#urlxterm'
+    Export:
+      Name: !Sub "${AWS::StackName}-url-xterm"
     Value: !Sub
       - "https://${AWS::StackName}.${DomainName}/xterm/"
       - DomainName: !GetAtt LambdaRunnerFindDomainName.DomainName
