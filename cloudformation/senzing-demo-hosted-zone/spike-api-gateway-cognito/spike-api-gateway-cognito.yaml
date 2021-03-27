@@ -209,6 +209,15 @@ Resources:
         - - integrations
           - !Ref MyIntegration
 
+# https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-apigatewayv2-stage.html
+
+  HttpApiStage:
+  Type: AWS::ApiGatewayV2::Stage
+  Properties:
+    ApiId: !Ref MyHTTPApi
+    AutoDeploy: true
+    StageName: $default
+
 # -- Cloud, subnets, routing --------------------------------------------------
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-vpc.html
@@ -328,14 +337,11 @@ Resources:
           IpProtocol: '-1'
       SecurityGroupIngress:
         -
-          CidrIp: !FindInMap
-            - VpcCidrs
-            - vpc
-            - cidr
-          Description: Senzing API server security group
+          CidrIp: 0.0.0.0/0
           FromPort: 8080
           IpProtocol: tcp
           ToPort: 8080
+          Description: swagger gateway
       Tags:
         - Key: Name
           Value: !Sub "${AWS::StackName}-ec2-security-group-load-balancer-private"
@@ -357,7 +363,7 @@ Resources:
   Ec2RoutePrivate:
     Properties:
       DestinationCidrBlock: 0.0.0.0/0
-      NatGatewayId: !Ref Ec2NatGateway
+      GatewayId: !Ref Ec2InternetGateway
       RouteTableId: !Ref Ec2RouteTablePrivate
     Type: AWS::EC2::Route
 
@@ -465,9 +471,10 @@ Resources:
 
   UserPoolClient:
     Properties:
-      AllowedOAuthFlows:
-        - client_credentials # Required for machine to machine auth
-      GenerateSecret: true
+      GenerateSecret: false
+      ExplicitAuthFlows:
+        - ALLOW_USER_PASSWORD_AUTH # Required for machine to machine auth
+        - ALLOW_REFRESH_TOKEN_AUTH
       SupportedIdentityProviders: # Optional: add providers for identity federation
         - COGNITO
       UserPoolId: !Ref UserPool
@@ -579,4 +586,19 @@ Outputs:
     Description: 'the http gateway url'
     Export:
       Name: !Sub "${AWS::StackName}-http-api-gateway"
-    Value: !GetAtt MyHTTPApi.ApiEndpoint
+    Value: !Join
+      - ""
+      - - !GetAtt MyHTTPApi.ApiEndpoint
+        - "/swagger"
+  
+  ClientId:
+    Description: "the cognito app client id"
+    Export:
+      Name: !Sub "${AWS::StackName}-client-id"
+    Value: !Ref UserPoolClient
+  
+  PoolId:
+    Description: "the cognito user pool id"
+    Export:
+      Name: !Sub "${AWS::StackName}-pool-id"
+    Value: !Ref UserPool

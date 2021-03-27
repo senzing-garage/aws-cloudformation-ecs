@@ -2,6 +2,14 @@
 
 HTTP Api Gateway embedded with Cognito for authentication, connected to an ECS service
 
+## Architecture
+
+This is a high level overview of the architecture.
+
+![Image of architecture](cloudformation/senzing-demo-hosted-zone/spike-api-gateway-cognito/architecture.png)
+
+## How to embedd cognito into HTTP API
+
 ## How to programmatically access ECS Service?
 
 First setup the following variables
@@ -49,3 +57,5 @@ Finally access the url that you have indicated with the retrieved token
 ```console
 curl -v -H "Authorization: Bearer $TOKEN" $API_URL
 ```
+
+If you are too lazy, you can always use [my script](programmatic-login.sh)
