@@ -8,8 +8,6 @@ This is a high level overview of the architecture.
 
 ![Image of architecture](cloudformation/senzing-demo-hosted-zone/spike-api-gateway-cognito/architecture.png)
 
-## How to embedd cognito into HTTP API
-
 ## How to programmatically access ECS Service?
 
 First setup the following variables

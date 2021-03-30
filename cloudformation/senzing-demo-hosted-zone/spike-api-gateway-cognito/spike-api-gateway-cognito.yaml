@@ -212,11 +212,11 @@ Resources:
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-apigatewayv2-stage.html
 
   HttpApiStage:
-  Type: AWS::ApiGatewayV2::Stage
-  Properties:
-    ApiId: !Ref MyHTTPApi
-    AutoDeploy: true
-    StageName: $default
+    Type: AWS::ApiGatewayV2::Stage
+    Properties:
+      ApiId: !Ref MyHTTPApi
+      AutoDeploy: true
+      StageName: $default
 
 # -- Cloud, subnets, routing --------------------------------------------------
 
@@ -443,7 +443,7 @@ Resources:
   UserPool:
     Properties:
       AdminCreateUserConfig:
-        AllowAdminCreateUserOnly: true
+        AllowAdminCreateUserOnly: false
       AutoVerifiedAttributes:
         - email
       Policies:

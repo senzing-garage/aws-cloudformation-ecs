@@ -1,6 +1,6 @@
 #!/bin/bash
 
-EMAIL=""
+EMAIL="chiahui@senzing.com"
 PASSWORD=""
 
 CLIENT_ID=""
