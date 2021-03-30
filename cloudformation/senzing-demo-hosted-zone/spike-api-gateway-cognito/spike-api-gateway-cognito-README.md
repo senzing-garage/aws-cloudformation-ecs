@@ -6,7 +6,7 @@ HTTP Api Gateway embedded with Cognito for authentication, connected to an ECS s
 
 This is a high level overview of the architecture.
 
-![Image of architecture](cloudformation/senzing-demo-hosted-zone/spike-api-gateway-cognito/architecture.png)
+![Image of architecture](architecture.png)
 
 ## How to programmatically access ECS Service?
 
