@@ -276,6 +276,54 @@ Conditions:
 
 Resources:
 
+# -- Ssm -----------------------------------------------------------------
+
+# https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ssm-parameter.html
+
+  SsmParameterSenzingEngineConfigurationJson:
+    Properties:
+      Name: !Sub "${AWS::StackName}-ssm-parameter-senzing-engine-configuration-json"
+      Type: String
+      Value: !Sub
+        - >-
+          {
+              "PIPELINE": {
+                  "CONFIGPATH": "/etc/opt/senzing",
+                  "RESOURCEPATH": "/opt/senzing/g2/resources",
+                  "SUPPORTPATH": "/opt/senzing/data"
+              },
+              "SQL": {
+                  "BACKEND": "HYBRID",
+                  "CONNECTION":"postgresql://${DatabaseUsername}:${DatabasePassword}@${DatabaseHostCore}:${DatabasePortCore}:${DatabaseName}"
+              },
+              "C1": {
+                  "CLUSTER_SIZE": "1",
+                  "DB_1": "postgresql://${DatabaseUsername}:${DatabasePassword}@${DatabaseHostRes}:${DatabasePortRes}:${DatabaseName}"
+              },
+              "C2": {
+                  "CLUSTER_SIZE": "1",
+                  "DB_1": "postgresql://${DatabaseUsername}:${DatabasePassword}@${DatabaseHostLibfeat}:${DatabasePortLibfeat}:${DatabaseName}"
+              },
+              "HYBRID": {
+                  "LIB_FEAT": "C2",
+                  "LIB_FEAT_HKEY": "C2",
+                  "RES_FEAT": "C1",
+                  "RES_FEAT_EKEY": "C1",
+                  "RES_FEAT_LKEY": "C1",
+                  "RES_FEAT_STAT": "C1"
+              }
+          }
+        - DatabaseHostLibfeat: !GetAtt RdsDbClusterLibfeat.Endpoint.Address
+          DatabaseHostCore: !GetAtt RdsDbClusterCore.Endpoint.Address
+          DatabaseHostRes: !GetAtt RdsDbClusterRes.Endpoint.Address
+          DatabaseName: !FindInMap [Constants, Database, Name]
+          DatabasePassword: !GetAtt LambdaRunnerDbPassword.RandomString
+          DatabasePortLibfeat: !GetAtt RdsDbClusterLibfeat.Endpoint.Port
+          DatabasePortCore: !GetAtt RdsDbClusterCore.Endpoint.Port
+          DatabasePortRes: !GetAtt RdsDbClusterRes.Endpoint.Port
+          DatabaseUsername: !FindInMap [Constants, Database, Username]
+    Type: AWS::SSM::Parameter
+
 # -- Iam -----------------------------------------------------------------
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-iam-role.html
@@ -2541,7 +2589,7 @@ Resources:
      - LoadBalancerPrivate
     Properties:
       HealthCheckIntervalSeconds: 80
-      HealthCheckPath: '/heartbeat'
+      HealthCheckPath: '/api/heartbeat'
       HealthCheckProtocol: HTTP
       HealthCheckTimeoutSeconds: 50
       HealthyThresholdCount: 2
@@ -2569,7 +2617,7 @@ Resources:
      - LoadBalancerPublic
     Properties:
       HealthCheckIntervalSeconds: 80
-      HealthCheckPath: '/heartbeat'
+      HealthCheckPath: '/api/heartbeat'
       HealthCheckProtocol: HTTP
       HealthCheckTimeoutSeconds: 50
       HealthyThresholdCount: 2
@@ -2633,7 +2681,7 @@ Resources:
      - LoadBalancerPublic
     Properties:
       HealthCheckIntervalSeconds: 80
-      HealthCheckPath: '/'
+      HealthCheckPath: '/swagger/'
       HealthCheckProtocol: HTTP
       HealthCheckTimeoutSeconds: 50
       HealthyThresholdCount: 2
@@ -2660,7 +2708,7 @@ Resources:
      - LoadBalancerPublic
     Properties:
       HealthCheckIntervalSeconds: 80
-      HealthCheckPath: '/'
+      HealthCheckPath: '/app/'
       HealthCheckProtocol: HTTP
       HealthCheckTimeoutSeconds: 50
       HealthyThresholdCount: 2
@@ -2686,7 +2734,7 @@ Resources:
      - LoadBalancerPublic
     Properties:
       HealthCheckIntervalSeconds: 80
-      HealthCheckPath: '/'
+      HealthCheckPath: '/xterm/'
       HealthCheckProtocol: HTTP
       HealthCheckTimeoutSeconds: 50
       HealthyThresholdCount: 2
@@ -3384,44 +3432,7 @@ Resources:
           Environment:
             -
               Name: SENZING_ENGINE_CONFIGURATION_JSON
-              Value: !Sub
-                - >-
-                  {
-                      "PIPELINE": {
-                          "CONFIGPATH": "/etc/opt/senzing",
-                          "RESOURCEPATH": "/opt/senzing/g2/resources",
-                          "SUPPORTPATH": "/opt/senzing/data"
-                      },
-                      "SQL": {
-                          "BACKEND": "HYBRID",
-                          "CONNECTION":"postgresql://${DatabaseUsername}:${DatabasePassword}@${DatabaseHostCore}:${DatabasePortCore}:${DatabaseName}"
-                      },
-                      "C1": {
-                          "CLUSTER_SIZE": "1",
-                          "DB_1": "postgresql://${DatabaseUsername}:${DatabasePassword}@${DatabaseHostRes}:${DatabasePortRes}:${DatabaseName}"
-                      },
-                      "C2": {
-                          "CLUSTER_SIZE": "1",
-                          "DB_1": "postgresql://${DatabaseUsername}:${DatabasePassword}@${DatabaseHostLibfeat}:${DatabasePortLibfeat}:${DatabaseName}"
-                      },
-                      "HYBRID": {
-                          "LIB_FEAT": "C2",
-                          "LIB_FEAT_HKEY": "C2",
-                          "RES_FEAT": "C1",
-                          "RES_FEAT_EKEY": "C1",
-                          "RES_FEAT_LKEY": "C1",
-                          "RES_FEAT_STAT": "C1"
-                      }
-                  }
-                - DatabaseHostLibfeat: !GetAtt RdsDbClusterLibfeat.Endpoint.Address
-                  DatabaseHostCore: !GetAtt RdsDbClusterCore.Endpoint.Address
-                  DatabaseHostRes: !GetAtt RdsDbClusterRes.Endpoint.Address
-                  DatabaseName: !FindInMap [Constants, Database, Name]
-                  DatabasePassword: !GetAtt LambdaRunnerDbPassword.RandomString
-                  DatabasePortLibfeat: !GetAtt RdsDbClusterLibfeat.Endpoint.Port
-                  DatabasePortCore: !GetAtt RdsDbClusterCore.Endpoint.Port
-                  DatabasePortRes: !GetAtt RdsDbClusterRes.Endpoint.Port
-                  DatabaseUsername: !FindInMap [Constants, Database, Username]
+              Value: !GetAtt SsmParameterSenzingEngineConfigurationJson.Value
             -
               Name: SENZING_G2CONFIG_GTC
               Value: |
@@ -3565,44 +3576,7 @@ Resources:
           Environment:
             -
               Name: SENZING_ENGINE_CONFIGURATION_JSON
-              Value: !Sub
-                - >-
-                  {
-                      "PIPELINE": {
-                          "CONFIGPATH": "/etc/opt/senzing",
-                          "RESOURCEPATH": "/opt/senzing/g2/resources",
-                          "SUPPORTPATH": "/opt/senzing/data"
-                      },
-                      "SQL": {
-                          "BACKEND": "HYBRID",
-                          "CONNECTION":"postgresql://${DatabaseUsername}:${DatabasePassword}@${DatabaseHostCore}:${DatabasePortCore}:${DatabaseName}"
-                      },
-                      "C1": {
-                          "CLUSTER_SIZE": "1",
-                          "DB_1": "postgresql://${DatabaseUsername}:${DatabasePassword}@${DatabaseHostRes}:${DatabasePortRes}:${DatabaseName}"
-                      },
-                      "C2": {
-                          "CLUSTER_SIZE": "1",
-                          "DB_1": "postgresql://${DatabaseUsername}:${DatabasePassword}@${DatabaseHostLibfeat}:${DatabasePortLibfeat}:${DatabaseName}"
-                      },
-                      "HYBRID": {
-                          "LIB_FEAT": "C2",
-                          "LIB_FEAT_HKEY": "C2",
-                          "RES_FEAT": "C1",
-                          "RES_FEAT_EKEY": "C1",
-                          "RES_FEAT_LKEY": "C1",
-                          "RES_FEAT_STAT": "C1"
-                      }
-                  }
-                - DatabaseHostLibfeat: !GetAtt RdsDbClusterLibfeat.Endpoint.Address
-                  DatabaseHostCore: !GetAtt RdsDbClusterCore.Endpoint.Address
-                  DatabaseHostRes: !GetAtt RdsDbClusterRes.Endpoint.Address
-                  DatabaseName: !FindInMap [Constants, Database, Name]
-                  DatabasePassword: !GetAtt LambdaRunnerDbPassword.RandomString
-                  DatabasePortLibfeat: !GetAtt RdsDbClusterLibfeat.Endpoint.Port
-                  DatabasePortCore: !GetAtt RdsDbClusterCore.Endpoint.Port
-                  DatabasePortRes: !GetAtt RdsDbClusterRes.Endpoint.Port
-                  DatabaseUsername: !FindInMap [Constants, Database, Username]
+              Value: !GetAtt SsmParameterSenzingEngineConfigurationJson.Value
           Essential: true
           Image: public.ecr.aws/senzing/jupyter:1.2.0
           LogConfiguration:
@@ -3685,44 +3659,7 @@ Resources:
           Environment:
             -
               Name: SENZING_ENGINE_CONFIGURATION_JSON
-              Value: !Sub
-                - >-
-                  {
-                      "PIPELINE": {
-                          "CONFIGPATH": "/etc/opt/senzing",
-                          "RESOURCEPATH": "/opt/senzing/g2/resources",
-                          "SUPPORTPATH": "/opt/senzing/data"
-                      },
-                      "SQL": {
-                          "BACKEND": "HYBRID",
-                          "CONNECTION":"postgresql://${DatabaseUsername}:${DatabasePassword}@${DatabaseHostCore}:${DatabasePortCore}:${DatabaseName}"
-                      },
-                      "C1": {
-                          "CLUSTER_SIZE": "1",
-                          "DB_1": "postgresql://${DatabaseUsername}:${DatabasePassword}@${DatabaseHostRes}:${DatabasePortRes}:${DatabaseName}"
-                      },
-                      "C2": {
-                          "CLUSTER_SIZE": "1",
-                          "DB_1": "postgresql://${DatabaseUsername}:${DatabasePassword}@${DatabaseHostLibfeat}:${DatabasePortLibfeat}:${DatabaseName}"
-                      },
-                      "HYBRID": {
-                          "LIB_FEAT": "C2",
-                          "LIB_FEAT_HKEY": "C2",
-                          "RES_FEAT": "C1",
-                          "RES_FEAT_EKEY": "C1",
-                          "RES_FEAT_LKEY": "C1",
-                          "RES_FEAT_STAT": "C1"
-                      }
-                  }
-                - DatabaseHostLibfeat: !GetAtt RdsDbClusterLibfeat.Endpoint.Address
-                  DatabaseHostCore: !GetAtt RdsDbClusterCore.Endpoint.Address
-                  DatabaseHostRes: !GetAtt RdsDbClusterRes.Endpoint.Address
-                  DatabaseName: !FindInMap [Constants, Database, Name]
-                  DatabasePassword: !GetAtt LambdaRunnerDbPassword.RandomString
-                  DatabasePortLibfeat: !GetAtt RdsDbClusterLibfeat.Endpoint.Port
-                  DatabasePortCore: !GetAtt RdsDbClusterCore.Endpoint.Port
-                  DatabasePortRes: !GetAtt RdsDbClusterRes.Endpoint.Port
-                  DatabaseUsername: !FindInMap [Constants, Database, Username]
+              Value: !GetAtt SsmParameterSenzingEngineConfigurationJson.Value
             -
               Name: SENZING_EXIT_ON_THREAD_TERMINATION
               Value: 'true'
@@ -3904,44 +3841,7 @@ Resources:
           Environment:
             -
               Name: SENZING_ENGINE_CONFIGURATION_JSON
-              Value: !Sub
-                - >-
-                  {
-                      "PIPELINE": {
-                          "CONFIGPATH": "/etc/opt/senzing",
-                          "RESOURCEPATH": "/opt/senzing/g2/resources",
-                          "SUPPORTPATH": "/opt/senzing/data"
-                      },
-                      "SQL": {
-                          "BACKEND": "HYBRID",
-                          "CONNECTION":"postgresql://${DatabaseUsername}:${DatabasePassword}@${DatabaseHostCore}:${DatabasePortCore}:${DatabaseName}"
-                      },
-                      "C1": {
-                          "CLUSTER_SIZE": "1",
-                          "DB_1": "postgresql://${DatabaseUsername}:${DatabasePassword}@${DatabaseHostRes}:${DatabasePortRes}:${DatabaseName}"
-                      },
-                      "C2": {
-                          "CLUSTER_SIZE": "1",
-                          "DB_1": "postgresql://${DatabaseUsername}:${DatabasePassword}@${DatabaseHostLibfeat}:${DatabasePortLibfeat}:${DatabaseName}"
-                      },
-                      "HYBRID": {
-                          "LIB_FEAT": "C2",
-                          "LIB_FEAT_HKEY": "C2",
-                          "RES_FEAT": "C1",
-                          "RES_FEAT_EKEY": "C1",
-                          "RES_FEAT_LKEY": "C1",
-                          "RES_FEAT_STAT": "C1"
-                      }
-                  }
-                - DatabaseHostLibfeat: !GetAtt RdsDbClusterLibfeat.Endpoint.Address
-                  DatabaseHostCore: !GetAtt RdsDbClusterCore.Endpoint.Address
-                  DatabaseHostRes: !GetAtt RdsDbClusterRes.Endpoint.Address
-                  DatabaseName: !FindInMap [Constants, Database, Name]
-                  DatabasePassword: !GetAtt LambdaRunnerDbPassword.RandomString
-                  DatabasePortLibfeat: !GetAtt RdsDbClusterLibfeat.Endpoint.Port
-                  DatabasePortCore: !GetAtt RdsDbClusterCore.Endpoint.Port
-                  DatabasePortRes: !GetAtt RdsDbClusterRes.Endpoint.Port
-                  DatabaseUsername: !FindInMap [Constants, Database, Username]
+              Value: !GetAtt SsmParameterSenzingEngineConfigurationJson.Value
             -
               Name: SENZING_DELAY_IN_SECONDS
               Value: '900'
