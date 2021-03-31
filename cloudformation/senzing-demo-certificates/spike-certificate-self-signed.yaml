@@ -180,6 +180,25 @@ Resources:
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-iam-policy.html
 
+
+  IamPolicyCertifictes:
+    Properties:
+      PolicyName: !Sub "${AWS::StackName}-iam-policy-certificates"
+      PolicyDocument:
+        Statement:
+          -
+            Action:
+              - iam:UploadServerCertificate
+            Effect: Allow
+            Resource:
+              - '*'
+        Version: '2012-10-17'
+      Roles:
+       - !Ref IamRoleLambda
+       - !Ref IamRoleSwagger
+    Type: AWS::IAM::Policy
+
+
   IamPolicyLoggingCreateStream:
     Properties:
       PolicyName: !Sub "${AWS::StackName}-iam-policy-logging-create-stream"
@@ -216,23 +235,6 @@ Resources:
        - !Ref IamRoleSwagger
     Type: AWS::IAM::Policy
 
-
-  IamPolicyCertifictes:
-    Properties:
-      PolicyName: !Sub "${AWS::StackName}-iam-policy-certificates"
-      PolicyDocument:
-        Statement:
-          -
-            Action:
-              - iam:UploadServerCertificate
-            Effect: Allow
-            Resource:
-              - '*'
-        Version: '2012-10-17'
-      Roles:
-       - !Ref IamRoleLambda
-       - !Ref IamRoleSwagger
-    Type: AWS::IAM::Policy
 
 # -- Logging ------------------------------------------------------------------
 
@@ -613,7 +615,7 @@ Outputs:
 
   UrlSwaggerHttps:
     Description: 'URL for Swagger. Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#urlswagger'
-    Value: !Sub "https//${LoadBalancerPublic.DNSName}:8081"
+    Value: !Sub "https://${LoadBalancerPublic.DNSName}:8081"
 
 # CertificateArn:
 #   Value: !GetAtt LambdaRunnerGenerateSelfSignedCertificate.CertificateArn
