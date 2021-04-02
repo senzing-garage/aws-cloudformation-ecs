@@ -133,6 +133,15 @@ Technical information on AWS Cloudformation parameters can be seen at
 1. **Allowed values:** See [SENZING_ACCEPT_EULA](https://github.com/Senzing/knowledge-base/blob/master/lists/environment-variables.md#senzing_accept_eula).
 1. **Default:** None
 
+### AcknowledgeInsecureSystem
+
+1. **Synopsis:**
+   Acknowledgement of the security level of the system.
+1. **Required:** Yes
+1. **Type:** String
+1. **Allowed values:** "I AGREE"
+1. **Default:** None
+
 ### CidrInbound
 
 1. **Synopsis:** The password used to access the AWS Aurora Postgres Serverless databases.
@@ -143,34 +152,38 @@ Technical information on AWS Cloudformation parameters can be seen at
 1. **Example:** 45.26.129.200/32
 1. **Default:** 0.0.0.0/0
 
-### DbPassword
+### CognitoAdminEmail
 
-1. **Synopsis:** The password used to access the AWS Aurora Postgres Serverless databases.
+1. **Synopsis:** An email address that will be used as a username to access the system via AWS Cognito.
 1. **Required:** Yes
 1. **Type:** String
-1. **Allowed pattern:** Letters and numbers. Specifically: `[a-zA-Z0-9]*`
-1. **Allowed values:** String of length 8 to 41 characters.
-1. **Example:** dbPassword4Me
+1. **Allowed pattern:** A valid email address
+1. **Example:** me@example.com
 1. **Default:** None
 
-### DbPasswordConfirm
+### RunApiServer
 
-1. **Synopsis:** A confirmation of the database password.
+1. **Synopsis:**
+   Optionally, run the
+   [Senzing API server](https://github.com/Senzing/senzing-api-server).
 1. **Required:** Yes
-1. **Type:** String
-1. **Allowed pattern:** Letters and numbers. Specifically: `[a-zA-Z0-9]*`
-1. **Allowed values:** Must match value of [DbPassword](#dbpassword)
-1. **Default:** None
+1. **Type:** Boolean
+1. **Allowed values:**
+   [ "Yes" | "No" ]
+1. **Default:** Yes
 
-### DbUsername
+### RunJupyter
 
-1. **Synopsis:** The username used to access the AWS Aurora Postgres Serverless databases.
+1. **Synopsis:**
+   Optionally, run the
+   [Senzing Jupyter notebooks](https://github.com/Senzing/docker-jupyter).
 1. **Required:** Yes
-1. **Type:** String
-1. **Allowed pattern:** A letter followed by letters or numbers. Specifically: `[a-zA-Z][a-zA-Z0-9]*`
-1. **Allowed values:** String of length 1 to 16 characters.
-1. **Example:** user1234
-1. **Default:** senzing
+1. **Type:** Boolean
+1. **Allowed values:**
+   [ "Yes" | "No" ]
+1. **Default:** No
+
+### RunRedoer
 
 ### RunSshd
 
@@ -184,6 +197,8 @@ Technical information on AWS Cloudformation parameters can be seen at
 1. **Default:** No
 1. **References:**
     1. [github.com/Senzing/docker-sshd](https://github.com/Senzing/docker-sshd)
+
+### RunStreamLoader
 
 ### RunStreamProducer
 
@@ -239,6 +254,8 @@ Technical information on AWS Cloudformation parameters can be seen at
 1. **Default:** Yes
 1. **References:**
     1. [github.com/Senzing/entity-search-web-app](https://github.com/Senzing/entity-search-web-app)
+
+### RunXterm
 
 ### SenzingInputUrl
 
@@ -350,43 +367,52 @@ Technical information on AWS Cloudformation parameters can be seen at
 
 ## Outputs
 
-### ApiServerHeartbeatUrl
-
-1. **Synopsis:**
-   A URL showing how to reach the
-   [Senzing API Server](https://github.com/Senzing/senzing-api-server)
-   directly.
-   The `/heartbeat` URI path simply demonstrates that the API server is responding.
-   For more URIs, see
-   [SwaggerUrl output value](#swaggerurl).
-
-### DatabaseHost
+### AccountID
+### CertificateArn
+### DatabaseHostCore
 
 FIXME: will need to be updated when clustering is enabled.
 
 1. **Synopsis:**
    More information at [AWS RDS Console](https://console.aws.amazon.com/rds/home).
 
+### DatabaseHostLibfeat
 
-### DatabasePort
+FIXME: will need to be updated when clustering is enabled.
+
+1. **Synopsis:**
+   More information at [AWS RDS Console](https://console.aws.amazon.com/rds/home).
+
+### DatabaseHostRes
+
+FIXME: will need to be updated when clustering is enabled.
+
+1. **Synopsis:**
+   More information at [AWS RDS Console](https://console.aws.amazon.com/rds/home).
+
+### DatabaseName
+### DatabasePassword
+### DatabasePortCore
 
 1. **Synopsis:**
    The port used to access each of the databases.
    More information at [AWS RDS Console](https://console.aws.amazon.com/rds/home).
 
+### DatabasePortLibfeat
+
+1. **Synopsis:**
+   The port used to access each of the databases.
+   More information at [AWS RDS Console](https://console.aws.amazon.com/rds/home).
+
+### DatabasePortRes
+
+1. **Synopsis:**
+   The port used to access each of the databases.
+   More information at [AWS RDS Console](https://console.aws.amazon.com/rds/home).
+
+### DatabaseUsername
 ### Ec2Vpc
-
-1. **Synopsis:**
-   The AWS Resource ID of the Virtual Private Cloud (VPC).
-   More information at [AWS VPC Console](https://console.aws.amazon.com/vpc/home?#vpcs:).
-
 ### Host
-
-1. **Synopsis:**
-   The hostname of the loadbalancer that is a proxy to all of the services.
-   More information at [AWS Load Balancers console](https://console.aws.amazon.com/ec2/v2/home?#LoadBalancers:).
-   Also used as the `host` value when using [SwaggerUrl](#swaggerurl).
-
 ### Queue
 
 1. **Synopsis:**
@@ -401,20 +427,40 @@ FIXME: will need to be updated when clustering is enabled.
    In otherwords, if the JSON message is malformed, or Senzing d into the Senzing Engine.
    More information at [AWS SQS Console](https://console.aws.amazon.com/sqs/v2/home?#/queues).
 
-### Subnet1
+### QueueInfo
 
-TODO:
+1. **Synopsis:**
+   The queue from which records are ingested into Senzing Engine.
+   In otherwords, this is the queue where records are sent to be inserted into the Senzing Engine.
+   More information at [AWS SQS Console](https://console.aws.amazon.com/sqs/v2/home?#/queues).
 
-### Subnet2
+### SenzingVersion
+### SshPassword
+### SshUsername
+### SubnetPrivate1
+### SubnetPrivate2
+### SubnetPublic1
+### SubnetPublic2
+### UrlApiServer
 
-TODO:
+### UrlApiServerHeartbeat
 
-### SwaggerUrl
+1. **Synopsis:**
+   A URL showing how to reach the
+   [Senzing API Server](https://github.com/Senzing/senzing-api-server)
+   directly.
+   The `/heartbeat` URI path simply demonstrates that the API server is responding.
+   For more URIs, see
+   [SwaggerUrl output value](#swaggerurl).
 
-TODO:
-
-### WebAppUrl
+### UrlJupyter
+### UrlSwagger
+### UrlWebApp
 
 1. **Synopsis:**
    A URL showing how to reach the
    [Senzing Entity Search Web App](https://github.com/Senzing/entity-search-web-app).
+
+### UrlXterm
+### WebInitPassword
+### WebUsername
