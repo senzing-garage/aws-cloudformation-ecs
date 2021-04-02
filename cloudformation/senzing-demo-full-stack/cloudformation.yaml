@@ -7,7 +7,7 @@ AWSTemplateFormatVersion: 2010-09-09
 #     aws cloudformation validate-template: https://awscli.amazonaws.com/v2/documentation/api/latest/reference/cloudformation/validate-template.html
 
 Description: >-
-  Senzing aws-cloudformation-ecs/senzing-demo-full-stack Version: 0.2.0
+  Senzing aws-cloudformation-ecs/senzing-demo-full-stack Version: 0.3.0
   For more information see https://github.com/Senzing/aws-cloudformation-ecs
 
 # -----------------------------------------------------------------------------
@@ -145,7 +145,7 @@ Parameters:
     AllowedPattern: '.+|^I AGREE$'
     ConstraintDescription: AcknowledgeInsecureSystem parameter must be 'I AGREE'
     Default: '_'
-    Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#acknowledgeinsecuresystem'
+    Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs/#acknowledgeinsecuresystem'
     Type: String
 
 
@@ -167,7 +167,7 @@ Parameters:
       - 'No'
       - 'Yes'
     Default: 'Yes'
-    Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-full-stack#runapiserver'
+    Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs/#runapiserver'
     Type: String
 
 
@@ -176,7 +176,7 @@ Parameters:
       - 'No'
       - 'Yes'
     Default: 'No'
-    Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-full-stack#runjupyter'
+    Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs/#runjupyter'
     Type: String
 
 
@@ -185,7 +185,7 @@ Parameters:
       - 'No'
       - 'Yes'
     Default: 'Yes'
-    Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-full-stack#runredoer'
+    Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs/#runredoer'
     Type: String
 
 
@@ -194,7 +194,7 @@ Parameters:
       - 'No'
       - 'Yes'
     Default: 'Yes'
-    Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-full-stack#runsshd'
+    Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs/#runsshd'
     Type: String
 
 
@@ -203,7 +203,7 @@ Parameters:
       - 'No'
       - 'Yes'
     Default: 'Yes'
-    Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-full-stack#runstreamloader'
+    Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs/#runstreamloader'
     Type: String
 
 
@@ -212,7 +212,7 @@ Parameters:
       - 'No'
       - 'Yes'
     Default: 'Yes'
-    Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-full-stack#runstreamproducer'
+    Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs/#runstreamproducer'
     Type: String
 
 
@@ -221,7 +221,7 @@ Parameters:
       - 'No'
       - 'Yes'
     Default: 'Yes'
-    Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-full-stack#runswagger'
+    Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs/#runswagger'
     Type: String
 
 
@@ -230,7 +230,7 @@ Parameters:
       - 'No'
       - 'Yes'
     Default: 'No'
-    Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-full-stack#runvpcflowlogs'
+    Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs/#runvpcflowlogs'
     Type: String
 
 
@@ -239,7 +239,7 @@ Parameters:
       - 'No'
       - 'Yes'
     Default: 'Yes'
-    Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-full-stack#runwebapp'
+    Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs/#runwebapp'
     Type: String
 
 
@@ -248,39 +248,39 @@ Parameters:
       - 'No'
       - 'Yes'
     Default: 'Yes'
-    Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-full-stack#xterm'
+    Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs/#xterm'
     Type: String
 
 
   SenzingInputUrl:
     Default: https://s3.amazonaws.com/public-read-access/TestDataSets/SenzingTruthSet/truth-set.json
-    Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-full-stack#senzinginputurl'
+    Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs/#senzinginputurl'
     Type: String
 
 
   SenzingLicenseAsBase64:
 #   AllowedPattern: ' ^$|[^-A-Za-z0-9+\/=\s]|=[^=]|={3,}$'
-    ConstraintDescription: 'Must contain only Base64 characters. see http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/senzing-demo-full-stack#senzinglicenseasbase64'
+    ConstraintDescription: 'Must contain only Base64 characters. see http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-full-stack#senzinglicenseasbase64'
     Default: ' '
-    Description: 'Help: http://hub.senzing.com/aws-cloudformation/senzing-demo-full-stack#senzinglicenseasbase64'
+    Description: 'Help: http://hub.senzing.com/aws-cloudformation/#senzinglicenseasbase64'
     Type: String
 
 
   SenzingRecordMax:
     Default: 100
-    Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-full-stack#senzingrecordmax'
+    Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs/#senzingrecordmax'
     Type: Number
 
 
   SenzingRecordMin:
     Default: 0
-    Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-full-stack#senzingrecordmin'
+    Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs/#senzingrecordmin'
     Type: Number
 
 
   VpcAvailabilityZones:
     Default: ''
-    Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-full-stack#vpcavailabilityzones'
+    Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs/#vpcavailabilityzones'
     Type: CommaDelimitedList
 
 
@@ -290,7 +290,7 @@ Parameters:
       VPC Id must begin with 'vpc-' followed by either an 8 or 17 character
       identifier, or leave blank to have a new VPC created
     Default: ''
-    Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-full-stack#vpcid'
+    Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs/#vpcid'
     Type: String
 
 # -----------------------------------------------------------------------------
@@ -334,7 +334,7 @@ Mappings:
     Senzing:
       Version: senzingapi-2.4.1-21064
     Stack:
-      Name: experimental
+      Name: demo-full-stack
     StreamProducer:
       DataSource: TEST
       EntityType: GENERIC
@@ -4446,7 +4446,7 @@ Resources:
      - ListenerRuleApiServer
     Properties:
       Cluster: !Ref EcsCluster
-      DesiredCount: 1
+      DesiredCount: 2
       EnableECSManagedTags: true
       LaunchType: FARGATE
       LoadBalancers:
@@ -4484,7 +4484,7 @@ Resources:
      - ListenerRuleJupyter
     Properties:
       Cluster: !Ref EcsCluster
-      DesiredCount: 1
+      DesiredCount: 2
       EnableECSManagedTags: true
       LaunchType: FARGATE
       LoadBalancers:
@@ -4598,7 +4598,7 @@ Resources:
      - ListenerRuleSwagger
     Properties:
       Cluster: !Ref EcsCluster
-      DesiredCount: 1
+      DesiredCount: 2
       EnableECSManagedTags: true
       LaunchType: FARGATE
       LoadBalancers:
@@ -4631,7 +4631,7 @@ Resources:
      - ListenerRuleWebApp
     Properties:
       Cluster: !Ref EcsCluster
-      DesiredCount: 1
+      DesiredCount: 2
       EnableECSManagedTags: true
       LaunchType: FARGATE
       LoadBalancers:
@@ -4665,7 +4665,7 @@ Resources:
      - ListenerRuleXterm
     Properties:
       Cluster: !Ref EcsCluster
-      DesiredCount: 1
+      DesiredCount: 2
       EnableECSManagedTags: true
       LaunchType: FARGATE
       LoadBalancers:
@@ -4697,7 +4697,7 @@ Resources:
   ApplicationAutoScalingScalableTargetApiServer:
     Properties:
       MaxCapacity: 200
-      MinCapacity: 1
+      MinCapacity: 2
       ResourceId: !Sub "service/${EcsCluster}/${EcsServiceApiServer.Name}"
       RoleARN: !Sub "arn:aws:iam::${AWS::AccountId}:role/aws-service-role/ecs.application-autoscaling.amazonaws.com/AWSServiceRoleForApplicationAutoScaling_ECSService"
       ScalableDimension: ecs:service:DesiredCount
@@ -4727,7 +4727,7 @@ Resources:
   ApplicationAutoScalingScalableTargetWebApp:
     Properties:
       MaxCapacity: 200
-      MinCapacity: 1
+      MinCapacity: 2
       ResourceId: !Sub "service/${EcsCluster}/${EcsServiceWebApp.Name}"
       RoleARN: !Sub "arn:aws:iam::${AWS::AccountId}:role/aws-service-role/ecs.application-autoscaling.amazonaws.com/AWSServiceRoleForApplicationAutoScaling_ECSService"
       ScalableDimension: ecs:service:DesiredCount
@@ -4795,7 +4795,7 @@ Outputs:
     Value: !Sub "${AWS::AccountId}"
 
   CertificateArn:
-    Description: 'ARN of the SSL certificate. Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#certificatearn'
+    Description: 'ARN of the SSL certificate. Help: http://hub.senzing.com/aws-cloudformation-ecs/#certificatearn'
     Export:
       Name: !Sub "${AWS::StackName}-certificate-arn"
     Value: !GetAtt IamServerCertificate.Arn
@@ -4864,7 +4864,7 @@ Outputs:
       - !Ref VpcId
 
   Host:
-    Description: 'Host name of public services. Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#host'
+    Description: 'Host name of public services. Help: http://hub.senzing.com/aws-cloudformation-ecs/#host'
     Export:
       Name: !Sub "${AWS::StackName}-host"
     Value: !Sub "${LoadBalancerPublic.DNSName}"
@@ -4888,13 +4888,13 @@ Outputs:
     Value: !Ref SqsQueueInfo
 
   SenzingVersion:
-    Description: 'The Senzing Engine version installed. Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#senzingversion'
+    Description: 'The Senzing Engine version installed. Help: http://hub.senzing.com/aws-cloudformation-ecs/#senzingversion'
     Export:
       Name: !Sub "${AWS::StackName}-senzing-version"
     Value: !FindInMap [Constants, Senzing, Version]
 
   SshPassword:
-    Description: 'The randomly generated password for SSH access. Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#sshpassword'
+    Description: 'The randomly generated password for SSH access. Help: http://hub.senzing.com/aws-cloudformation-ecs/#sshpassword'
     Export:
       Name: !Sub "${AWS::StackName}-ssh-password"
     Value: !GetAtt LambdaRunnerSshPassword.RandomString
@@ -4906,13 +4906,13 @@ Outputs:
     Value: root
 
   SubnetPrivate1:
-    Description: 'The ID of private subnet 1. Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#subnetprivate1'
+    Description: 'The ID of private subnet 1. Help: http://hub.senzing.com/aws-cloudformation-ecs/#subnetprivate1'
     Export:
       Name: !Sub "${AWS::StackName}-subnet-private-1"
     Value: !Ref Ec2SubnetPrivate1
 
   SubnetPrivate2:
-    Description: 'The ID of private subnet 2. Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#subnetprivate2'
+    Description: 'The ID of private subnet 2. Help: http://hub.senzing.com/aws-cloudformation-ecs/#subnetprivate2'
     Export:
       Name: !Sub "${AWS::StackName}-subnet-private-2"
     Value: !Ref Ec2SubnetPrivate2
@@ -4929,47 +4929,54 @@ Outputs:
       Name: !Sub "${AWS::StackName}-subnet-public-2"
     Value: !Ref Ec2SubnetPublic2
 
+  UrlApiServer:
+    Condition: IfRunApiServer
+    Description: "URL for API Server. Help: http://hub.senzing.com/aws-cloudformation-ecs/#urlapiserver"
+    Export:
+      Name: !Sub "${AWS::StackName}-url-api-server"
+    Value: !Sub "https://${LoadBalancerPublic.DNSName}/api/"
+
   UrlApiServerHeartbeat:
     Condition: IfRunApiServer
-    Description: "URL for API Server's heartbeat. Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#urlapiserverheartbeat"
+    Description: "URL for API Server's heartbeat. Help: http://hub.senzing.com/aws-cloudformation-ecs/#urlapiserverheartbeat"
     Value: !Sub "https://${LoadBalancerPublic.DNSName}/api/heartbeat/"
 
   UrlJupyter:
     Condition: IfRunJupyter
-    Description: 'URL for Jupyter Notebooks. Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#urljupyter'
+    Description: 'URL for Jupyter Notebooks. Help: http://hub.senzing.com/aws-cloudformation-ecs/#urljupyter'
     Export:
       Name: !Sub "${AWS::StackName}-url-jupyter"
     Value: !Sub "https://${LoadBalancerPublic.DNSName}/jupyter/"
 
   UrlSwagger:
     Condition: IfRunSwagger
-    Description: 'HTTPS URL for Swagger. Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#urlswagger'
+    Description: 'HTTPS URL for Swagger. Help: http://hub.senzing.com/aws-cloudformation-ecs/#urlswagger'
     Export:
       Name: !Sub "${AWS::StackName}-url-swagger"
     Value: !Sub "https://${LoadBalancerPublic.DNSName}/swagger/"
 
   UrlWebApp:
     Condition: IfRunWebApp
-    Description: 'URL for Senzing Web App. Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#urlwebapp'
+    Description: 'URL for Senzing Web App. Help: http://hub.senzing.com/aws-cloudformation-ecs/#urlwebapp'
     Export:
       Name: !Sub "${AWS::StackName}-url-webapp"
     Value: !Sub "https://${LoadBalancerPublic.DNSName}/app/"
 
   UrlXterm:
     Condition: IfRunXterm
-    Description: 'HTTPS URL for Xterm. Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#urlxterm'
+    Description: 'HTTPS URL for Xterm. Help: http://hub.senzing.com/aws-cloudformation-ecs/#urlxterm'
     Export:
       Name: !Sub "${AWS::StackName}-url-xterm"
     Value: !Sub "https://${LoadBalancerPublic.DNSName}/xterm/"
 
   WebInitPassword:
-    Description: 'One time password for web access. Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#webpassword'
+    Description: 'One time password for web access. Help: http://hub.senzing.com/aws-cloudformation-ecs/#webpassword'
     Export:
       Name: !Sub "${AWS::StackName}-web-init-password"
     Value: !GetAtt LambdaRunnerWebPassword.RandomPassword
 
   WebUsername:
-    Description: 'Username for web access. Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#webusername'
+    Description: 'Username for web access. Help: http://hub.senzing.com/aws-cloudformation-ecs/#webusername'
     Export:
       Name: !Sub "${AWS::StackName}-web-username"
     Value: !Ref CognitoAdminEmail
