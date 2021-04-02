@@ -120,7 +120,7 @@ Parameters:
 
   SenzingLicenseAsBase64:
 #   AllowedPattern: ' ^$|[^-A-Za-z0-9+\/=\s]|=[^=]|={3,}$'
-    ConstraintDescription: 'Must contain only Base64 characters. see http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/senzing-demo-full-stack#senzinglicenseasbase64'
+    ConstraintDescription: 'Must contain only Base64 characters. see http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-full-stack#senzinglicenseasbase64'
     Default: ' '
     Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs/#senzinglicenseasbase64'
     Type: String
@@ -4204,7 +4204,7 @@ Resources:
      - ListenerRuleApiServer
     Properties:
       Cluster: !Ref EcsCluster
-      DesiredCount: 1
+      DesiredCount: 2
       EnableECSManagedTags: true
       LaunchType: FARGATE
       LoadBalancers:
@@ -4242,7 +4242,7 @@ Resources:
      - ListenerRuleJupyter
     Properties:
       Cluster: !Ref EcsCluster
-      DesiredCount: 1
+      DesiredCount: 2
       EnableECSManagedTags: true
       LaunchType: FARGATE
       LoadBalancers:
@@ -4356,7 +4356,7 @@ Resources:
      - ListenerRuleSwagger
     Properties:
       Cluster: !Ref EcsCluster
-      DesiredCount: 1
+      DesiredCount: 2
       EnableECSManagedTags: true
       LaunchType: FARGATE
       LoadBalancers:
@@ -4389,7 +4389,7 @@ Resources:
      - ListenerRuleWebApp
     Properties:
       Cluster: !Ref EcsCluster
-      DesiredCount: 1
+      DesiredCount: 2
       EnableECSManagedTags: true
       LaunchType: FARGATE
       LoadBalancers:
@@ -4423,7 +4423,7 @@ Resources:
      - ListenerRuleXterm
     Properties:
       Cluster: !Ref EcsCluster
-      DesiredCount: 1
+      DesiredCount: 2
       EnableECSManagedTags: true
       LaunchType: FARGATE
       LoadBalancers:
@@ -4455,7 +4455,7 @@ Resources:
   ApplicationAutoScalingScalableTargetApiServer:
     Properties:
       MaxCapacity: 200
-      MinCapacity: 1
+      MinCapacity: 2
       ResourceId: !Sub "service/${EcsCluster}/${EcsServiceApiServer.Name}"
       RoleARN: !Sub "arn:aws:iam::${AWS::AccountId}:role/aws-service-role/ecs.application-autoscaling.amazonaws.com/AWSServiceRoleForApplicationAutoScaling_ECSService"
       ScalableDimension: ecs:service:DesiredCount
@@ -4485,7 +4485,7 @@ Resources:
   ApplicationAutoScalingScalableTargetWebApp:
     Properties:
       MaxCapacity: 200
-      MinCapacity: 1
+      MinCapacity: 2
       ResourceId: !Sub "service/${EcsCluster}/${EcsServiceWebApp.Name}"
       RoleARN: !Sub "arn:aws:iam::${AWS::AccountId}:role/aws-service-role/ecs.application-autoscaling.amazonaws.com/AWSServiceRoleForApplicationAutoScaling_ECSService"
       ScalableDimension: ecs:service:DesiredCount
@@ -4554,7 +4554,7 @@ Outputs:
 
   CertificateArn:
     Condition: IfRoute53HostedZoneId
-    Description: 'ARN of the SSL certificate. Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#certificatearn'
+    Description: 'ARN of the SSL certificate. Help: http://hub.senzing.com/aws-cloudformation-ecs/#certificatearn'
     Export:
       Name: !Sub "${AWS::StackName}-certificate-arn"
     Value: !GetAtt LambdaRunnerFindDomainName.CertificateArn
@@ -4621,7 +4621,7 @@ Outputs:
 
   Host:
     Condition: IfRoute53HostedZoneId
-    Description: 'Host name of public services. Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#host'
+    Description: 'Host name of public services. Help: http://hub.senzing.com/aws-cloudformation-ecs/#host'
     Export:
       Name: !Sub "${AWS::StackName}-host"
     Value: !Sub
@@ -4647,13 +4647,13 @@ Outputs:
     Value: !Ref SqsQueueInfo
 
   SenzingVersion:
-    Description: 'The Senzing Engine version installed. Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#senzingversion'
+    Description: 'The Senzing Engine version installed. Help: http://hub.senzing.com/aws-cloudformation-ecs/#senzingversion'
     Export:
       Name: !Sub "${AWS::StackName}-senzing-version"
     Value: !FindInMap [Constants, Senzing, Version]
 
   SshPassword:
-    Description: 'The randomly generated password for SSH access. Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#sshpassword'
+    Description: 'The randomly generated password for SSH access. Help: http://hub.senzing.com/aws-cloudformation-ecs/#sshpassword'
     Export:
       Name: !Sub "${AWS::StackName}-ssh-password"
     Value: !GetAtt LambdaRunnerSshPassword.RandomString
@@ -4665,39 +4665,46 @@ Outputs:
     Value: root
 
   SubnetPrivate1:
-    Description: 'The ID of private subnet 1. Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#subnetprivate1'
+    Description: 'The ID of private subnet 1. Help: http://hub.senzing.com/aws-cloudformation-ecs/#subnetprivate1'
     Export:
       Name: !Sub "${AWS::StackName}-subnet-private-1"
     Value: !Ref Ec2SubnetPrivate1
 
   SubnetPrivate2:
-    Description: 'The ID of private subnet 2. Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#subnetprivate2'
+    Description: 'The ID of private subnet 2. Help: http://hub.senzing.com/aws-cloudformation-ecs/#subnetprivate2'
     Export:
       Name: !Sub "${AWS::StackName}-subnet-private-2"
     Value: !Ref Ec2SubnetPrivate2
 
   SubnetPublic1:
-    Description: 'The ID of public subnet 1. Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#subnetpublic1'
+    Description: 'The ID of public subnet 1. Help: http://hub.senzing.com/aws-cloudformation-ecs/#subnetpublic1'
     Export:
       Name: !Sub "${AWS::StackName}-subnet-public-1"
     Value: !Ref Ec2SubnetPublic1
 
   SubnetPublic2:
-    Description: 'The ID of public subnet 2. Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#subnetpublic2'
+    Description: 'The ID of public subnet 2. Help: http://hub.senzing.com/aws-cloudformation-ecs/#subnetpublic2'
     Export:
       Name: !Sub "${AWS::StackName}-subnet-public-2"
     Value: !Ref Ec2SubnetPublic2
 
+  UrlApiServer:
+    Condition: IfRunApiServerHttps
+    Description: "URL for API Server's heartbeat. Help: http://hub.senzing.com/aws-cloudformation-ecs/#urlapiserver"
+    Value: !Sub
+      - "https://${AWS::StackName}.${DomainName}/api/"
+      - DomainName: !GetAtt LambdaRunnerFindDomainName.DomainName
+      
   UrlApiServerHeartbeat:
     Condition: IfRunApiServerHttps
-    Description: "URL for API Server's heartbeat. Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#urlapiserverheartbeat"
+    Description: "URL for API Server's heartbeat. Help: http://hub.senzing.com/aws-cloudformation-ecs/#urlapiserverheartbeat"
     Value: !Sub
       - "https://${AWS::StackName}.${DomainName}/api/heartbeat"
       - DomainName: !GetAtt LambdaRunnerFindDomainName.DomainName
 
   UrlJupyter:
     Condition: IfRunJupyterHttps
-    Description: 'URL for Jupyter Notebooks. Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#urljupyter'
+    Description: 'URL for Jupyter Notebooks. Help: http://hub.senzing.com/aws-cloudformation-ecs/#urljupyter'
     Export:
       Name: !Sub "${AWS::StackName}-url-jupyter"
     Value: !Sub
@@ -4706,7 +4713,7 @@ Outputs:
 
   UrlSwagger:
     Condition: IfRunSwaggerHttps
-    Description: 'HTTPS URL for Swagger. Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#urlswagger'
+    Description: 'HTTPS URL for Swagger. Help: http://hub.senzing.com/aws-cloudformation-ecs/#urlswagger'
     Export:
       Name: !Sub "${AWS::StackName}-url-swagger"
     Value: !Sub
@@ -4715,7 +4722,7 @@ Outputs:
 
   UrlWebApp:
     Condition: IfRunWebAppHttps
-    Description: 'URL for Senzing Web App. Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#urlwebapp'
+    Description: 'URL for Senzing Web App. Help: http://hub.senzing.com/aws-cloudformation-ecs/#urlwebapp'
     Export:
       Name: !Sub "${AWS::StackName}-url-webapp"
     Value: !Sub
@@ -4724,7 +4731,7 @@ Outputs:
 
   UrlXterm:
     Condition: IfRunXtermHttps
-    Description: 'HTTPS URL for Xterm. Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#urlxterm'
+    Description: 'HTTPS URL for Xterm. Help: http://hub.senzing.com/aws-cloudformation-ecs/#urlxterm'
     Export:
       Name: !Sub "${AWS::StackName}-url-xterm"
     Value: !Sub
@@ -4732,13 +4739,13 @@ Outputs:
       - DomainName: !GetAtt LambdaRunnerFindDomainName.DomainName
 
   WebInitPassword:
-    Description: 'One time password for web access. Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#webpassword'
+    Description: 'One time password for web access. Help: http://hub.senzing.com/aws-cloudformation-ecs/#webpassword'
     Export:
       Name: !Sub "${AWS::StackName}-web-init-password"
     Value: !GetAtt LambdaRunnerWebPassword.RandomPassword
 
   WebUsername:
-    Description: 'Username for web access. Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#webusername'
+    Description: 'Username for web access. Help: http://hub.senzing.com/aws-cloudformation-ecs/#webusername'
     Export:
       Name: !Sub "${AWS::StackName}-web-username"
     Value: !Ref CognitoAdminEmail

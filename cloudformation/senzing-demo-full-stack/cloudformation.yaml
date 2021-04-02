@@ -262,7 +262,7 @@ Parameters:
 #   AllowedPattern: ' ^$|[^-A-Za-z0-9+\/=\s]|=[^=]|={3,}$'
     ConstraintDescription: 'Must contain only Base64 characters. see http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-full-stack#senzinglicenseasbase64'
     Default: ' '
-    Description: 'Help: http://hub.senzing.com/aws-cloudformation/#senzinglicenseasbase64'
+    Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs/#senzinglicenseasbase64'
     Type: String
 
 
@@ -334,7 +334,7 @@ Mappings:
     Senzing:
       Version: senzingapi-2.4.1-21064
     Stack:
-      Name: demo-full-stack
+      Name: full-stack
     StreamProducer:
       DataSource: TEST
       EntityType: GENERIC
