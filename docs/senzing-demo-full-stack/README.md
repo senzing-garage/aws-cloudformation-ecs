@@ -165,7 +165,8 @@ Technical information on AWS Cloudformation parameters can be seen at
 
 1. **Synopsis:**
    Optionally, run the
-   [Senzing API server](https://github.com/Senzing/senzing-api-server).
+   [Senzing API server](https://github.com/Senzing/senzing-api-server)
+   to create a RESTful API service to the Senzing Engine.
 1. **Required:** Yes
 1. **Type:** Boolean
 1. **Allowed values:**
@@ -176,7 +177,8 @@ Technical information on AWS Cloudformation parameters can be seen at
 
 1. **Synopsis:**
    Optionally, run the
-   [Senzing Jupyter notebooks](https://github.com/Senzing/docker-jupyter).
+   [Senzing Jupyter notebooks](https://github.com/Senzing/docker-jupyter)
+   to view Jupyter notebooks showing Senzing code samples.
 1. **Required:** Yes
 1. **Type:** Boolean
 1. **Allowed values:**
@@ -185,25 +187,47 @@ Technical information on AWS Cloudformation parameters can be seen at
 
 ### RunRedoer
 
+1. **Synopsis:**
+   Optionally, run the
+   [redoer](https://github.com/Senzing/redoer)
+   to process "redo records"
+1. **Required:** Yes
+1. **Type:** Boolean
+1. **Allowed values:**
+   [ "Yes" | "No" ]
+1. **Default:** Yes
+
 ### RunSshd
 
 1. **Synopsis:**
-   Optionally, run a container that allows `ssh` and `scp` access.
+   Optionally, run the
+   [sshd](https://github.com/Senzing/docker-sshd)
+   container that allows `ssh` and `scp` access.
    Can be used for debugging, copying files to the EFS, or the Senzing Exploratory Tools.
 1. **Required:** Yes
 1. **Type:** Boolean
 1. **Allowed values:**
    [ "Yes" | "No" ]
 1. **Default:** No
-1. **References:**
-    1. [github.com/Senzing/docker-sshd](https://github.com/Senzing/docker-sshd)
 
 ### RunStreamLoader
+
+1. **Synopsis:**
+   Optionally, run the
+   [stream-loader](https://github.com/Senzing/stream-loader)'
+   which reads records from the SQS queue and sends them to the Senzing Engine.
+1. **Required:** Yes
+1. **Type:** Boolean
+1. **Allowed values:**
+   [ "Yes" | "No" ]
+1. **Default:** Yes
 
 ### RunStreamProducer
 
 1. **Synopsis:**
-   Optionally, run a container that fetches JSON lines from a file and pushes them to the SQS queue.
+   Optionally, run the
+   [stream-producer](https://github.com/Senzing/stream-producer)
+   container that fetches JSON lines from a file and pushes them to the SQS queue.
    If "Yes" is chosen,
    [SenzingInputUrl](#senzinginputurl),
    [SenzingRecordMin](#senzingrecordmin),
@@ -215,20 +239,19 @@ Technical information on AWS Cloudformation parameters can be seen at
 1. **Allowed values:**
    [ "Yes" | "No" ]
 1. **Default:** No
-1. **References:**
-    1. [github.com/Senzing/stream-producer](https://github.com/Senzing/stream-producer)
 
 ### RunSwagger
 
 1. **Synopsis:**
-   Optionally, run a container that hosts the SwaggerUI for viewing the Senzing REST API OpenAPI document.
+   Optionally, run the
+   [swaggerapi/swagger-ui](https://github.com/swagger-api/swagger-ui)
+   container that hosts the SwaggerUI for viewing the
+   [Senzing REST API OpenAPI document](https://github.com/Senzing/senzing-rest-api-specification).
 1. **Required:** Yes
 1. **Type:** Boolean
 1. **Allowed values:**
    [ "Yes" | "No" ]
 1. **Default:** No
-1. **References:**
-    1. [github.com/Senzing/senzing-rest-api-specification](https://github.com/Senzing/senzing-rest-api-specification).
 
 ### RunVpcFlowLogs
 
@@ -245,17 +268,28 @@ Technical information on AWS Cloudformation parameters can be seen at
 ### RunWebApp
 
 1. **Synopsis:**
-   Optionally, run a container that hosts the Senzing Entity Search Web App.
+   Optionally, run the
+   [entity-search-web-app](https://github.com/Senzing/entity-search-web-app)
+   which gives a web-based representation of data stored in the Senzing data model.
 1. **Required:** Yes
 1. **Type:** Boolean
 1. **Allowed values:**
    [ "Yes" | "No" ]
 1. **Example:**
 1. **Default:** Yes
-1. **References:**
-    1. [github.com/Senzing/entity-search-web-app](https://github.com/Senzing/entity-search-web-app)
 
 ### RunXterm
+
+1. **Synopsis:**
+   Optionally, run the
+   [Senzing Xterm](https://github.com/Senzing/docker-xterm)
+   which gives a web-base terminal useful in running command line programs.
+1. **Required:** Yes
+1. **Type:** Boolean
+1. **Allowed values:**
+   [ "Yes" | "No" ]
+1. **Example:**
+1. **Default:** Yes
 
 ### SenzingInputUrl
 
@@ -368,51 +402,94 @@ Technical information on AWS Cloudformation parameters can be seen at
 ## Outputs
 
 ### AccountID
-### CertificateArn
-### DatabaseHostCore
-
-FIXME: will need to be updated when clustering is enabled.
 
 1. **Synopsis:**
-   More information at [AWS RDS Console](https://console.aws.amazon.com/rds/home).
+   AWS account from which Cloudformation was deployed.
+
+### CertificateArn
+
+1. **Synopsis:**
+   Amazon Resource Name (ARN) of certificate used for SSL support.
+   More information at
+   [AWS LoadBalancer Console](https://console.aws.amazon.com/ec2/v2/home#LoadBalancers).
+   Select a load balancer, view the "Listeners" tab, then click "View/edit certificates".
+
+### DatabaseHostCore
+
+1. **Synopsis:**
+   One of three Senzing databases.
+   More information at
+   [AWS RDS Console](https://console.aws.amazon.com/rds/home).
 
 ### DatabaseHostLibfeat
 
-FIXME: will need to be updated when clustering is enabled.
-
 1. **Synopsis:**
-   More information at [AWS RDS Console](https://console.aws.amazon.com/rds/home).
+   Two of three Senzing databases.
+   More information at
+   [AWS RDS Console](https://console.aws.amazon.com/rds/home).
 
 ### DatabaseHostRes
 
-FIXME: will need to be updated when clustering is enabled.
-
 1. **Synopsis:**
-   More information at [AWS RDS Console](https://console.aws.amazon.com/rds/home).
+   Three of three Senzing databases.
+   More information at
+   [AWS RDS Console](https://console.aws.amazon.com/rds/home).
 
 ### DatabaseName
+
+1. **Synopsis:**
+   Name of database in each of the three databases.
+   More information at
+   [AWS RDS Console](https://console.aws.amazon.com/rds/home).
+
 ### DatabasePassword
+
+1. **Synopsis:**
+   Password to access database in each of the three databases.
+   More information at
+   [AWS RDS Console](https://console.aws.amazon.com/rds/home).
+
 ### DatabasePortCore
 
 1. **Synopsis:**
-   The port used to access each of the databases.
-   More information at [AWS RDS Console](https://console.aws.amazon.com/rds/home).
+   The port used to access the [DatabaseHostCore](#databasehostcore) database.
+   More information at
+   [AWS RDS Console](https://console.aws.amazon.com/rds/home).
 
 ### DatabasePortLibfeat
 
 1. **Synopsis:**
-   The port used to access each of the databases.
-   More information at [AWS RDS Console](https://console.aws.amazon.com/rds/home).
+   The port used to access the [DatabaseHostLibfeat](#databasehostlibfeat) database.
+   More information at
+   [AWS RDS Console](https://console.aws.amazon.com/rds/home).
 
 ### DatabasePortRes
 
 1. **Synopsis:**
-   The port used to access each of the databases.
-   More information at [AWS RDS Console](https://console.aws.amazon.com/rds/home).
+   The port used to access the [DatabaseHostRes](#databasehostres) database.
+   More information at
+   [AWS RDS Console](https://console.aws.amazon.com/rds/home).
 
 ### DatabaseUsername
+
+1. **Synopsis:**
+   Username to access database in each of the three databases.
+   More information at
+   [AWS RDS Console](https://console.aws.amazon.com/rds/home).
+
 ### Ec2Vpc
+
+1. **Synopsis:**
+   Identifier of the Virtual Private Cloud (VPC).
+   More information at
+   [AWS VPC Console](https://console.aws.amazon.com/vpc/home#vpcs:).
+
 ### Host
+
+   More information at
+   [AWS Load Balancers Console](https://console.aws.amazon.com/ec2/v2/home?region=us-east-1#LoadBalancers).
+   Select a load balancer, view the "Description" tab, view **DNS name**.
+
 ### Queue
 
 1. **Synopsis:**
@@ -430,18 +507,42 @@ FIXME: will need to be updated when clustering is enabled.
 ### QueueInfo
 
 1. **Synopsis:**
-   The queue from which records are ingested into Senzing Engine.
-   In otherwords, this is the queue where records are sent to be inserted into the Senzing Engine.
+   The queue to which "WithInfo" results are sent by the
+   [stream-loader](https://github.com/Senzing/stream-loader)
+   after ingesting records from the [Queue](#queue).
    More information at [AWS SQS Console](https://console.aws.amazon.com/sqs/v2/home?#/queues).
 
 ### SenzingVersion
+
+1. **Synopsis:**
+   The version of Senzing installed onto the AWS Elastic File System.
+   More information at [Senzing API Version History](https://senzing.com/releases/#api-releases).
+
 ### SshPassword
+
+1. **Synopsis:**
+   Password to be used when logging into the
+   [SSHD container](#runsshd).
+
 ### SshUsername
+
+1. **Synopsis:**
+   User ID to be used when logging into the
+   [SSHD container](#runsshd).
+
 ### SubnetPrivate1
+
 ### SubnetPrivate2
+
 ### SubnetPublic1
+
 ### SubnetPublic2
+
 ### UrlApiServer
+
+1. **Synopsis:**
+   A URL showing how to reach the
+   [Senzing API Server](https://github.com/Senzing/senzing-api-server).
 
 ### UrlApiServerHeartbeat
 
@@ -451,10 +552,22 @@ FIXME: will need to be updated when clustering is enabled.
    directly.
    The `/heartbeat` URI path simply demonstrates that the API server is responding.
    For more URIs, see
-   [SwaggerUrl output value](#swaggerurl).
+   [SwaggerUrl output value](#urlswagger).
 
 ### UrlJupyter
+
+1. **Synopsis:**
+   A URL showing how to reach the
+   [Senzing Jupyter notebooks](https://github.com/Senzing/docker-jupyter).
+
 ### UrlSwagger
+
+1. **Synopsis:**
+   A URL showing how to reach the
+   [swaggerapi/swagger-ui](https://github.com/swagger-api/swagger-ui)
+   for viewing the
+   [Senzing REST API OpenAPI document](https://github.com/Senzing/senzing-rest-api-specification).
+
 ### UrlWebApp
 
 1. **Synopsis:**
@@ -462,5 +575,24 @@ FIXME: will need to be updated when clustering is enabled.
    [Senzing Entity Search Web App](https://github.com/Senzing/entity-search-web-app).
 
 ### UrlXterm
+
+1. **Synopsis:**
+   A URL showing how to reach the
+   [Senzing Xterm](https://github.com/Senzing/docker-xterm).
+
 ### WebInitPassword
+
+1. **Synopsis:**
+   A one-time password for logging into AWS Cognito.
+   More information at
+   [AWS User Pools](https://console.aws.amazon.com/cognito/users/).
+   Select User Pool, select Users and Groups.
+
 ### WebUsername
+
+1. **Synopsis:**
+   The initial AWS Cognito user defined by the CloudFormation deployment.
+   Additional users can be created by viewing
+   more information at
+   [AWS User Pools](https://console.aws.amazon.com/cognito/users/).
+   Select User Pool, select "Users and Groups", select "Create user"
