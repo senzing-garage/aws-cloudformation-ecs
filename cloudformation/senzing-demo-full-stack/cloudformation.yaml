@@ -338,6 +338,8 @@ Mappings:
     StreamProducer:
       DataSource: TEST
       EntityType: GENERIC
+    Url:
+      Certificate: http://senzing.dockter.com/files/certificates/test-certificate-2.json
 
 
   VpcCidrs:
@@ -818,6 +820,7 @@ Resources:
        - !Ref IamRoleXterm
     Type: AWS::IAM::Policy
 
+
   IamPolicyCertificates:
     Properties:
       PolicyName: !Sub "${AWS::StackName}-iam-policy-certificates"
@@ -1058,20 +1061,24 @@ Resources:
         - StackNameAsLower: !GetAtt LambdaRunnerStackNameAsLower.OutputString
     Type: AWS::Logs::LogGroup
 
+
   LogsLogGroupLambdaCognitoCreateUser:
     Properties:
       LogGroupName: !Sub "/aws/lambda/${AWS::StackName}-lambda-cognito-create-user"
     Type: AWS::Logs::LogGroup
+
 
   LogsLogGroupLambdaGenerateCertificate:
     Properties:
       LogGroupName: !Sub "/aws/lambda/${AWS::StackName}-lambda-generate-certificate"
     Type: AWS::Logs::LogGroup
 
+
   LogsLogGroupLambdaRandomString:
     Properties:
       LogGroupName: !Sub "/aws/lambda/${AWS::StackName}-lambda-random-string"
     Type: AWS::Logs::LogGroup
+
 
   LogsLogGroupLambdaRunTask:
     Properties:
@@ -1982,55 +1989,6 @@ Resources:
     Type: AWS::Lambda::Function
 
 
-  LambdaFunctionGenerateCertificate01:
-    Properties:
-      Code:
-        ZipFile: |
-          #!/usr/bin/env python3
-
-          import boto3
-          import cfnresponse
-          import datetime
-          import json
-          import logging
-          import traceback
-          from json import JSONEncoder
-
-          logger = logging.getLogger()
-          logger.setLevel(logging.INFO)
-
-          class DateTimeEncoder(JSONEncoder):
-              def default(self, obj):
-                  if isinstance(obj, (datetime.date, datetime.datetime)):
-                      return obj.isoformat()
-
-          def handler(event, context):
-              result = cfnresponse.SUCCESS
-              response_data = {}
-              try:
-
-                  logger.info("Event: {0}".format(json.dumps(event)))
-                  logger.info("Response: {0}".format(json.dumps(response, cls=DateTimeEncoder)))
-
-              except Exception as e:
-                  logger.error(e)
-                  traceback.print_exc()
-                  result = cfnresponse.FAILED
-              finally:
-                  cfnresponse.send(event, context, result, response_data)
-
-      Description: Generate Public/Private key pair.
-      FunctionName: !Sub "${AWS::StackName}-lambda-generate-certificate-01"
-      Handler: index.handler
-      Role: !GetAtt IamRoleLambda.Arn
-      Runtime: python3.8
-      Tags:
-        - Key: Name
-          Value: !Sub "${AWS::StackName}-lambda-generate-certificate-01"
-      Timeout: 600
-    Type: AWS::Lambda::Function
-
-
   LambdaFunctionGenerateCertificate:
     Properties:
       Code:
@@ -2038,7 +1996,6 @@ Resources:
           #!/usr/bin/env python3
 
           import base64
-          import boto3
           import cfnresponse
           import datetime
           import json
@@ -2059,36 +2016,27 @@ Resources:
               result = cfnresponse.SUCCESS
               response_data = {}
               try:
-
-                  http_payload_json = "{}"
-                  with urllib.request.urlopen('http://senzing.dockter.com/files/certificates/test-certificate-2.json') as http_response:
-                     http_payload_json = http_response.read()
-                  http_payload_dict = json.loads(http_payload_json)
-
-                  logger.info("HTTP Payload: {0}".format(http_payload_json))
-                  logger.info("HTTP Payload as dictionary: {0}".format(http_payload_dict))
-
-                  certificate_encoded = http_payload_dict.get('certificate')
-                  certificate_decoded =  base64.b64decode(certificate_encoded)
-                  certificate_str = certificate_decoded.decode('utf-8')
-
-                  private_key_encoded = http_payload_dict.get('privateKey')
-                  private_key_decoded = base64.b64decode(private_key_encoded)
-                  private_key_str = private_key_decoded.decode('utf-8')
-
-                  logger.info("certificate_encoded type: {0} {1}".format(type(certificate_encoded), certificate_encoded))
-                  logger.info("certificate_decoded type: {0} {1}".format(type(certificate_decoded), certificate_decoded))
-                  logger.info("certificate_str     type: {0} {1}".format(type(certificate_str), certificate_str))
-
-                  logger.info("private_key_encoded type: {0} {1}".format(type(private_key_encoded), private_key_encoded))
-                  logger.info("private_key_decoded type: {0} {1}".format(type(private_key_decoded), private_key_decoded))
-                  logger.info("private_key_str     type: {0} {1}".format(type(private_key_str), private_key_str))
-
-                  response_data["CertificateBody"] = certificate_str
-                  response_data["PrivateKey"] = private_key_str
-
                   logger.info("Event: {0}".format(json.dumps(event)))
-                  logger.info("Response: {0}".format(json.dumps(response_data, cls=DateTimeEncoder)))
+                  if event['RequestType'] in ['Create', 'Update']:
+                      properties = event.get('ResourceProperties', {})
+                      certificate_url = properties.get('CertificateUrl')
+
+                      http_payload_json = "{}"
+                      with urllib.request.urlopen(certificate_url) as http_response:
+                          http_payload_json = http_response.read()
+                      http_payload_dict = json.loads(http_payload_json)
+
+                      certificate_b64_encoded = http_payload_dict.get('certificate', "")
+                      certificate_decoded = base64.b64decode(certificate_b64_encoded)
+                      certificate_str = certificate_decoded.decode('utf-8')
+                      response_data["CertificateBody"] = certificate_str
+
+                      private_key_b64_encoded = http_payload_dict.get('privateKey', "")
+                      private_key_decoded = base64.b64decode(private_key_b64_encoded)
+                      private_key_str = private_key_decoded.decode('utf-8')
+                      response_data["PrivateKey"] = private_key_str
+
+                      logger.info("Response: {0}".format(json.dumps(response_data, cls=DateTimeEncoder)))
 
               except Exception as e:
                   logger.error(e)
@@ -2567,6 +2515,7 @@ Resources:
 
   LambdaRunnerGenerateCertificate:
     Properties:
+      CertificateUrl: !FindInMap [Constants, Url, Certificate]
       ClusterId: !Ref EcsCluster
       ServiceToken: !GetAtt LambdaFunctionGenerateCertificate.Arn
       Tags:
