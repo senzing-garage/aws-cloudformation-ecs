@@ -59,7 +59,7 @@ Metadata:
       CognitoAdminEmail:
         default: 'Required: Email address for initial user.'
       Route53HostedZoneId:
-        default: 'Optional: Specifing a hosted zone enables HTTPS.'
+        default: 'Required: Specify a hosted zone.'
       RunStreamProducer:
         default: 'Optional: Would you like to have sample data imported?'
       SenzingLicenseAsBase64:
