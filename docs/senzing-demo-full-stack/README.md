@@ -88,7 +88,7 @@ describing where we can improve.   Now on with the show...
 
 ### Launch AWS Cloudformation
 
-1. Visit [AWS Cloudformation with Senzing template](https://console.aws.amazon.com/cloudformation/home#/stacks/new?templateURL=https://s3-us-west-1.amazonaws.com/cf-templates-xoqvergspzx7-us-west-1/2020357pXi-cloudformation.yaml).
+1. Visit [AWS Cloudformation with Senzing template](https://console.aws.amazon.com/cloudformation/home#/stacks/new?templateURL=https://public-read-access.s3.amazonaws.com/aws-cloudformation-ecs-full-stack/cloudformation.yaml).
 1. In lower-right, click on "Next" button.
 1. In **Specify stack details**
     1. In **Stack name**
