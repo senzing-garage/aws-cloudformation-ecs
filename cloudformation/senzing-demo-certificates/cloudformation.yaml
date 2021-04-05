@@ -7,7 +7,7 @@ AWSTemplateFormatVersion: 2010-09-09
 #     aws cloudformation validate-template: https://awscli.amazonaws.com/v2/documentation/api/latest/reference/cloudformation/validate-template.html
 
 Description: >-
-  Senzing aws-cloudformation-ecs-senzing-demo-hosted-zone Version: 0.1.0
+  Senzing aws-cloudformation-ecs-senzing-demo-certificate Version: 0.1.0
   For more information see https://github.com/Senzing/aws-cloudformation-ecs
 
 # -----------------------------------------------------------------------------
@@ -16,14 +16,8 @@ Description: >-
 # -----------------------------------------------------------------------------
 
 Metadata:
-
   AWS::CloudFormation::Interface:
     ParameterGroups:
-      -
-        Label:
-          default: Acknowledge insecure system
-        Parameters:
-          - AcknowledgeInsecureSystem
       -
         Label:
           default: Senzing installation
@@ -34,38 +28,25 @@ Metadata:
         Label:
           default: Security
         Parameters:
-          - CognitoAdminEmail
           - CidrInbound
-          - Route53HostedZoneId
-      -
-        Label:
-          default: Options
-        Parameters:
-          - RunStreamProducer
+          - CertificateBody
+          - PrivateKey
     ParameterLabels:
       AcceptEula:
         default: >-
           Required: If you accept the Senzing End User License Agreements at
           https://senzing.com/end-user-license-agreement,
           enter 'I_ACCEPT_THE_SENZING_EULA'.
-      AcknowledgeInsecureSystem:
-        default: >-
-          A default deployment of this template is for public demonstration only.
-          Before using authentic PII, ensure the security of your deployment.
-          The security of this deployment is your responsibility.
-          To acknowledge your understanding and acceptance of the foregoing, type “I AGREE”.
+      CertificateBody:
+        default: 'Certificate body.'
       CidrInbound:
         default: 'Required: Allowed inbound connections using CIDR notation.'
-      CognitoAdminEmail:
-        default: 'Required: Email address for initial user.'
-      Route53HostedZoneId:
-        default: 'Required: Specify a hosted zone.'
-      RunStreamProducer:
-        default: 'Optional: Would you like to have sample data imported?'
       SenzingLicenseAsBase64:
         default: >-
           Required if inserting more than 100K records.
           Senzing license as base64 encoded string.
+      PrivateKey:
+        default: 'Private key.'
 
 # -----------------------------------------------------------------------------
 # Parameters
@@ -78,51 +59,84 @@ Parameters:
     AllowedPattern: '.+|^I_ACCEPT_THE_SENZING_EULA$'
     ConstraintDescription: AcceptEula parameter must be 'I_ACCEPT_THE_SENZING_EULA'
     Default: '_'
-    Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-hosted-zone/#accepteula'
+    Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#accepteula'
     Type: String
 
-
-  AcknowledgeInsecureSystem:
-    AllowedPattern: '.+|^I AGREE$'
-    ConstraintDescription: AcknowledgeInsecureSystem parameter must be 'I AGREE'
-    Default: '_'
-    Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-hosted-zone/#acknowledgeinsecuresystem'
+  CertificateBody:
     Type: String
-
+    Description: The body of self signed certificate
+    Default: |
+      -----BEGIN CERTIFICATE-----
+      MIIEHTCCAwWgAwIBAgIDAJojMA0GCSqGSIb3DQEBCwUAMIGLMQswCQYDVQQGEwJV
+      UzETMBEGA1UECAwKQ2FsaWZvcm5pYTEWMBQGA1UEBwwNU2FuIEZyYW5jaXNjbzEX
+      MBUGA1UECgwOTXlPcmdhbml6YXRpb24xHTAbBgNVBAsMFE15T3JnYW5pemF0aW9u
+      YWxVbml0MRcwFQYDVQQDDA5NeSBvd24gUm9vdCBDQTAeFw0yMTAzMTExNTAwNDla
+      Fw0zMDAzMDkxNTAwNDlaMIGIMQswCQYDVQQGEwJVUzETMBEGA1UECAwKQ2FsaWZv
+      cm5pYTEWMBQGA1UEBwwNU2FuIEZyYW5jaXNjbzEXMBUGA1UECgwOTXlPcmdhbml6
+      YXRpb24xHTAbBgNVBAsMFE15T3JnYW5pemF0aW9uYWxVbml0MRQwEgYDVQQDDAtl
+      eGFtcGxlLmNvbTCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAMnKQhQG
+      pRuxcO5RF8VMyAmWe4rs4XWeodVQflYtJVY+mCg/JidmgYe1EYXvE2Qqf1Xzi2O2
+      oEJJSAs/s+Wb91yzunnoHVR/5uTHdjN2e6HRhEmUFlJuconjlmBxVKe1LG4Ra8yr
+      JA+E0tS2kzrGCLNcFpghQ982GJjuvRWm9nAAsCJPm7N8a/Gm1opMdUkiH1b/3d47
+      0wugisz6fYRHQ61UIYfjNUWlg/tV1thGOScAB2RyusQJdTB422BQAlpD4TTX8uj8
+      Wd0GhYjpM8DWWpSUOFsoYOHBc3bPr7ctpOoIG8gZcs56zDwZi9CVda4viS/8HPnC
+      r8jXaQW1pqwP8ekCAwEAAaOBijCBhzAJBgNVHRMEAjAAMB0GA1UdDgQWBBTaOaPu
+      XmtLDTJVv++VYBiQr9gHCTAfBgNVHSMEGDAWgBTaOaPuXmtLDTJVv++VYBiQr9gH
+      CTATBgNVHSUEDDAKBggrBgEFBQcDATALBgNVHQ8EBAMCB4AwGAYDVR0RBBEwD4IN
+      Ki5leGFtcGxlLmNvbTANBgkqhkiG9w0BAQsFAAOCAQEAWIZu4sma7MmWTXSMwKSP
+      stQDWdIvcwthD8ozHkLsNdl5eKqOEndAc0wb7mSk1z8rRkSsd0D0T2zaKyduCYrs
+      eBAMhS2+NnHWcXxhn0VOkmXhw5kO8Un14KIptRH0y8FIqHMJ8LrSiK9g9fWCRlI9
+      g7eBipu43hzGyMiBP3K0EQ4m49QXlIEwG3OIWak5hdR29h3cD6xXMXaUtlOswsAN
+      3PDG/gcjZWZpkwPlaVzwjV8MRsYLmQIYdHPr/qF1FWddYPvK89T0nzpgiuFdBOTY
+      W6I1TeTAXFXG2Qf4trXsh5vsFNAisxlRF3mkpixYP5OmVXTOyN7cCOSPOUh6Uctv
+      eg==
+      -----END CERTIFICATE-----
 
   CidrInbound:
     AllowedPattern: '(?:\d{1,3}\.){3}\d{1,3}(?:/\d\d?)?'
     ConstraintDescription: Inbound CIDR must be in the format n.n.n.n/n
     Default: 0.0.0.0/0
-    Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-hosted-zone/#cidrinbound'
+    Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#cidrinbound'
     Type: String
 
-
-  CognitoAdminEmail:
+  PrivateKey:
     Type: String
-    Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-hosted-zone/#cognitoadminemail'
-
-
-  Route53HostedZoneId:
-    Default: ''
-    Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-hosted-zone/#route53hostedzoneid'
-    Type: AWS::Route53::HostedZone::Id
-
-
-  RunStreamProducer:
-    AllowedValues:
-      - 'No'
-      - 'Yes'
-    Default: 'Yes'
-    Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-hosted-zone/#runstreamproducer'
-    Type: String
-
+    Description: Te private key of certificate
+    Default: |
+      -----BEGIN PRIVATE KEY-----
+      MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQDJykIUBqUbsXDu
+      URfFTMgJlnuK7OF1nqHVUH5WLSVWPpgoPyYnZoGHtRGF7xNkKn9V84tjtqBCSUgL
+      P7Plm/dcs7p56B1Uf+bkx3Yzdnuh0YRJlBZSbnKJ45ZgcVSntSxuEWvMqyQPhNLU
+      tpM6xgizXBaYIUPfNhiY7r0VpvZwALAiT5uzfGvxptaKTHVJIh9W/93eO9MLoIrM
+      +n2ER0OtVCGH4zVFpYP7VdbYRjknAAdkcrrECXUweNtgUAJaQ+E01/Lo/FndBoWI
+      6TPA1lqUlDhbKGDhwXN2z6+3LaTqCBvIGXLOesw8GYvQlXWuL4kv/Bz5wq/I12kF
+      taasD/HpAgMBAAECggEAKePgBdI/UllqrT6OZboDyOHBcdytDULKK8NTBsbGenny
+      EmDRpdpEx4xSP/CaoO+lkY1GgYO3DyuxVgx6Zw8Ssd7ptkb2V8VZhGLX6eUN01Dw
+      WmnwnForUu65F/pO7aXRvGPHciyRBtu2/MuOEuRrh/h1BE3bjinnv0/IVwdbH3LW
+      pLiJoxzlSJDDomaIAOtB3u6Lw1/6kXiYT9lvXnUpBzR+1uMApTPQN0NJuxLiA0Rs
+      es2kBTZ/weEQW+GeJaSYmEXX9zCKGMVCq5EZfS3sH0TrkDENVqW40J+OF3Ee6r12
+      CoWLWkC+DPtfHvwh1zp89HFYZ7I6lyycBb31yHb1kQKBgQDuURbpgWxP7XaSgPuI
+      6rv2ApjZQav58kNj1K1pRIcnoZsfz3LX3xfft0PKyoKDmndN8nS9KKL9T//XIBaO
+      PeD3XzlSvQQ/SvNdaBHqOzkkwldGng3swR3c8RELoaKU9yBdhlMFYXkZsIp5hZgG
+      MPVdihamFfUk9J/sdYAr9vjnVQKBgQDYw1TWyBi4UTkMox62hqSUgWw3llaliHkP
+      tEinMKF3i0oZzGzWDIHV9YoPPuu2L5cy+j2wLe8r6DWvsKd0dqeNS/yXYj7eIDVz
+      fff9SmP25RdtV8h6fkAiLD708G7P0w94G+LhakuVpeTpMNSDPWUk6bl+K81ZRvm6
+      DKS7aOM4RQKBgEhQFrG38dO27Fm8BZcgEvStCRAzWym2lzg9mnjssE4YPWfDnMdg
+      DHB3vXxVQpEIV9cxELctE3flxG3UcMOshwzIui4e6KED7yCSqYz3d3lt9umYoAUM
+      /DDEfTWYUCr/abS3Q43Ia+SdqwcAwIZwaKN/eSvgUchq6fPoG4I7qH8ZAoGBAMRS
+      ndtuHZ2Kyw3cC6wrZJKwabAq9M02PtdvZMIwdH3OZU3abdSsPUfo/KL0TQ6UKfBc
+      31RbNhzhUwaODAyajwSVhvAhZmlOaLryo5IAN2vdcAtzjzsKb9HDmz3DKcoHEiKp
+      tyKMYGrodtyRglhfWeVF3uAckf9DHllYrDalN+61AoGAP9OrCgoDnjtTasFzibZ8
+      jb+xYG9E42smB2gep03Jj8l5gqnWTFh0TyA1Z7+RJNvSzkqK8bU/uAH/TgJAqviE
+      7XA7a2yuaf/Ww4vToy5bo1HqhQBak1PP2wzuWiUkJcyTRTGryLvnIR9fDonJ9TAd
+      0GsjqdfyAqjsvycLNvwR0wk=
+      -----END PRIVATE KEY-----
 
   SenzingLicenseAsBase64:
 #   AllowedPattern: ' ^$|[^-A-Za-z0-9+\/=\s]|=[^=]|={3,}$'
-    ConstraintDescription: 'Must contain only Base64 characters. see http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-full-stack#senzinglicenseasbase64'
+    ConstraintDescription: 'Must contain only Base64 characters. see http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/senzing-demo-full-stack#senzinglicenseasbase64'
     Default: ' '
-    Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-hosted-zone/#senzinglicenseasbase64'
+    Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#senzinglicenseasbase64'
     Type: String
 
 # -----------------------------------------------------------------------------
@@ -131,7 +145,6 @@ Parameters:
 # -----------------------------------------------------------------------------
 
 Rules:
-
   ConfirmEula:
     Assertions:
       - Assert: !Not
@@ -143,14 +156,6 @@ Rules:
           - !Ref AcceptEula
           - I_ACCEPT_THE_SENZING_EULA
         AssertDescription: 'EULA acceptance incorrect.  Enter "I_ACCEPT_THE_SENZING_EULA"'
-
-
-  ConfirmAcknowledgeInsecureSystem:
-    Assertions:
-      - Assert: !Equals
-          - !Ref AcknowledgeInsecureSystem
-          - 'I AGREE'
-        AssertDescription: 'Entering "I AGREE" is required to proceed.'
 
 # -----------------------------------------------------------------------------
 # Mappings
@@ -169,21 +174,17 @@ Mappings:
       Redoer: Yes
       Sshd: Yes
       StreamLoader: Yes
+      StreamProducer: Yes
       Swagger: Yes
       VpcFlowLogs: No
       WebApp: Yes
       Xterm: Yes
-    Senzing:
-      Version: senzingapi-2.4.1-21064
     Stack:
       Name: hosted-zone
     StreamProducer:
-      DataSource: TEST
-      EntityType: GENERIC
-      InputUrl: https://s3.amazonaws.com/public-read-access/TestDataSets/SenzingTruthSet/truth-set.json
-      RecordMax: 0
+      InputUrl: https://public-read-access.s3.amazonaws.com/TestDataSets/test-dataset-100m.json.gz
+      RecordMax: 20000
       RecordMin: 0
-
 
   VpcCidrs:
     vpc:
@@ -204,26 +205,13 @@ Mappings:
 
 Conditions:
 
-  IfRoute53HostedZoneId: !Not
-    - !Equals
-      - !Ref Route53HostedZoneId
-      - ''
-
   IfRunApiServer: !Equals
     - !FindInMap [Constants, Run, ApiServer]
     - Yes
 
-  IfRunApiServerHttps: !And
-    - !Condition IfRoute53HostedZoneId
-    - !Condition IfRunApiServer
-
   IfRunJupyter: !Equals
     - !FindInMap [Constants, Run, Jupyter]
     - Yes
-
-  IfRunJupyterHttps: !And
-    - !Condition IfRoute53HostedZoneId
-    - !Condition IfRunJupyter
 
   IfRunRedoer: !Equals
     - !FindInMap [Constants, Run, Redoer]
@@ -238,16 +226,12 @@ Conditions:
     - Yes
 
   IfRunStreamProducer: !Equals
-    - !Ref RunStreamProducer
-    - 'Yes'
+    - !FindInMap [Constants, Run, StreamProducer]
+    - Yes
 
   IfRunSwagger: !Equals
     - !FindInMap [Constants, Run, Swagger]
     - Yes
-
-  IfRunSwaggerHttps: !And
-    - !Condition IfRoute53HostedZoneId
-    - !Condition IfRunSwagger
 
   IfRunVpcFlowLogs: !Equals
     - !FindInMap [Constants, Run, VpcFlowLogs]
@@ -257,17 +241,9 @@ Conditions:
     - !FindInMap [Constants, Run, WebApp]
     - Yes
 
-  IfRunWebAppHttps: !And
-    - !Condition IfRoute53HostedZoneId
-    - !Condition IfRunWebApp
-
   IfRunXterm: !Equals
     - !FindInMap [Constants, Run, Xterm]
     - Yes
-
-  IfRunXtermHttps: !And
-    - !Condition IfRoute53HostedZoneId
-    - !Condition IfRunXterm
 
 # -----------------------------------------------------------------------------
 # Resources
@@ -275,54 +251,6 @@ Conditions:
 # -----------------------------------------------------------------------------
 
 Resources:
-
-# -- Ssm -----------------------------------------------------------------
-
-# https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ssm-parameter.html
-
-  SsmParameterSenzingEngineConfigurationJson:
-    Properties:
-      Name: !Sub "${AWS::StackName}-ssm-parameter-senzing-engine-configuration-json"
-      Type: String
-      Value: !Sub
-        - >-
-          {
-              "PIPELINE": {
-                  "CONFIGPATH": "/etc/opt/senzing",
-                  "RESOURCEPATH": "/opt/senzing/g2/resources",
-                  "SUPPORTPATH": "/opt/senzing/data"
-              },
-              "SQL": {
-                  "BACKEND": "HYBRID",
-                  "CONNECTION":"postgresql://${DatabaseUsername}:${DatabasePassword}@${DatabaseHostCore}:${DatabasePortCore}:${DatabaseName}"
-              },
-              "C1": {
-                  "CLUSTER_SIZE": "1",
-                  "DB_1": "postgresql://${DatabaseUsername}:${DatabasePassword}@${DatabaseHostRes}:${DatabasePortRes}:${DatabaseName}"
-              },
-              "C2": {
-                  "CLUSTER_SIZE": "1",
-                  "DB_1": "postgresql://${DatabaseUsername}:${DatabasePassword}@${DatabaseHostLibfeat}:${DatabasePortLibfeat}:${DatabaseName}"
-              },
-              "HYBRID": {
-                  "LIB_FEAT": "C2",
-                  "LIB_FEAT_HKEY": "C2",
-                  "RES_FEAT": "C1",
-                  "RES_FEAT_EKEY": "C1",
-                  "RES_FEAT_LKEY": "C1",
-                  "RES_FEAT_STAT": "C1"
-              }
-          }
-        - DatabaseHostLibfeat: !GetAtt RdsDbClusterLibfeat.Endpoint.Address
-          DatabaseHostCore: !GetAtt RdsDbClusterCore.Endpoint.Address
-          DatabaseHostRes: !GetAtt RdsDbClusterRes.Endpoint.Address
-          DatabaseName: !FindInMap [Constants, Database, Name]
-          DatabasePassword: !GetAtt LambdaRunnerDbPassword.RandomString
-          DatabasePortLibfeat: !GetAtt RdsDbClusterLibfeat.Endpoint.Port
-          DatabasePortCore: !GetAtt RdsDbClusterCore.Endpoint.Port
-          DatabasePortRes: !GetAtt RdsDbClusterRes.Endpoint.Port
-          DatabaseUsername: !FindInMap [Constants, Database, Username]
-    Type: AWS::SSM::Parameter
 
 # -- Iam -----------------------------------------------------------------
 
@@ -382,25 +310,6 @@ Resources:
       Tags:
         - Key: Name
           Value: !Sub "${AWS::StackName}-iam-role-flow-log"
-    Type: AWS::IAM::Role
-
-
-  IamRoleG2ConfigTool:
-    Properties:
-      AssumeRolePolicyDocument:
-        Statement:
-          -
-            Action:
-              - sts:AssumeRole
-            Effect: Allow
-            Principal:
-              Service:
-                - ecs-tasks.amazonaws.com
-        Version: '2012-10-17'
-      Description: !Sub "${AWS::StackName}-iam-role-g2configtool"
-      Tags:
-        - Key: Name
-          Value: !Sub "${AWS::StackName}-iam-role-g2configtool"
     Type: AWS::IAM::Role
 
 
@@ -678,14 +587,14 @@ Resources:
     Type: AWS::IAM::Policy
 
 
-  IamPolicyCognito:
+  IamPolicyCertificates:
     Properties:
-      PolicyName: !Sub "${AWS::StackName}-iam-policy-cognito"
+      PolicyName: !Sub "${AWS::StackName}-iam-policy-certificates"
       PolicyDocument:
         Statement:
           -
             Action:
-              - cognito-idp:AdminCreateUser
+              - iam:UploadServerCertificate
             Effect: Allow
             Resource:
               - '*'
@@ -693,7 +602,23 @@ Resources:
       Roles:
        - !Ref IamRoleLambda
        - !Ref IamRoleSwagger
-       - !Ref IamRoleXterm
+    Type: AWS::IAM::Policy
+
+
+  IamPolicyEfs:
+    Properties:
+      PolicyName: !Sub "${AWS::StackName}-iam-policy-lambda"
+      PolicyDocument:
+        Statement:
+          -
+            Action:
+              - elasticfilesystem:DescribeMountTargets
+            Effect: Allow
+            Resource:
+              - !GetAtt EfsFileSystem.Arn
+        Version: '2012-10-17'
+      Roles:
+       - !Ref IamRoleLambda
     Type: AWS::IAM::Policy
 
 
@@ -718,23 +643,6 @@ Resources:
     Type: AWS::IAM::Policy
 
 
-  IamPolicyEfs:
-    Properties:
-      PolicyName: !Sub "${AWS::StackName}-iam-policy-lambda"
-      PolicyDocument:
-        Statement:
-          -
-            Action:
-              - elasticfilesystem:DescribeMountTargets
-            Effect: Allow
-            Resource:
-              - !GetAtt EfsFileSystem.Arn
-        Version: '2012-10-17'
-      Roles:
-       - !Ref IamRoleLambda
-    Type: AWS::IAM::Policy
-
-
   IamPolicyLoggingCreateStream:
     Properties:
       PolicyName: !Sub "${AWS::StackName}-iam-policy-logging-create-stream"
@@ -751,7 +659,6 @@ Resources:
       Roles:
        - !Ref IamRoleApiServer
        - !Ref IamRoleFlowLog
-       - !Ref IamRoleG2ConfigTool
        - !Ref IamRoleInitEfs
        - !Ref IamRoleInitPostgres
        - !Ref IamRoleInitSenzing
@@ -782,7 +689,6 @@ Resources:
         Version: '2012-10-17'
       Roles:
        - !Ref IamRoleFlowLog
-       - !Ref IamRoleG2ConfigTool
        - !Ref IamRoleInitEfs
        - !Ref IamRoleLambda
        - !Ref IamRoleStreamProducer
@@ -839,10 +745,8 @@ Resources:
             Resource:
               - !GetAtt SqsQueue.Arn
               - !GetAtt SqsQueueDeadLetter.Arn
-              - !GetAtt SqsQueueInfo.Arn
         Version: '2012-10-17'
       Roles:
-       - !Ref IamRoleStreamLoader
        - !Ref IamRoleStreamProducer
     Type: AWS::IAM::Policy
 
@@ -862,7 +766,6 @@ Resources:
         Version: '2012-10-17'
       Roles:
        - !Ref IamRoleApiServer
-       - !Ref IamRoleG2ConfigTool
        - !Ref IamRoleJupyter
        - !Ref IamRoleLambda
        - !Ref IamRoleRedoer
@@ -877,13 +780,19 @@ Resources:
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-logs-loggroup.html
 
+  LogsLogGroupMain:
+    Properties:
+      LogGroupName: !Sub
+        - "/senzing/${StackName}/${AWS::StackName}"
+        - StackName: !FindInMap [Constants, Stack, Name]
+    Type: AWS::Logs::LogGroup
+
   LogsLogGroupDbClusterCore:
     Properties:
       LogGroupName: !Sub
         - "/aws/rds/cluster/${StackNameAsLower}-aurora-senzing-cluster-core/postgresql"
         - StackNameAsLower: !GetAtt LambdaRunnerStackNameAsLower.OutputString
     Type: AWS::Logs::LogGroup
-
 
   LogsLogGroupDbClusterLibfeat:
     Properties:
@@ -892,7 +801,6 @@ Resources:
         - StackNameAsLower: !GetAtt LambdaRunnerStackNameAsLower.OutputString
     Type: AWS::Logs::LogGroup
 
-
   LogsLogGroupDbClusterRes:
     Properties:
       LogGroupName: !Sub
@@ -900,56 +808,29 @@ Resources:
         - StackNameAsLower: !GetAtt LambdaRunnerStackNameAsLower.OutputString
     Type: AWS::Logs::LogGroup
 
-
-  LogsLogGroupLambdaCognitoCreateUser:
-    Condition: IfRoute53HostedZoneId
-    Properties:
-      LogGroupName: !Sub "/aws/lambda/${AWS::StackName}-lambda-cognito-create-user"
-    Type: AWS::Logs::LogGroup
-
-
-  LogsLogGroupLambdaFindDomainName:
-    Condition: IfRoute53HostedZoneId
-    Properties:
-      LogGroupName: !Sub "/aws/lambda/${AWS::StackName}-lambda-find-domain-name"
-    Type: AWS::Logs::LogGroup
-
-
   LogsLogGroupLambdaRandomString:
     Properties:
       LogGroupName: !Sub "/aws/lambda/${AWS::StackName}-lambda-random-string"
     Type: AWS::Logs::LogGroup
-
 
   LogsLogGroupLambdaRunTask:
     Properties:
       LogGroupName: !Sub "/aws/lambda/${AWS::StackName}-lambda-run-task"
     Type: AWS::Logs::LogGroup
 
-
   LogsLogGroupLambdaRunTaskAndWait:
     Properties:
       LogGroupName: !Sub "/aws/lambda/${AWS::StackName}-lambda-run-task-and-wait"
     Type: AWS::Logs::LogGroup
-
 
   LogsLogGroupLambdaStringToLower:
     Properties:
       LogGroupName: !Sub "/aws/lambda/${AWS::StackName}-lambda-string-to-lower"
     Type: AWS::Logs::LogGroup
 
-
   LogsLogGroupLambdaWaitForEfs:
     Properties:
       LogGroupName: !Sub "/aws/lambda/${AWS::StackName}-lambda-wait-for-efs"
-    Type: AWS::Logs::LogGroup
-
-
-  LogsLogGroupMain:
-    Properties:
-      LogGroupName: !Sub
-        - "/senzing/${StackName}/${AWS::StackName}"
-        - StackName: !FindInMap [Constants, Stack, Name]
     Type: AWS::Logs::LogGroup
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-flowlog.html
@@ -987,40 +868,6 @@ Resources:
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-subnet.html
 
-  Ec2SubnetPrivate1:
-    Properties:
-      AvailabilityZone: !Select
-          - '0'
-          - !GetAZs
-            Ref: AWS::Region
-      CidrBlock: !FindInMap
-        - VpcCidrs
-        - privsubnet1
-        - cidr
-      Tags:
-        - Key: Name
-          Value: !Sub "${AWS::StackName}-ec2-subnet-private-1"
-      VpcId: !Ref Ec2Vpc
-    Type: AWS::EC2::Subnet
-
-
-  Ec2SubnetPrivate2:
-    Properties:
-      AvailabilityZone: !Select
-          - '1'
-          - !GetAZs
-            Ref: AWS::Region
-      CidrBlock: !FindInMap
-        - VpcCidrs
-        - privsubnet2
-        - cidr
-      Tags:
-        - Key: Name
-          Value: !Sub "${AWS::StackName}-ec2-subnet-private-2"
-      VpcId: !Ref Ec2Vpc
-    Type: AWS::EC2::Subnet
-
-
   Ec2SubnetPublic1:
     Properties:
       AvailabilityZone: !Select
@@ -1054,6 +901,40 @@ Resources:
       VpcId: !Ref Ec2Vpc
     Type: AWS::EC2::Subnet
 
+
+  Ec2SubnetPrivate1:
+    Properties:
+      AvailabilityZone: !Select
+          - '0'
+          - !GetAZs
+            Ref: AWS::Region
+      CidrBlock: !FindInMap
+        - VpcCidrs
+        - privsubnet1
+        - cidr
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-ec2-subnet-private-1"
+      VpcId: !Ref Ec2Vpc
+    Type: AWS::EC2::Subnet
+
+
+  Ec2SubnetPrivate2:
+    Properties:
+      AvailabilityZone: !Select
+          - '1'
+          - !GetAZs
+            Ref: AWS::Region
+      CidrBlock: !FindInMap
+        - VpcCidrs
+        - privsubnet2
+        - cidr
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-ec2-subnet-private-2"
+      VpcId: !Ref Ec2Vpc
+    Type: AWS::EC2::Subnet
+
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-ec2-eip.html
 
   Ec2Eip:
@@ -1076,6 +957,7 @@ Resources:
     Type: AWS::EC2::NatGateway
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-ec2-security-group.html
+
 
   Ec2SecurityGroupInternal:
     Properties:
@@ -1227,7 +1109,7 @@ Resources:
           ToPort: 8250
       Tags:
         - Key: Name
-          Value: !Sub "${AWS::StackName}-ec2-security-group-alb-private"
+          Value: !Sub "${AWS::StackName}-ec2-security-group-load-balancer-private"
       VpcId: !Ref Ec2Vpc
     Type: AWS::EC2::SecurityGroup
 
@@ -1242,7 +1124,7 @@ Resources:
           IpProtocol: '-1'
       Tags:
         - Key: Name
-          Value: !Sub "${AWS::StackName}-ec2-security-group-alb-public"
+          Value: !Sub "${AWS::StackName}-ec2-security-group-load-balancer-public"
       VpcId: !Ref Ec2Vpc
     Type: AWS::EC2::SecurityGroup
 
@@ -1263,7 +1145,18 @@ Resources:
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-ec2-security-group-ingress.html
 
-  Ec2SecurityGroupIngressApiServerPublic:
+  Ec2SecurityGroupHttps:
+    Properties:
+      CidrIp: !Ref CidrInbound
+      Description: HTTPS
+      FromPort: 443
+      GroupId: !Ref Ec2SecurityGroupLoadBalancerPublic
+      IpProtocol: tcp
+      ToPort: 443
+    Type: AWS::EC2::SecurityGroupIngress
+
+
+  Ec2SecurityGroupIngresApiServerPublic:
     Condition: IfRunApiServer
     Properties:
       CidrIp: !Ref CidrInbound
@@ -1275,19 +1168,7 @@ Resources:
     Type: AWS::EC2::SecurityGroupIngress
 
 
-  Ec2SecurityGroupIngressHttps:
-    Condition: IfRoute53HostedZoneId
-    Properties:
-      CidrIp: !Ref CidrInbound
-      Description: HTTPS
-      FromPort: 443
-      GroupId: !Ref Ec2SecurityGroupLoadBalancerPublic
-      IpProtocol: tcp
-      ToPort: 443
-    Type: AWS::EC2::SecurityGroupIngress
-
-
-  Ec2SecurityGroupIngressJupyter:
+  Ec2SecurityGroupIngresJupyter:
     Condition: IfRunJupyter
     Properties:
       CidrIp: !Ref CidrInbound
@@ -1299,7 +1180,7 @@ Resources:
     Type: AWS::EC2::SecurityGroupIngress
 
 
-  Ec2SecurityGroupIngressSsh:
+  Ec2SecurityGroupIngresSsh:
     Condition: IfRunSshd
     Properties:
       CidrIp: !Ref CidrInbound
@@ -1311,8 +1192,8 @@ Resources:
     Type: AWS::EC2::SecurityGroupIngress
 
 
-  Ec2SecurityGroupIngressSwagger:
-    Condition: IfRunSwaggerHttps
+  Ec2SecurityGroupIngresSwagger:
+    Condition: IfRunSwagger
     Properties:
       Description: Allow Health Check on Container 8080 from ALB
       FromPort: 8080
@@ -1323,7 +1204,7 @@ Resources:
     Type: AWS::EC2::SecurityGroupIngress
 
 
-  Ec2SecurityGroupIngressWebApp:
+  Ec2SecurityGroupIngresWebApp:
     Condition: IfRunWebApp
     Properties:
       CidrIp: !Ref CidrInbound
@@ -1335,8 +1216,8 @@ Resources:
     Type: AWS::EC2::SecurityGroupIngress
 
 
-  Ec2SecurityGroupIngressXterm:
-    Condition: IfRunXtermHttps
+  Ec2SecurityGroupIngresXterm:
+    Condition: IfRunXterm
     Properties:
       Description: Allow Health Check on Container 5000 from ALB
       FromPort: 5000
@@ -1365,15 +1246,6 @@ Resources:
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-route-table.html
 
-  Ec2RouteTablePrivate:
-    Properties:
-      Tags:
-        - Key: Name
-          Value: !Sub "${AWS::StackName}-ec2-route-table-private"
-      VpcId: !Ref Ec2Vpc
-    Type: AWS::EC2::RouteTable
-
-
   Ec2RouteTablePublic:
     Properties:
       Tags:
@@ -1382,15 +1254,16 @@ Resources:
       VpcId: !Ref Ec2Vpc
     Type: AWS::EC2::RouteTable
 
-# https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-route.html
 
-  Ec2RoutePrivate:
+  Ec2RouteTablePrivate:
     Properties:
-      DestinationCidrBlock: 0.0.0.0/0
-      NatGatewayId: !Ref Ec2NatGateway
-      RouteTableId: !Ref Ec2RouteTablePrivate
-    Type: AWS::EC2::Route
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-ec2-route-table-private"
+      VpcId: !Ref Ec2Vpc
+    Type: AWS::EC2::RouteTable
 
+# https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-route.html
 
   Ec2RoutePublic:
     DependsOn:
@@ -1401,21 +1274,15 @@ Resources:
       RouteTableId: !Ref Ec2RouteTablePublic
     Type: AWS::EC2::Route
 
+
+  Ec2RoutePrivate:
+    Properties:
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref Ec2NatGateway
+      RouteTableId: !Ref Ec2RouteTablePrivate
+    Type: AWS::EC2::Route
+
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-subnet-route-table-assoc.html
-
-  Ec2SubnetRouteTableAssociationPrivate1:
-    Properties:
-      RouteTableId: !Ref Ec2RouteTablePrivate
-      SubnetId: !Ref Ec2SubnetPrivate1
-    Type: AWS::EC2::SubnetRouteTableAssociation
-
-
-  Ec2SubnetRouteTableAssociationPrivate2:
-    Properties:
-      RouteTableId: !Ref Ec2RouteTablePrivate
-      SubnetId: !Ref Ec2SubnetPrivate2
-    Type: AWS::EC2::SubnetRouteTableAssociation
-
 
   Ec2SubnetRouteTableAssociationPublic1:
     Properties:
@@ -1428,6 +1295,20 @@ Resources:
     Properties:
       RouteTableId: !Ref Ec2RouteTablePublic
       SubnetId: !Ref Ec2SubnetPublic2
+    Type: AWS::EC2::SubnetRouteTableAssociation
+
+
+  Ec2SubnetRouteTableAssociationPrivate1:
+    Properties:
+      RouteTableId: !Ref Ec2RouteTablePrivate
+      SubnetId: !Ref Ec2SubnetPrivate1
+    Type: AWS::EC2::SubnetRouteTableAssociation
+
+
+  Ec2SubnetRouteTableAssociationPrivate2:
+    Properties:
+      RouteTableId: !Ref Ec2RouteTablePrivate
+      SubnetId: !Ref Ec2SubnetPrivate2
     Type: AWS::EC2::SubnetRouteTableAssociation
 
 # -- Elastic File System ------------------------------------------------------
@@ -1624,6 +1505,21 @@ Resources:
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-sqs-queues.html
 
+  SqsQueueDeadLetter:
+    Properties:
+      DelaySeconds: 0
+      KmsMasterKeyId: alias/aws/sqs
+      MaximumMessageSize: 262144
+      MessageRetentionPeriod: 1209600
+      QueueName: !Sub "${AWS::StackName}-sqs-dead-letter-queue"
+      ReceiveMessageWaitTimeSeconds: 0
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-sqs-queue-dead-letter"
+      VisibilityTimeout: 30
+    Type: AWS::SQS::Queue
+
+
   SqsQueue:
     Properties:
       DelaySeconds: 0
@@ -1644,36 +1540,6 @@ Resources:
       VisibilityTimeout: 300
     Type: AWS::SQS::Queue
 
-
-  SqsQueueDeadLetter:
-    Properties:
-      DelaySeconds: 0
-      KmsMasterKeyId: alias/aws/sqs
-      MaximumMessageSize: 262144
-      MessageRetentionPeriod: 1209600
-      QueueName: !Sub "${AWS::StackName}-sqs-dead-letter-queue"
-      ReceiveMessageWaitTimeSeconds: 0
-      Tags:
-        - Key: Name
-          Value: !Sub "${AWS::StackName}-sqs-queue-dead-letter"
-      VisibilityTimeout: 30
-    Type: AWS::SQS::Queue
-
-
-  SqsQueueInfo:
-    Properties:
-      DelaySeconds: 0
-      KmsMasterKeyId: alias/aws/sqs
-      MaximumMessageSize: 262144
-      MessageRetentionPeriod: 1209600
-      QueueName: !Sub "${AWS::StackName}-sqs-queue-info"
-      ReceiveMessageWaitTimeSeconds: 0
-      Tags:
-        - Key: Name
-          Value: !Sub "${AWS::StackName}-sqs-queue-info"
-      VisibilityTimeout: 300
-    Type: AWS::SQS::Queue
-
 # -- ECS Cluster --------------------------------------------------------------
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ecs-cluster.html
@@ -1690,210 +1556,91 @@ Resources:
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-lambda-function.html
 
-  LambdaFunctionCognitoCreateUser:
-    Condition: IfRoute53HostedZoneId
-    DependsOn:
-     - IamPolicyRoute53
-    Properties:
-      Code:
-        ZipFile: |
-          #!/usr/bin/env python3
-
-          import boto3
-          import cfnresponse
-          import datetime
-          import json
-          import logging
-          import traceback
-          from json import JSONEncoder
-
-          logger = logging.getLogger()
-          logger.setLevel(logging.INFO)
-
-          class DateTimeEncoder(JSONEncoder):
-              def default(self, obj):
-                  if isinstance(obj, (datetime.date, datetime.datetime)):
-                      return obj.isoformat()
-
-          def handler(event, context):
-              result = cfnresponse.SUCCESS
-              response = {}
-              try:
-                  logger.info("Event: {0}".format(json.dumps(event)))
-                  if event['RequestType'] in ['Create', 'Update']:
-                      properties = event.get('ResourceProperties', {})
-                      user_pool_id = properties.get('UserPoolId', '')
-                      username = properties.get('WebUsername', '')
-                      password = properties.get('WebPassword', '')
-
-                      # Create Cognito
-                      # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/cognito-idp.html
-
-                      cognito = boto3.client('cognito-idp')
-                      admin_create_user_response = cognito.admin_create_user(
-                         UserPoolId=user_pool_id,
-                         Username=username,
-                         TemporaryPassword=password,
-                      )
-
-                      logger.info("admin_create_user_response = {0}".format(admin_create_user_response))
-                  logger.info("Response: {0}".format(json.dumps(response, cls=DateTimeEncoder)))
-
-              except Exception as e:
-                  logger.error(e)
-                  traceback.print_exc()
-                  result = cfnresponse.FAILED
-              finally:
-                  cfnresponse.send(event, context, result, response)
-
-      Description: Create user.
-      FunctionName: !Sub "${AWS::StackName}-lambda-cognito-create-user"
-      Handler: index.handler
-      Role: !GetAtt IamRoleLambda.Arn
-      Runtime: python3.8
-      Tags:
-        - Key: Name
-          Value: !Sub "${AWS::StackName}-lambda-cognito-create-user"
-      Timeout: 30
-    Type: AWS::Lambda::Function
-
-
-  LambdaFunctionFindDomainName:
-    Condition: IfRoute53HostedZoneId
-    DependsOn:
-     - IamPolicyRoute53
-    Properties:
-      Code:
-        ZipFile: |
-          #!/usr/bin/env python3
-
-          import boto3
-          import cfnresponse
-          import datetime
-          import json
-          import logging
-          import traceback
-          from json import JSONEncoder
-
-          logger = logging.getLogger()
-          logger.setLevel(logging.INFO)
-
-          class DateTimeEncoder(JSONEncoder):
-              def default(self, obj):
-                  if isinstance(obj, (datetime.date, datetime.datetime)):
-                      return obj.isoformat()
-
-          def find_certificate_arn(certificate_domain_name, certificate_list):
-              certificate_summary_list = certificate_list.get('CertificateSummaryList', [])
-              for certificate_summary in certificate_summary_list:
-                  if certificate_summary.get('DomainName') == certificate_domain_name:
-                     return certificate_summary.get('CertificateArn')
-              return ""
-
-          def handler(event, context):
-              result = cfnresponse.SUCCESS
-              response = {}
-              try:
-                  logger.info("Event: {0}".format(json.dumps(event)))
-                  if event['RequestType'] in ['Create', 'Update']:
-                      properties = event.get('ResourceProperties', {})
-                      hosted_zone_id = properties.get('HostedZoneId', {})
-
-                      # Find domain in AWS Route53
-                      # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/route53.html
-
-                      route53 = boto3.client('route53')
-                      hosted_zone_dict = route53.get_hosted_zone(Id=hosted_zone_id)
-                      name = hosted_zone_dict.get("HostedZone", {}).get("Name", " ")
-                      response["Name"] = name
-                      response["DomainName"] = name[:-1]
-
-                      # Find Certificate in AWS Certificate Manager
-                      # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/acm.html
-
-                      certificate_domain_name = "*.{0}".format(response["DomainName"])
-                      logger.info("domain_name = {0}".format(certificate_domain_name))
-
-                      acm_client = boto3.client('acm')
-                      certificate_list = acm_client.list_certificates()
-                      certificate_arn = find_certificate_arn(certificate_domain_name, certificate_list)
-                      response["CertificateArn"] = certificate_arn
-                      logger.info("certificate_arn = {0}".format(certificate_arn))
-
-                      if not certificate_arn:
-                          logger.warning("Cannot find certificate for '{0}'".format(certificate_domain_name))
-                          result = cfnresponse.FAILED
-
-                  logger.info("Response: {0}".format(json.dumps(response, cls=DateTimeEncoder)))
-
-              except Exception as e:
-                  logger.error(e)
-                  traceback.print_exc()
-                  result = cfnresponse.FAILED
-              finally:
-                  cfnresponse.send(event, context, result, response)
-
-      Description: Gets Route53 hosted zone information.
-      FunctionName: !Sub "${AWS::StackName}-lambda-find-domain-name"
-      Handler: index.handler
-      Role: !GetAtt IamRoleLambda.Arn
-      Runtime: python3.8
-      Tags:
-        - Key: Name
-          Value: !Sub "${AWS::StackName}-lambda-find-domain-name"
-      Timeout: 30
-    Type: AWS::Lambda::Function
-
-
-  LambdaFunctionRandomPassword:
-    Properties:
-      Code:
-        ZipFile: |
-          #!/usr/bin/env python3
-
-          import cfnresponse
-          import json
-          import logging
-          import random
-          import string
-          import traceback
-
-          logger = logging.getLogger()
-          logger.setLevel(logging.INFO)
-
-          def handler(event, context):
-              result = cfnresponse.SUCCESS
-              response_data = {}
-              try:
-                  logger.info("Event: {0}".format(json.dumps(event)))
-                  if event['RequestType'] in ['Create', 'Update']:
-                      properties = event.get('ResourceProperties', {})
-                      length = int(properties.get('Length', 0))
-                      char_list = []
-                      char_list.extend(random.choices(string.ascii_lowercase, k=1))
-                      char_list.extend(random.choices(string.ascii_uppercase, k=1))
-                      char_list.extend(random.choices(string.digits, k=1))
-                      char_list.extend(random.choices(string.punctuation, k=1))
-                      char_list.extend(random.choices(string.ascii_letters + string.digits + string.punctuation, k=length-4))
-                      random.shuffle(char_list)
-                      response_data["RandomPassword"] = ''.join(char_list)
-              except Exception as e:
-                  logger.error(e)
-                  traceback.print_exc()
-                  result = cfnresponse.FAILED
-              finally:
-                  cfnresponse.send(event, context, result, response_data)
-
-      Description: Generate string of random characters for a password.
-      FunctionName: !Sub "${AWS::StackName}-lambda-random-password"
-      Handler: index.handler
-      Role: !GetAtt IamRoleLambda.Arn
-      Runtime: python3.8
-      Tags:
-        - Key: Name
-          Value: !Sub "${AWS::StackName}-lambda-random-password"
-      Timeout: 600
-    Type: AWS::Lambda::Function
+# LambdaFunctionFindDomainName:
+#   Condition: IfRoute53HostedZoneId
+#   DependsOn:
+#    - IamPolicyRoute53
+#   Properties:
+#     Code:
+#       ZipFile: |
+#         #!/usr/bin/env python3
+#
+#         import boto3
+#         import cfnresponse
+#         import datetime
+#         import json
+#         import logging
+#         import traceback
+#         from json import JSONEncoder
+#
+#         logger = logging.getLogger()
+#         logger.setLevel(logging.INFO)
+#
+#         class DateTimeEncoder(JSONEncoder):
+#             def default(self, obj):
+#                 if isinstance(obj, (datetime.date, datetime.datetime)):
+#                     return obj.isoformat()
+#
+#         def find_certificate_arn(certificate_domain_name, certificate_list):
+#             certificate_summary_list = certificate_list.get('CertificateSummaryList', [])
+#             for certificate_summary in certificate_summary_list:
+#                 if certificate_summary.get('DomainName') == certificate_domain_name:
+#                    return certificate_summary.get('CertificateArn')
+#             return ""
+#
+#         def handler(event, context):
+#             result = cfnresponse.SUCCESS
+#             response = {}
+#             try:
+#                 logger.info("Event: {0}".format(json.dumps(event)))
+#                 if event['RequestType'] in ['Create', 'Update']:
+#                     properties = event.get('ResourceProperties', {})
+#                     hosted_zone_id = properties.get('HostedZoneId', {})
+#
+#                     # Find domain in AWS Route53
+#                     # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/route53.html
+#
+#                     route53 = boto3.client('route53')
+#                     hosted_zone_dict = route53.get_hosted_zone(Id=hosted_zone_id)
+#                     name = hosted_zone_dict.get("HostedZone", {}).get("Name", " ")
+#                     response["Name"] = name
+#                     response["DomainName"] = name[:-1]
+#
+#                     # Find Certificate in AWS Certificate Manager
+#                     # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/acm.html
+#
+#                     certificate_domain_name = "*.{0}".format(response["DomainName"])
+#                     logger.info("domain_name = {0}".format(certificate_domain_name))
+#
+#                     acm_client = boto3.client('acm')
+#                     certificate_list = acm_client.list_certificates()
+#                     certificate_arn = find_certificate_arn(certificate_domain_name, certificate_list)
+#                     response["CertificateArn"] = certificate_arn
+#                     logger.info("certificate_arn = {0}".format(certificate_arn))
+#
+#                     if not certificate_arn:
+#                         logger.warning("Cannot find certificate for '{0}'".format(certificate_domain_name))
+#                         result = cfnresponse.FAILED
+#
+#                 logger.info("Response: {0}".format(json.dumps(response, cls=DateTimeEncoder)))
+#
+#             except Exception as e:
+#                 logger.error(e)
+#                 traceback.print_exc()
+#                 result = cfnresponse.FAILED
+#             finally:
+#                 cfnresponse.send(event, context, result, response)
+#
+#     Description: Gets Route53 hosted zone information.
+#     FunctionName: !Sub "${AWS::StackName}-lambda-find-domain-name"
+#     Handler: index.handler
+#     Role: !GetAtt IamRoleLambda.Arn
+#     Runtime: python3.8
+#     Tags:
+#       - Key: Name
+#         Value: !Sub "${AWS::StackName}-lambda-find-domain-name"
+#     Timeout: 30
+#   Type: AWS::Lambda::Function
 
 
   LambdaFunctionRandomString:
@@ -2203,20 +1950,6 @@ Resources:
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/template-custom-resources.html
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-cfn-customresource.html
 
-  LambdaRunnerCognitoCreateUser:
-    Condition: IfRoute53HostedZoneId
-    Properties:
-      ClusterId: !Ref EcsCluster
-      ServiceToken: !GetAtt LambdaFunctionCognitoCreateUser.Arn
-      Tags:
-        - Key: Name
-          Value: !Sub "${AWS::StackName}-lambda-runner-cognito-create-user"
-      UserPoolId: !Ref UserPool
-      WebPassword: !GetAtt LambdaRunnerWebPassword.RandomPassword
-      WebUsername: !Ref CognitoAdminEmail
-    Type: Custom::LambdaRunnerCognitoCreateUser
-
-
   LambdaRunnerDbPassword:
     Properties:
       ClusterId: !Ref EcsCluster
@@ -2228,46 +1961,16 @@ Resources:
     Type: Custom::LambdaRunnerDbPassword
 
 
-  LambdaRunnerFindDomainName:
-    Condition: IfRoute53HostedZoneId
-    Properties:
-      ClusterId: !Ref EcsCluster
-      HostedZoneId: !Ref Route53HostedZoneId
-      ServiceToken: !GetAtt LambdaFunctionFindDomainName.Arn
-      Tags:
-        - Key: Name
-          Value: !Sub "${AWS::StackName}-lambda-runner-find-domain-name"
-    Type: Custom::LambdaRunnerFindDomainName
-
-
-  LambdaRunnerG2ConfigTool:
-    DependsOn:
-     - LambdaRunnerInitSenzing
-    Properties:
-      ClusterId: !Ref EcsCluster
-      RunTaskParameters:
-        # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/ecs.html#ECS.Client.run_task
-        cluster: !Ref EcsCluster
-        count: 1
-        launchType: FARGATE
-        networkConfiguration:
-          awsvpcConfiguration:
-            assignPublicIp: DISABLED
-            securityGroups:
-              - !Ref Ec2SecurityGroupLambdaRunner
-            subnets:
-              - !Ref Ec2SubnetPrivate1
-              - !Ref Ec2SubnetPrivate2
-        platformVersion: 1.4.0
-        tags:
-          - key: Name
-            value: !Sub "${AWS::StackName}-lambda-runner-g2configtool-run-task-parameters"
-        taskDefinition: !Ref EcsTaskDefinitionG2ConfigTool
-      Tags:
-        - Key: Name
-          Value: !Sub "${AWS::StackName}-lambda-runner-g2configtool"
-      ServiceToken: !GetAtt LambdaFunctionRunTaskAndWait.Arn
-    Type: Custom::LambdaRunnerG2ConfigTool
+# LambdaRunnerFindDomainName:
+#   Condition: IfRoute53HostedZoneId
+#   Properties:
+#     ClusterId: !Ref EcsCluster
+#     HostedZoneId: !Ref Route53HostedZoneId
+#     ServiceToken: !GetAtt LambdaFunctionFindDomainName.Arn
+#     Tags:
+#       - Key: Name
+#         Value: !Sub "${AWS::StackName}-lambda-runner-find-domain-name"
+#   Type: Custom::LambdaRunnerFindDomainName
 
 
   LambdaRunnerInitEfs:
@@ -2294,10 +1997,10 @@ Resources:
           - key: Name
             value: !Sub "${AWS::StackName}-lambda-runner-init-efs-run-task-parameters"
         taskDefinition: !Ref EcsTaskDefinitionInitEfs
-      ServiceToken: !GetAtt LambdaFunctionRunTaskAndWait.Arn
       Tags:
         - Key: Name
           Value: !Sub "${AWS::StackName}-lambda-runner-init-efs"
+      ServiceToken: !GetAtt LambdaFunctionRunTaskAndWait.Arn
     Type: Custom::LambdaRunnerInitEfs
 
 
@@ -2324,10 +2027,10 @@ Resources:
           - key: Name
             value: !Sub "${AWS::StackName}-lambda-runner-yum-run-task-parameters"
         taskDefinition: !Ref EcsTaskDefinitionInstallSenzing
-      ServiceToken: !GetAtt LambdaFunctionRunTaskAndWait.Arn
       Tags:
         - Key: Name
           Value: !Sub "${AWS::StackName}-lambda-runner-yum"
+      ServiceToken: !GetAtt LambdaFunctionRunTaskAndWait.Arn
     Type: Custom::LambdaRunnerInstallSenzing
 
 
@@ -2355,10 +2058,10 @@ Resources:
           - key: Name
             value: !Sub "${AWS::StackName}-lambda-runner-init-postgres-core-run-task-parameters"
         taskDefinition: !Ref EcsTaskDefinitionInitPostgresCore
-      ServiceToken: !GetAtt LambdaFunctionRunTaskAndWait.Arn
       Tags:
         - Key: Name
           Value: !Sub "${AWS::StackName}-lambda-runner-init-postgres-core"
+      ServiceToken: !GetAtt LambdaFunctionRunTaskAndWait.Arn
     Type: Custom::LambdaRunnerInitPostgresCore
 
 
@@ -2386,10 +2089,10 @@ Resources:
           - key: Name
             value: !Sub "${AWS::StackName}-lambda-runner-init-postgres-libfeat-run-task-parameters"
         taskDefinition: !Ref EcsTaskDefinitionInitPostgresLibfeat
-      ServiceToken: !GetAtt LambdaFunctionRunTaskAndWait.Arn
       Tags:
         - Key: Name
           Value: !Sub "${AWS::StackName}-lambda-runner-init-postgres-libfeat"
+      ServiceToken: !GetAtt LambdaFunctionRunTaskAndWait.Arn
     Type: Custom::LambdaRunnerInitPostgresLibfeat
 
 
@@ -2417,10 +2120,10 @@ Resources:
           - key: Name
             value: !Sub "${AWS::StackName}-lambda-runner-init-postgres-res-run-task-parameters"
         taskDefinition: !Ref EcsTaskDefinitionInitPostgresRes
-      ServiceToken: !GetAtt LambdaFunctionRunTaskAndWait.Arn
       Tags:
         - Key: Name
           Value: !Sub "${AWS::StackName}-lambda-runner-init-postgres-res"
+      ServiceToken: !GetAtt LambdaFunctionRunTaskAndWait.Arn
     Type: Custom::LambdaRunnerInitPostgresRes
 
 
@@ -2449,10 +2152,10 @@ Resources:
           - key: Name
             value: !Sub "${AWS::StackName}-lambda-runner-init-senzing-run-task-parameters"
         taskDefinition: !Ref EcsTaskDefinitionInitSenzing
-      ServiceToken: !GetAtt LambdaFunctionRunTaskAndWait.Arn
       Tags:
         - Key: Name
           Value: !Sub "${AWS::StackName}-lambda-runner-init-senzing"
+      ServiceToken: !GetAtt LambdaFunctionRunTaskAndWait.Arn
     Type: Custom::LambdaRunnerInitSenzing
 
 
@@ -2534,40 +2237,27 @@ Resources:
           Value: !Sub "${AWS::StackName}-lambda-runner-wait-for-efs-mount-target-2"
     Type: Custom::LambdaRunnerWaitForEfsMountTarget2
 
+# -- HTTPS support ------------------------------------------------------------
 
-  LambdaRunnerWebPassword:
+# https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-iam-servercertificate.html
+
+  IamServerCertificate:
     Properties:
-      ClusterId: !Ref EcsCluster
-      Length: 16
-      ServiceToken: !GetAtt LambdaFunctionRandomPassword.Arn
+      CertificateBody: !Ref CertificateBody
+      PrivateKey: !Ref PrivateKey
+      ServerCertificateName: !Sub "${AWS::StackName}-certificate"
       Tags:
         - Key: Name
-          Value: !Sub "${AWS::StackName}-lambda-runner-web-password"
-    Type: Custom::LambdaRunnerWebPassword
+          Value: !Sub "${AWS::StackName}-certificate"
+    Type: AWS::IAM::ServerCertificate
 
 # -- Load balancing -----------------------------------------------------------
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-elasticloadbalancingv2-loadbalancer.html
 
-  LoadBalancerPrivate:
-    Properties:
-      Name: !Sub "${AWS::StackName}-alb-private"
-      Scheme: internal
-      SecurityGroups:
-        - !Ref Ec2SecurityGroupLoadBalancerPrivate
-      Subnets:
-        - !Ref Ec2SubnetPrivate1
-        - !Ref Ec2SubnetPrivate2
-      Tags:
-        - Key: Name
-          Value: !Sub "${AWS::StackName}-alb-private"
-      Type: application
-    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
-
-
   LoadBalancerPublic:
     Properties:
-      Name: !Sub "${AWS::StackName}-alb-public"
+      Name: !Sub "${AWS::StackName}-load-balancer-public"
       Scheme: internet-facing
       SecurityGroups:
         - !Ref Ec2SecurityGroupLoadBalancerPublic
@@ -2576,7 +2266,23 @@ Resources:
         - !Ref Ec2SubnetPublic2
       Tags:
         - Key: Name
-          Value: !Sub "${AWS::StackName}-alb-public"
+          Value: !Sub "${AWS::StackName}-load-balancer-public"
+      Type: application
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+
+
+  LoadBalancerPrivate:
+    Properties:
+      Name: !Sub "${AWS::StackName}-load-balancer-private"
+      Scheme: internal
+      SecurityGroups:
+        - !Ref Ec2SecurityGroupLoadBalancerPrivate
+      Subnets:
+        - !Ref Ec2SubnetPrivate1
+        - !Ref Ec2SubnetPrivate2
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-load-balancer-private"
       Type: application
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
 
@@ -2588,7 +2294,7 @@ Resources:
      - LoadBalancerPrivate
     Properties:
       HealthCheckIntervalSeconds: 80
-      HealthCheckPath: '/api/heartbeat'
+      HealthCheckPath: '/heartbeat'
       HealthCheckProtocol: HTTP
       HealthCheckTimeoutSeconds: 50
       HealthyThresholdCount: 2
@@ -2598,12 +2304,10 @@ Resources:
       Protocol: HTTP
       Tags:
         - Key: Name
-          Value: !Sub "${AWS::StackName}-target-group-api-server-private"
+          Value: !Sub "${AWS::StackName}-tg-api-server-private"
       TargetGroupAttributes:
         - Key: deregistration_delay.timeout_seconds
           Value: '60'
-        - Key: slow_start.duration_seconds
-          Value: '120'
       TargetType: ip
       UnhealthyThresholdCount: 5
       VpcId: !Ref Ec2Vpc
@@ -2616,22 +2320,21 @@ Resources:
      - LoadBalancerPublic
     Properties:
       HealthCheckIntervalSeconds: 80
-      HealthCheckPath: '/api/heartbeat'
+      HealthCheckPath: '/heartbeat'
       HealthCheckProtocol: HTTP
       HealthCheckTimeoutSeconds: 50
       HealthyThresholdCount: 2
       Matcher:
         HttpCode: 200-299
+      Name: !Sub "${AWS::StackName}-tg-api-server-public"
       Port: 8250
       Protocol: HTTP
       Tags:
         - Key: Name
-          Value: !Sub "${AWS::StackName}-target-group-api-server-public"
+          Value: !Sub "${AWS::StackName}-tg-api-server-public"
       TargetGroupAttributes:
         - Key: deregistration_delay.timeout_seconds
           Value: '60'
-        - Key: slow_start.duration_seconds
-          Value: '120'
       TargetType: ip
       UnhealthyThresholdCount: 5
       VpcId: !Ref Ec2Vpc
@@ -2650,11 +2353,12 @@ Resources:
       HealthyThresholdCount: 2
       Matcher:
         HttpCode: 200-299
+      Name: !Sub "${AWS::StackName}-tg-jupyter"
       Port: 8888
       Protocol: HTTP
       Tags:
         - Key: Name
-          Value: !Sub "${AWS::StackName}-target-group-jupyter"
+          Value: !Sub "${AWS::StackName}-tg-jupyter"
       TargetGroupAttributes:
       -
         Key: deregistration_delay.timeout_seconds
@@ -2675,23 +2379,23 @@ Resources:
 
 
   TargetGroupSwagger:
-    Condition: IfRunSwaggerHttps
+    Condition: IfRunSwagger
     DependsOn:
      - LoadBalancerPublic
     Properties:
       HealthCheckIntervalSeconds: 80
-      HealthCheckPath: '/swagger/'
+      HealthCheckPath: '/'
       HealthCheckProtocol: HTTP
       HealthCheckTimeoutSeconds: 50
       HealthyThresholdCount: 2
       Matcher:
         HttpCode: 200-299
-      Name: !Sub "${AWS::StackName}-target-group-swagger"
+      Name: !Sub "${AWS::StackName}-tg-swagger"
       Port: 8080
       Protocol: HTTP
       Tags:
         - Key: Name
-          Value: !Sub "${AWS::StackName}-target-group-swagger"
+          Value: !Sub "${AWS::StackName}-tg-swagger"
       TargetGroupAttributes:
       - Key: deregistration_delay.timeout_seconds
         Value: '60'
@@ -2707,17 +2411,18 @@ Resources:
      - LoadBalancerPublic
     Properties:
       HealthCheckIntervalSeconds: 80
-      HealthCheckPath: '/app/'
+      HealthCheckPath: '/'
       HealthCheckProtocol: HTTP
       HealthCheckTimeoutSeconds: 50
       HealthyThresholdCount: 2
       Matcher:
         HttpCode: 200-299
+      Name: !Sub "${AWS::StackName}-tg-web-app"
       Port: 8251
       Protocol: HTTP
       Tags:
         - Key: Name
-          Value: !Sub "${AWS::StackName}-target-group-web-app"
+          Value: !Sub "${AWS::StackName}-tg-web-app"
       TargetGroupAttributes:
       - Key: deregistration_delay.timeout_seconds
         Value: '60'
@@ -2728,23 +2433,23 @@ Resources:
 
 
   TargetGroupXterm:
-    Condition: IfRunXtermHttps
+    Condition: IfRunXterm
     DependsOn:
      - LoadBalancerPublic
     Properties:
       HealthCheckIntervalSeconds: 80
-      HealthCheckPath: '/xterm/'
+      HealthCheckPath: '/'
       HealthCheckProtocol: HTTP
       HealthCheckTimeoutSeconds: 50
       HealthyThresholdCount: 2
       Matcher:
         HttpCode: 200-299
-      Name: !Sub "${AWS::StackName}-target-group-xterm"
+      Name: !Sub "${AWS::StackName}-tg-xterm"
       Port: 5000
       Protocol: HTTP
       Tags:
         - Key: Name
-          Value: !Sub "${AWS::StackName}-target-group-xterm"
+          Value: !Sub "${AWS::StackName}-tg-xterm"
       TargetGroupAttributes:
       -
         Key: deregistration_delay.timeout_seconds
@@ -2765,6 +2470,24 @@ Resources:
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-elasticloadbalancingv2-listener.html
 
+  ListenerPort443:
+    Properties:
+      Certificates:
+        - CertificateArn: !GetAtt IamServerCertificate.Arn
+      DefaultActions:
+        - Order: 1
+          RedirectConfig:
+            Protocol: HTTPS
+            Port: '443'
+            Host: hub.senzing.com
+            Path: /aws-cloudformation-ecs-poc-simple/
+            StatusCode: HTTP_301
+          Type: redirect
+      LoadBalancerArn: !Ref LoadBalancerPublic
+      Port: 443
+      Protocol: HTTPS
+    Type: AWS::ElasticLoadBalancingV2::Listener
+
   ListenerApiServerPrivate:
     Condition: IfRunApiServer
     Properties:
@@ -2776,260 +2499,118 @@ Resources:
       Protocol: HTTP
     Type: AWS::ElasticLoadBalancingV2::Listener
 
-
-  ListenerPort443:
-    Condition: IfRoute53HostedZoneId
-    Properties:
-      Certificates:
-        - CertificateArn: !GetAtt LambdaRunnerFindDomainName.CertificateArn
-      DefaultActions:
-        - Order: 1
-          RedirectConfig:
-            Host: hub.senzing.com
-            Path: /aws-cloudformation-ecs-poc-simple/
-            Port: '443'
-            Protocol: HTTPS
-            StatusCode: HTTP_301
-          Type: redirect
-      LoadBalancerArn: !Ref LoadBalancerPublic
-      Port: 443
-      Protocol: HTTPS
-    Type: AWS::ElasticLoadBalancingV2::Listener
-
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-elasticloadbalancingv2-listenerrule.html
 
   ListenerRuleApiServer:
-    Condition: IfRunApiServerHttps
+    Condition: IfRunApiServer
     Properties:
       Actions:
-        - AuthenticateCognitoConfig:
-            OnUnauthenticatedRequest: authenticate
-            Scope: openid
-            UserPoolArn: !GetAtt 'UserPool.Arn'
-            UserPoolClientId: !Ref UserPoolClient
-            UserPoolDomain: !Ref UserPoolDomain
-          Order: 1
-          Type: authenticate-cognito
         -
           Type: "forward"
           TargetGroupArn: !Ref TargetGroupApiServerPublic
-          Order: 2
+          Order: 1
       Conditions:
         -
           Field: "path-pattern"
           Values:
             - "/api/*"
-            - "/api"
-      ListenerArn: !Ref ListenerPort443
-      Priority: 2
-    Type: "AWS::ElasticLoadBalancingV2::ListenerRule"
-
-
-  ListenerRuleJupyter:
-    Condition: IfRunJupyterHttps
-    Properties:
-      Actions:
-        - AuthenticateCognitoConfig:
-            OnUnauthenticatedRequest: authenticate
-            Scope: openid
-            UserPoolArn: !GetAtt 'UserPool.Arn'
-            UserPoolClientId: !Ref UserPoolClient
-            UserPoolDomain: !Ref UserPoolDomain
-          Order: 1
-          Type: authenticate-cognito
-        -
-          Type: "forward"
-          TargetGroupArn: !Ref TargetGroupJupyter
-          Order: 2
-      Conditions:
-        -
-          Field: "path-pattern"
-          Values:
-            - "/jupyter/*"
-            - "/jupyter"
       ListenerArn: !Ref ListenerPort443
       Priority: 3
     Type: "AWS::ElasticLoadBalancingV2::ListenerRule"
 
 
-  ListenerRuleSwagger:
-    Condition: IfRunSwaggerHttps
+  ListenerRuleJupyter:
+    Condition: IfRunJupyter
     Properties:
       Actions:
-        - AuthenticateCognitoConfig:
-            OnUnauthenticatedRequest: authenticate
-            Scope: openid
-            UserPoolArn: !GetAtt 'UserPool.Arn'
-            UserPoolClientId: !Ref UserPoolClient
-            UserPoolDomain: !Ref UserPoolDomain
-          Order: 1
-          Type: authenticate-cognito
         -
-          Order: 2
-          TargetGroupArn: !Ref TargetGroupSwagger
           Type: "forward"
+          TargetGroupArn: !Ref TargetGroupJupyter
+          Order: 1
+      Conditions:
+        -
+          Field: "path-pattern"
+          Values:
+            - "/jupyter/*"
+      ListenerArn: !Ref ListenerPort443
+      Priority: 6
+    Type: "AWS::ElasticLoadBalancingV2::ListenerRule"
+
+
+  ListenerRuleSwagger:
+    Condition: IfRunSwagger
+    Properties:
+      Actions:
+        -
+          Type: "forward"
+          TargetGroupArn: !Ref TargetGroupSwagger
+          Order: 1
       Conditions:
         -
           Field: "path-pattern"
           Values:
             - "/swagger/*"
-            - "/swagger"
       ListenerArn: !Ref ListenerPort443
       Priority: 4
     Type: "AWS::ElasticLoadBalancingV2::ListenerRule"
 
 
   ListenerRuleWebApp:
-    Condition: IfRunWebAppHttps
+    Condition: IfRunWebApp
     Properties:
       Actions:
-        - AuthenticateCognitoConfig:
-            OnUnauthenticatedRequest: authenticate
-            Scope: openid
-            UserPoolArn: !GetAtt 'UserPool.Arn'
-            UserPoolClientId: !Ref UserPoolClient
-            UserPoolDomain: !Ref UserPoolDomain
-          Order: 1
-          Type: authenticate-cognito
         -
           Type: "forward"
           TargetGroupArn: !Ref TargetGroupWebApp
-          Order: 2
+          Order: 1
       Conditions:
         -
           Field: "path-pattern"
           Values:
             - "/app/*"
-            - "/app"
       ListenerArn: !Ref ListenerPort443
-      Priority: 5
+      Priority: 2
     Type: "AWS::ElasticLoadBalancingV2::ListenerRule"
 
 
   ListenerRuleXterm:
-    Condition: IfRunXtermHttps
+    Condition: IfRunXterm
     Properties:
       Actions:
-        - AuthenticateCognitoConfig:
-            OnUnauthenticatedRequest: authenticate
-            Scope: openid
-            UserPoolArn: !GetAtt 'UserPool.Arn'
-            UserPoolClientId: !Ref UserPoolClient
-            UserPoolDomain: !Ref UserPoolDomain
-          Order: 1
-          Type: authenticate-cognito
         -
-          Order: 2
-          TargetGroupArn: !Ref TargetGroupXterm
           Type: "forward"
+          TargetGroupArn: !Ref TargetGroupXterm
+          Order: 1
       Conditions:
         -
           Field: "path-pattern"
           Values:
             - "/xterm/*"
-            - "/xterm"
       ListenerArn: !Ref ListenerPort443
-      Priority: 3
+      Priority: 5
     Type: "AWS::ElasticLoadBalancingV2::ListenerRule"
 
 # -- Route53RecordSet ---------------------------------------------------------
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-route53-recordset.html
 
-  Route53RecordSet:
-    Condition: IfRoute53HostedZoneId
-    Properties:
-      AliasTarget:
-        DNSName: !Sub
-          - "dualstack.${LoadBalancerPublicDNSName}"
-          - LoadBalancerPublicDNSName: !GetAtt LoadBalancerPublic.DNSName
-        EvaluateTargetHealth: true
-        HostedZoneId: !GetAtt LoadBalancerPublic.CanonicalHostedZoneID
-      Comment: !Sub "${AWS::StackName} RecordSet"
-      HostedZoneId: !Ref Route53HostedZoneId
-      Name: !Sub
-        - "${StackName}.${DomainName}"
-        - StackName: !Ref AWS::StackName
-          DomainName: !GetAtt LambdaRunnerFindDomainName.Name
-      Type: A
-    Type: AWS::Route53::RecordSet
-
-# -- UserPool -----------------------------------------------------------------
-
-# https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-cognito-userpool.html
-
-  UserPool:
-    Condition: IfRoute53HostedZoneId
-    Properties:
-      AdminCreateUserConfig:
-        AllowAdminCreateUserOnly: true
-        InviteMessageTemplate:
-          EmailMessage: !Sub
-            - |
-              <html>
-              <p>
-                  To log into https://${AWS::StackName}.${DomainName},
-                  use these credentials:
-                  <ul>
-                      <li><b>Username:</b>  {username}</li>
-                      <li><b>OneTime Password:</b>  {####}</li>
-                  </ul>
-              </p>
-              <p>
-                  You will be prompted to change your password.
-                  This one-time password is valid for three weeks.
-              </p>
-              </html>
-            - DomainName: !GetAtt LambdaRunnerFindDomainName.DomainName
-          EmailSubject: !Sub 'Temporary password for AWS ${AWS::StackName} stack'
-          SMSMessage: 'Use the username {username} and the temporary password {####} to log in for the first time.'
-      AutoVerifiedAttributes:
-        - email
-      Policies:
-        PasswordPolicy:
-          MinimumLength: 16
-          RequireLowercase: true
-          RequireNumbers: true
-          RequireSymbols: true
-          RequireUppercase: true
-          TemporaryPasswordValidityDays: 21
-      UsernameAttributes:
-        - email
-      UserPoolName: !Sub "${AWS::StackName}-user-pool"
-    Type: AWS::Cognito::UserPool
-
-# -- UserPoolDomain -----------------------------------------------------------
-
-# https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-cognito-userpooldomain.html
-
-  UserPoolDomain: # Provides Cognito Login Page
-    Condition: IfRoute53HostedZoneId
-    Properties:
-      Domain: !Sub "${AWS::StackName}"
-      UserPoolId: !Ref UserPool
-    Type: AWS::Cognito::UserPoolDomain
-
-# -- UserPoolClient -----------------------------------------------------------
-
-# https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-cognito-userpoolclient.html
-
-  UserPoolClient:
-    Condition: IfRoute53HostedZoneId
-    Properties:
-      AllowedOAuthFlows:
-        - code # Required for ALB authentication
-      AllowedOAuthFlowsUserPoolClient: true # Required for ALB authentication
-      AllowedOAuthScopes:
-        - openid
-      CallbackURLs:
-        - !Sub
-          - "https://${AWS::StackName}.${DomainName}/oauth2/idpresponse"
-          - DomainName: !GetAtt LambdaRunnerFindDomainName.DomainName
-      GenerateSecret: true
-      SupportedIdentityProviders: # Optional: add providers for identity federation
-        - COGNITO
-      UserPoolId: !Ref UserPool
-    Type: AWS::Cognito::UserPoolClient
+# Route53RecordSet:
+#   Condition: IfRoute53HostedZoneId
+#   Properties:
+#     AliasTarget:
+#       DNSName: !Sub
+#         - "dualstack.${LoadBalancerPublicDNSName}"
+#         - LoadBalancerPublicDNSName: !GetAtt LoadBalancerPublic.DNSName
+#       EvaluateTargetHealth: true
+#       HostedZoneId: !GetAtt LoadBalancerPublic.CanonicalHostedZoneID
+#     Comment: !Sub "${AWS::StackName} RecordSet"
+#     HostedZoneId: !Ref Route53HostedZoneId
+#     Name: !Sub
+#       - "${StackName}.${DomainName}"
+#       - StackName: !Ref AWS::StackName
+#         DomainName: !GetAtt LambdaRunnerFindDomainName.Name
+#     Type: A
+#   Type: AWS::Route53::RecordSet
 
 # -- EcsTaskDefinition --------------------------------------------------------
 
@@ -3039,33 +2620,19 @@ Resources:
     Properties:
       ContainerDefinitions:
         -
-          Environment:
-            -
-              Name: SENZING_API_SERVER_ALLOWED_ORIGINS
-              Value: "*"
-            -
-              Name: SENZING_API_SERVER_BIND_ADDR
-              Value: all
-            -
-              Name: SENZING_API_SERVER_ENABLE_ADMIN
-              Value: 'true'
-            -
-              Name: SENZING_API_SERVER_INI_FILE
-              Value: /etc/opt/senzing/G2Module.ini
-            -
-              Name: SENZING_API_SERVER_PORT
-              Value: "8250"
-            -
-              Name: SENZING_API_SERVER_SKIP_ENGINE_PRIMING
-              Value: 'true'
-            -
-              Name: SENZING_API_SERVER_SKIP_STARTUP_PERF
-              Value: 'true'
-            -
-              Name: SENZING_API_SERVER_URL_BASE_PATH
-              Value: /api
+          Command:
+            - -httpPort
+            - '8250'
+            - -bindAddr
+            - all
+            - -iniFile
+            - /etc/opt/senzing/G2Module.ini
+            - -allowedOrigins
+            - '*'
+            - -enableAdmin
+            - -skipStartupPerf
           Essential: true
-          Image: public.ecr.aws/senzing/senzing-api-server:2.5.0
+          Image: public.ecr.aws/senzing/senzing-api-server:2.3.2
           LogConfiguration:
             LogDriver: awslogs
             Options:
@@ -3136,72 +2703,6 @@ Resources:
               FilesystemId:
                 Ref: EfsFileSystem
               RootDirectory: /var
-    Type: AWS::ECS::TaskDefinition
-
-
-  EcsTaskDefinitionG2ConfigTool:
-    Properties:
-      ContainerDefinitions:
-        -
-          Command:
-            - -f
-            - /etc/opt/senzing/G2Config.gtc
-          Essential: true
-          Image: public.ecr.aws/senzing/g2configtool:1.4.2
-          LogConfiguration:
-            LogDriver: awslogs
-            Options:
-              awslogs-group: !Ref LogsLogGroupMain
-              awslogs-region: !Ref AWS::Region
-              awslogs-stream-prefix: job
-          MountPoints:
-            -
-              SourceVolume: senzing-data-version-dir
-              ContainerPath: /opt/senzing/data
-              ReadOnly: true
-            -
-              SourceVolume: senzing-etc-dir
-              ContainerPath: /etc/opt/senzing
-              ReadOnly: true
-            -
-              SourceVolume: senzing-g2-dir
-              ContainerPath: /opt/senzing/g2
-              ReadOnly: true
-          Name: g2configtool
-          Privileged: false
-          ReadonlyRootFilesystem: false
-      Cpu: '1024'
-      ExecutionRoleArn: !GetAtt IamRoleG2ConfigTool.Arn
-      Family: !Sub "${AWS::StackName}-task-definition-g2configtool"
-      Memory: '8192'
-      NetworkMode: awsvpc
-      RequiresCompatibilities:
-        - FARGATE
-      Tags:
-        - Key: Name
-          Value: !Sub "${AWS::StackName}-ecs-task-definition-g2configtool"
-      Volumes:
-        -
-          Name: senzing-data-version-dir
-          EFSVolumeConfiguration:
-              AuthorizationConfig: {}
-              FilesystemId:
-                Ref: EfsFileSystem
-              RootDirectory: /data/1.0.0
-        -
-          Name: senzing-etc-dir
-          EFSVolumeConfiguration:
-              AuthorizationConfig: {}
-              FilesystemId:
-                Ref: EfsFileSystem
-              RootDirectory: /etc
-        -
-          Name: senzing-g2-dir
-          EFSVolumeConfiguration:
-              AuthorizationConfig: {}
-              FilesystemId:
-                Ref: EfsFileSystem
-              RootDirectory: /g2
     Type: AWS::ECS::TaskDefinition
 
 
@@ -3431,18 +2932,22 @@ Resources:
           Environment:
             -
               Name: SENZING_ENGINE_CONFIGURATION_JSON
-              Value: !GetAtt SsmParameterSenzingEngineConfigurationJson.Value
-            -
-              Name: SENZING_G2CONFIG_GTC
-              Value: |
-                addDataSource CUSTOMER
-                addDataSource WATCHLIST
-                save
+              Value: !Sub
+                - '{"PIPELINE": {"CONFIGPATH": "/etc/opt/senzing","RESOURCEPATH": "/opt/senzing/g2/resources","SUPPORTPATH": "/opt/senzing/data"},"SQL": {"BACKEND": "HYBRID","CONNECTION":"postgresql://${DatabaseUsername}:${DatabasePassword}@${DatabaseHostCore}:${DatabasePortCore}:${DatabaseName}"},"C1": {"CLUSTER_SIZE": "1","DB_1": "postgresql://${DatabaseUsername}:${DatabasePassword}@${DatabaseHostRes}:${DatabasePortRes}:${DatabaseName}"},"C2": {"CLUSTER_SIZE": "1","DB_1": "postgresql://${DatabaseUsername}:${DatabasePassword}@${DatabaseHostLibfeat}:${DatabasePortLibfeat}:${DatabaseName}"},"HYBRID": {"RES_FEAT": "C1","RES_FEAT_EKEY": "C1","RES_FEAT_LKEY": "C1","RES_FEAT_STAT": "C1","LIB_FEAT": "C2","LIB_FEAT_HKEY": "C2"}}'
+                - DatabaseHostLibfeat: !GetAtt RdsDbClusterLibfeat.Endpoint.Address
+                  DatabaseHostCore: !GetAtt RdsDbClusterCore.Endpoint.Address
+                  DatabaseHostRes: !GetAtt RdsDbClusterRes.Endpoint.Address
+                  DatabaseName: !FindInMap [Constants, Database, Name]
+                  DatabasePassword: !GetAtt LambdaRunnerDbPassword.RandomString
+                  DatabasePortLibfeat: !GetAtt RdsDbClusterLibfeat.Endpoint.Port
+                  DatabasePortCore: !GetAtt RdsDbClusterCore.Endpoint.Port
+                  DatabasePortRes: !GetAtt RdsDbClusterRes.Endpoint.Port
+                  DatabaseUsername: !FindInMap [Constants, Database, Username]
             -
               Name: SENZING_LICENSE_BASE64_ENCODED
               Value: !Sub "${SenzingLicenseAsBase64}"
           Essential: true
-          Image: public.ecr.aws/senzing/init-container:1.6.9
+          Image: public.ecr.aws/senzing/init-container:1.6.6
           LogConfiguration:
             LogDriver: awslogs
             Options:
@@ -3508,7 +3013,7 @@ Resources:
           Command:
             - '-y'
             - 'install'
-            - !FindInMap [Constants, Senzing, Version]
+            - 'senzingapi-2.3.0-20342'
           Environment:
             -
               Name: SENZING_ACCEPT_EULA
@@ -3575,7 +3080,17 @@ Resources:
           Environment:
             -
               Name: SENZING_ENGINE_CONFIGURATION_JSON
-              Value: !GetAtt SsmParameterSenzingEngineConfigurationJson.Value
+              Value: !Sub
+                - '{"PIPELINE": {"CONFIGPATH": "/etc/opt/senzing","RESOURCEPATH": "/opt/senzing/g2/resources","SUPPORTPATH": "/opt/senzing/data"},"SQL": {"BACKEND": "HYBRID","CONNECTION":"postgresql://${DatabaseUsername}:${DatabasePassword}@${DatabaseHostCore}:${DatabasePortCore}:${DatabaseName}"},"C1": {"CLUSTER_SIZE": "1","DB_1": "postgresql://${DatabaseUsername}:${DatabasePassword}@${DatabaseHostRes}:${DatabasePortRes}:${DatabaseName}"},"C2": {"CLUSTER_SIZE": "1","DB_1": "postgresql://${DatabaseUsername}:${DatabasePassword}@${DatabaseHostLibfeat}:${DatabasePortLibfeat}:${DatabaseName}"},"HYBRID": {"RES_FEAT": "C1","RES_FEAT_EKEY": "C1","RES_FEAT_LKEY": "C1","RES_FEAT_STAT": "C1","LIB_FEAT": "C2","LIB_FEAT_HKEY": "C2"}}'
+                - DatabaseHostLibfeat: !GetAtt RdsDbClusterLibfeat.Endpoint.Address
+                  DatabaseHostCore: !GetAtt RdsDbClusterCore.Endpoint.Address
+                  DatabaseHostRes: !GetAtt RdsDbClusterRes.Endpoint.Address
+                  DatabaseName: !FindInMap [Constants, Database, Name]
+                  DatabasePassword: !GetAtt LambdaRunnerDbPassword.RandomString
+                  DatabasePortLibfeat: !GetAtt RdsDbClusterLibfeat.Endpoint.Port
+                  DatabasePortCore: !GetAtt RdsDbClusterCore.Endpoint.Port
+                  DatabasePortRes: !GetAtt RdsDbClusterRes.Endpoint.Port
+                  DatabaseUsername: !FindInMap [Constants, Database, Username]
           Essential: true
           Image: public.ecr.aws/senzing/jupyter:1.2.0
           LogConfiguration:
@@ -3658,7 +3173,17 @@ Resources:
           Environment:
             -
               Name: SENZING_ENGINE_CONFIGURATION_JSON
-              Value: !GetAtt SsmParameterSenzingEngineConfigurationJson.Value
+              Value: !Sub
+                - '{"PIPELINE": {"CONFIGPATH": "/etc/opt/senzing","RESOURCEPATH": "/opt/senzing/g2/resources","SUPPORTPATH": "/opt/senzing/data"},"SQL": {"BACKEND": "HYBRID","CONNECTION":"postgresql://${DatabaseUsername}:${DatabasePassword}@${DatabaseHostCore}:${DatabasePortCore}:${DatabaseName}"},"C1": {"CLUSTER_SIZE": "1","DB_1": "postgresql://${DatabaseUsername}:${DatabasePassword}@${DatabaseHostRes}:${DatabasePortRes}:${DatabaseName}"},"C2": {"CLUSTER_SIZE": "1","DB_1": "postgresql://${DatabaseUsername}:${DatabasePassword}@${DatabaseHostLibfeat}:${DatabasePortLibfeat}:${DatabaseName}"},"HYBRID": {"RES_FEAT": "C1","RES_FEAT_EKEY": "C1","RES_FEAT_LKEY": "C1","RES_FEAT_STAT": "C1","LIB_FEAT": "C2","LIB_FEAT_HKEY": "C2"}}'
+                - DatabaseHostLibfeat: !GetAtt RdsDbClusterLibfeat.Endpoint.Address
+                  DatabaseHostCore: !GetAtt RdsDbClusterCore.Endpoint.Address
+                  DatabaseHostRes: !GetAtt RdsDbClusterRes.Endpoint.Address
+                  DatabaseName: !FindInMap [Constants, Database, Name]
+                  DatabasePassword: !GetAtt LambdaRunnerDbPassword.RandomString
+                  DatabasePortLibfeat: !GetAtt RdsDbClusterLibfeat.Endpoint.Port
+                  DatabasePortCore: !GetAtt RdsDbClusterCore.Endpoint.Port
+                  DatabasePortRes: !GetAtt RdsDbClusterRes.Endpoint.Port
+                  DatabaseUsername: !FindInMap [Constants, Database, Username]
             -
               Name: SENZING_EXIT_ON_THREAD_TERMINATION
               Value: 'true'
@@ -3760,7 +3285,7 @@ Resources:
               Name: SENZING_SKIP_DATABASE_PERFORMANCE_TEST
               Value: 'true'
           Essential: true
-          Image: public.ecr.aws/senzing/sshd:1.1.0
+          Image: public.ecr.aws/senzing/sshd:1.0.3
           LinuxParameters:
             Capabilities:
               Add:
@@ -3840,13 +3365,29 @@ Resources:
           Environment:
             -
               Name: SENZING_ENGINE_CONFIGURATION_JSON
-              Value: !GetAtt SsmParameterSenzingEngineConfigurationJson.Value
+              Value: !Sub
+                - '{"PIPELINE": {"CONFIGPATH": "/etc/opt/senzing","RESOURCEPATH": "/opt/senzing/g2/resources","SUPPORTPATH": "/opt/senzing/data"},"SQL": {"BACKEND": "HYBRID","CONNECTION":"postgresql://${DatabaseUsername}:${DatabasePassword}@${DatabaseHostCore}:${DatabasePortCore}:${DatabaseName}"},"C1": {"CLUSTER_SIZE": "1","DB_1": "postgresql://${DatabaseUsername}:${DatabasePassword}@${DatabaseHostRes}:${DatabasePortRes}:${DatabaseName}"},"C2": {"CLUSTER_SIZE": "1","DB_1": "postgresql://${DatabaseUsername}:${DatabasePassword}@${DatabaseHostLibfeat}:${DatabasePortLibfeat}:${DatabaseName}"},"HYBRID": {"RES_FEAT": "C1","RES_FEAT_EKEY": "C1","RES_FEAT_LKEY": "C1","RES_FEAT_STAT": "C1","LIB_FEAT": "C2","LIB_FEAT_HKEY": "C2"}}'
+                - DatabaseHostLibfeat: !GetAtt RdsDbClusterLibfeat.Endpoint.Address
+                  DatabaseHostCore: !GetAtt RdsDbClusterCore.Endpoint.Address
+                  DatabaseHostRes: !GetAtt RdsDbClusterRes.Endpoint.Address
+                  DatabaseName: !FindInMap [Constants, Database, Name]
+                  DatabasePassword: !GetAtt LambdaRunnerDbPassword.RandomString
+                  DatabasePortLibfeat: !GetAtt RdsDbClusterLibfeat.Endpoint.Port
+                  DatabasePortCore: !GetAtt RdsDbClusterCore.Endpoint.Port
+                  DatabasePortRes: !GetAtt RdsDbClusterRes.Endpoint.Port
+                  DatabaseUsername: !FindInMap [Constants, Database, Username]
+            -
+              Name: SENZING_DATA_SOURCE
+              Value: TEST
             -
               Name: SENZING_DELAY_IN_SECONDS
               Value: '900'
             -
               Name: SENZING_DELAY_RANDOMIZED
               Value: 'true'
+            -
+              Name: SENZING_ENTITY_TYPE
+              Value: GENERIC
             -
               Name: SENZING_GOVERNOR_CHECK_TIME_INTERVAL_IN_SECONDS
               Value: '600'
@@ -3863,19 +3404,16 @@ Resources:
               Name: SENZING_SKIP_DATABASE_PERFORMANCE_TEST
               Value: 'true'
             -
-              Name: SENZING_SQS_INFO_QUEUE_URL
-              Value: !Sub "https://sqs.${AWS::Region}.amazonaws.com/${AWS::AccountId}/${SqsQueueInfo.QueueName}"
-            -
               Name: SENZING_SQS_QUEUE_URL
               Value: !Sub "https://sqs.${AWS::Region}.amazonaws.com/${AWS::AccountId}/${SqsQueue.QueueName}"
             -
               Name: SENZING_SUBCOMMAND
-              Value: sqs-withinfo
+              Value: sqs
             -
               Name: SENZING_THREADS_PER_PROCESS
               Value: '8'
           Essential: true
-          Image: public.ecr.aws/senzing/stream-loader:1.7.3
+          Image: public.ecr.aws/senzing/stream-loader:1.7.2
           LogConfiguration:
             LogDriver: awslogs
             Options:
@@ -3951,12 +3489,6 @@ Resources:
         -
           Environment:
             -
-              Name: SENZING_DEFAULT_DATA_SOURCE
-              Value: !FindInMap [Constants, StreamProducer, DataSource]
-            -
-              Name: SENZING_DEFAULT_ENTITY_TYPE
-              Value: !FindInMap [Constants, StreamProducer, EntityType]
-            -
               Name: SENZING_INPUT_URL
               Value: !FindInMap [Constants, StreamProducer, InputUrl]
             -
@@ -3979,12 +3511,12 @@ Resources:
               Value: !Sub "https://sqs.${AWS::Region}.amazonaws.com/${AWS::AccountId}/${SqsQueue.QueueName}"
             -
               Name: SENZING_SUBCOMMAND
-              Value: json-to-sqs
+              Value: gzipped-json-to-sqs-batch
             -
               Name: SENZING_THREADS_PER_PRINT
               Value: '30'
           Essential: true
-          Image: public.ecr.aws/senzing/stream-producer:1.4.0
+          Image: public.ecr.aws/senzing/stream-producer:1.3.3
           LogConfiguration:
             LogDriver: awslogs
             Options:
@@ -4072,11 +3604,8 @@ Resources:
             -
               Name: SENZING_WEB_SERVER_PORT
               Value: '8251'
-            -
-              Name: SENZING_WEB_SERVER_VIRTUAL_PATH
-              Value: /app
           Essential: true
-          Image: public.ecr.aws/senzing/entity-search-web-app:2.2.3
+          Image: public.ecr.aws/senzing/entity-search-web-app:2.2.1
           LogConfiguration:
             LogDriver: awslogs
             Options:
@@ -4197,21 +3726,17 @@ Resources:
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ecs-service.html
 
   EcsServiceApiServer:
-    Condition: IfRunApiServerHttps
+    Condition: IfRunApiServer
     DependsOn:
      - LambdaRunnerInitSenzing
-     - ListenerPort443
-     - ListenerRuleApiServer
+#    - ListenerRuleApiServerPublic
+#    - ListenerRuleApiServerPrivate
     Properties:
       Cluster: !Ref EcsCluster
-      DesiredCount: 2
+      DesiredCount: 1
       EnableECSManagedTags: true
       LaunchType: FARGATE
       LoadBalancers:
-        -
-          ContainerPort: 8250
-          ContainerName: api-server
-          TargetGroupArn: !Ref TargetGroupApiServerPrivate
         -
           ContainerPort: 8250
           ContainerName: api-server
@@ -4235,14 +3760,14 @@ Resources:
 
 
   EcsServiceJupyter:
-    Condition: IfRunJupyterHttps
+    Condition: IfRunJupyter
     DependsOn:
      - LambdaRunnerInitSenzing
      - ListenerPort443
      - ListenerRuleJupyter
     Properties:
       Cluster: !Ref EcsCluster
-      DesiredCount: 2
+      DesiredCount: 1
       EnableECSManagedTags: true
       LaunchType: FARGATE
       LoadBalancers:
@@ -4350,13 +3875,13 @@ Resources:
 
 
   EcsServiceSwagger:
-    Condition: IfRunSwaggerHttps
+    Condition: IfRunSwagger
     DependsOn:
      - ListenerPort443
      - ListenerRuleSwagger
     Properties:
       Cluster: !Ref EcsCluster
-      DesiredCount: 2
+      DesiredCount: 1
       EnableECSManagedTags: true
       LaunchType: FARGATE
       LoadBalancers:
@@ -4366,12 +3891,12 @@ Resources:
           TargetGroupArn: !Ref TargetGroupSwagger
       NetworkConfiguration:
         AwsvpcConfiguration:
-          AssignPublicIp: DISABLED
+          AssignPublicIp: ENABLED
           SecurityGroups:
             - !Ref Ec2SecurityGroupLoadBalancerPublic
           Subnets:
-            - !Ref Ec2SubnetPrivate1
-            - !Ref Ec2SubnetPrivate2
+            - !Ref Ec2SubnetPublic1
+            - !Ref Ec2SubnetPublic2
       PlatformVersion: 1.4.0
       PropagateTags: TASK_DEFINITION
       ServiceName: swagger
@@ -4383,13 +3908,13 @@ Resources:
 
 
   EcsServiceWebApp:
-    Condition: IfRunWebAppHttps
+    Condition: IfRunWebApp
     DependsOn:
      - ListenerPort443
      - ListenerRuleWebApp
     Properties:
       Cluster: !Ref EcsCluster
-      DesiredCount: 2
+      DesiredCount: 1
       EnableECSManagedTags: true
       LaunchType: FARGATE
       LoadBalancers:
@@ -4416,14 +3941,14 @@ Resources:
 
 
   EcsServiceXterm:
-    Condition: IfRunXtermHttps
+    Condition: IfRunXterm
     DependsOn:
      - LambdaRunnerInitSenzing
      - ListenerPort443
      - ListenerRuleXterm
     Properties:
       Cluster: !Ref EcsCluster
-      DesiredCount: 2
+      DesiredCount: 1
       EnableECSManagedTags: true
       LaunchType: FARGATE
       LoadBalancers:
@@ -4433,12 +3958,12 @@ Resources:
           TargetGroupArn: !Ref TargetGroupXterm
       NetworkConfiguration:
         AwsvpcConfiguration:
-          AssignPublicIp: DISABLED
+          AssignPublicIp: ENABLED
           SecurityGroups:
             - !Ref Ec2SecurityGroupLoadBalancerPublic
           Subnets:
-            - !Ref Ec2SubnetPrivate1
-            - !Ref Ec2SubnetPrivate2
+            - !Ref Ec2SubnetPublic1
+            - !Ref Ec2SubnetPublic2
       PlatformVersion: 1.4.0
       PropagateTags: TASK_DEFINITION
       ServiceName: xterm
@@ -4455,7 +3980,7 @@ Resources:
   ApplicationAutoScalingScalableTargetApiServer:
     Properties:
       MaxCapacity: 200
-      MinCapacity: 2
+      MinCapacity: 1
       ResourceId: !Sub "service/${EcsCluster}/${EcsServiceApiServer.Name}"
       RoleARN: !Sub "arn:aws:iam::${AWS::AccountId}:role/aws-service-role/ecs.application-autoscaling.amazonaws.com/AWSServiceRoleForApplicationAutoScaling_ECSService"
       ScalableDimension: ecs:service:DesiredCount
@@ -4485,7 +4010,7 @@ Resources:
   ApplicationAutoScalingScalableTargetWebApp:
     Properties:
       MaxCapacity: 200
-      MinCapacity: 2
+      MinCapacity: 1
       ResourceId: !Sub "service/${EcsCluster}/${EcsServiceWebApp.Name}"
       RoleARN: !Sub "arn:aws:iam::${AWS::AccountId}:role/aws-service-role/ecs.application-autoscaling.amazonaws.com/AWSServiceRoleForApplicationAutoScaling_ECSService"
       ScalableDimension: ecs:service:DesiredCount
@@ -4548,204 +4073,131 @@ Outputs:
 
   AccountID:
     Description: 'The accountID'
-    Export:
-      Name: !Sub "${AWS::StackName}-account-id"
     Value: !Sub "${AWS::AccountId}"
 
-  CertificateArn:
-    Condition: IfRoute53HostedZoneId
-    Description: 'ARN of the SSL certificate. Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-hosted-zone/#certificatearn'
-    Export:
-      Name: !Sub "${AWS::StackName}-certificate-arn"
-    Value: !GetAtt LambdaRunnerFindDomainName.CertificateArn
-
   DatabaseHostCore:
-    Description: 'The connection endpoint for the DB cluster. Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-hosted-zone/#databasehostcore'
+    Description: 'The connection endpoint for the DB cluster. Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#databasehostcore'
     Export:
       Name: !Sub "${AWS::StackName}-database-host-core"
     Value: !GetAtt RdsDbClusterCore.Endpoint.Address
 
   DatabaseHostLibfeat:
-    Description: 'The connection endpoint for the DB cluster. Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-hosted-zone/#databasehostlibfeat'
+    Description: 'The connection endpoint for the DB cluster. Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#databasehostlibfeat'
     Export:
       Name: !Sub "${AWS::StackName}-database-host-libfeat"
     Value: !GetAtt RdsDbClusterLibfeat.Endpoint.Address
 
   DatabaseHostRes:
-    Description: 'The connection endpoint for the DB cluster. Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-hosted-zone/#databasehostres'
+    Description: 'The connection endpoint for the DB cluster. Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#databasehostres'
     Export:
       Name: !Sub "${AWS::StackName}-database-host-res"
     Value: !GetAtt RdsDbClusterRes.Endpoint.Address
 
   DatabaseName:
-    Description: 'The name of the database. Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-hosted-zone/#databasename'
+    Description: 'The name of the database. Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#databasename'
     Export:
       Name: !Sub "${AWS::StackName}-database-name"
     Value: !FindInMap [Constants, Database, Name]
 
   DatabasePassword:
-    Description: 'The randomly generated password for the database. Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-hosted-zone/#databasepassword'
+    Description: 'The randomly generated password for the database. Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#databasepassword'
     Export:
       Name: !Sub "${AWS::StackName}-database-password"
     Value: !GetAtt LambdaRunnerDbPassword.RandomString
 
   DatabasePortCore:
-    Description: 'The port number that will accept connections on this DB cluster. Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-hosted-zone/#databaseportcore'
+    Description: 'The port number that will accept connections on this DB cluster. Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#databaseportcore'
     Export:
       Name: !Sub "${AWS::StackName}-database-port-core"
     Value: !GetAtt RdsDbClusterCore.Endpoint.Port
 
   DatabasePortLibfeat:
-    Description: 'The port number that will accept connections on this DB cluster. Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-hosted-zone/#databaseportlibfeat'
+    Description: 'The port number that will accept connections on this DB cluster. Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#databaseportlibfeat'
     Export:
       Name: !Sub "${AWS::StackName}-database-port-libfeat"
     Value: !GetAtt RdsDbClusterLibfeat.Endpoint.Port
 
   DatabasePortRes:
-    Description: 'The port number that will accept connections on this DB cluster. Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-hosted-zone/#databaseportres'
+    Description: 'The port number that will accept connections on this DB cluster. Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#databaseportres'
     Export:
       Name: !Sub "${AWS::StackName}-database-port-res"
     Value: !GetAtt RdsDbClusterRes.Endpoint.Port
 
   DatabaseUsername:
-    Description: 'The administrative user name. Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-hosted-zone/#databaseusername'
+    Description: 'The administrative user name. Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#databaseusername'
     Export:
       Name: !Sub "${AWS::StackName}-database-username"
     Value: !FindInMap [Constants, Database, Username]
 
   Ec2Vpc:
-    Description: 'The ID of the VPC. Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-hosted-zone/#ec2vpc'
+    Description: 'The ID of the VPC. Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#ec2vpc'
     Export:
       Name: !Sub "${AWS::StackName}-ec2-VpcId"
     Value: !Ref Ec2Vpc
 
   Host:
-    Condition: IfRoute53HostedZoneId
-    Description: 'Host name of public services. Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-hosted-zone/#host'
+    Description: 'Host name of public services. Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#host'
     Export:
       Name: !Sub "${AWS::StackName}-host"
-    Value: !Sub
-      - "${AWS::StackName}.${DomainName}"
-      - DomainName: !GetAtt LambdaRunnerFindDomainName.DomainName
+    Value: !GetAtt LoadBalancerPublic.DNSName
 
   Queue:
-    Description: 'URL of the input queue. Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-hosted-zone/#queue'
+    Description: 'URL of the input queue. Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#queue'
     Export:
       Name: !Sub "${AWS::StackName}-queue"
     Value: !Ref SqsQueue
 
   QueueDeadLetter:
-    Description: 'URL of the dead-letter queue. Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-hosted-zone/#queuedeadletter'
+    Description: 'URL of the dead-letter queue. Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#queuedeadletter'
     Export:
       Name: !Sub "${AWS::StackName}-queue-deadletter"
     Value: !Ref SqsQueueDeadLetter
 
-  QueueInfo:
-    Description: 'URL of the info queue. Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-hosted-zone/#queueinfo'
-    Export:
-      Name: !Sub "${AWS::StackName}-queue-info"
-    Value: !Ref SqsQueueInfo
-
-  SenzingVersion:
-    Description: 'The Senzing Engine version installed. Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-hosted-zone/#senzingversion'
-    Export:
-      Name: !Sub "${AWS::StackName}-senzing-version"
-    Value: !FindInMap [Constants, Senzing, Version]
-
   SshPassword:
-    Description: 'The randomly generated password for SSH access. Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-hosted-zone/#sshpassword'
+    Description: 'The randomly generated password for SSH access. Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#sshpassword'
     Export:
       Name: !Sub "${AWS::StackName}-ssh-password"
     Value: !GetAtt LambdaRunnerSshPassword.RandomString
 
   SshUsername:
-    Description: 'The username for SSH access. Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-hosted-zone/#sshusername'
+    Description: 'The username for SSH access. Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#sshusername'
     Export:
       Name: !Sub "${AWS::StackName}-ssh-username"
     Value: root
 
-  SubnetPrivate1:
-    Description: 'The ID of private subnet 1. Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-hosted-zone/#subnetprivate1'
-    Export:
-      Name: !Sub "${AWS::StackName}-subnet-private-1"
-    Value: !Ref Ec2SubnetPrivate1
-
-  SubnetPrivate2:
-    Description: 'The ID of private subnet 2. Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-hosted-zone/#subnetprivate2'
-    Export:
-      Name: !Sub "${AWS::StackName}-subnet-private-2"
-    Value: !Ref Ec2SubnetPrivate2
-
   SubnetPublic1:
-    Description: 'The ID of public subnet 1. Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-hosted-zone/#subnetpublic1'
+    Description: 'The ID of public subnet 1. Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#subnetpublic1'
     Export:
       Name: !Sub "${AWS::StackName}-subnet-public-1"
     Value: !Ref Ec2SubnetPublic1
 
   SubnetPublic2:
-    Description: 'The ID of public subnet 2. Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-hosted-zone/#subnetpublic2'
+    Description: 'The ID of public subnet 2. Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#subnetpublic2'
     Export:
       Name: !Sub "${AWS::StackName}-subnet-public-2"
     Value: !Ref Ec2SubnetPublic2
 
-  UrlApiServer:
-    Condition: IfRunApiServerHttps
-    Description: "URL for API Server's heartbeat. Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-hosted-zone/#urlapiserver"
-    Value: !Sub
-      - "https://${AWS::StackName}.${DomainName}/api/"
-      - DomainName: !GetAtt LambdaRunnerFindDomainName.DomainName
-
   UrlApiServerHeartbeat:
-    Condition: IfRunApiServerHttps
-    Description: "URL for API Server's heartbeat. Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-hosted-zone/#urlapiserverheartbeat"
-    Value: !Sub
-      - "https://${AWS::StackName}.${DomainName}/api/heartbeat"
-      - DomainName: !GetAtt LambdaRunnerFindDomainName.DomainName
+    Condition: IfRunApiServer
+    Description: "URL for API Server's heartbeat. Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#urlapiserverheartbeat"
+    Value: !Sub "https://${LoadBalancerPublic.DNSName}/api/heartbeat"
 
   UrlJupyter:
-    Condition: IfRunJupyterHttps
-    Description: 'URL for Jupyter Notebooks. Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-hosted-zone/#urljupyter'
-    Export:
-      Name: !Sub "${AWS::StackName}-url-jupyter"
-    Value: !Sub
-      - "https://${AWS::StackName}.${DomainName}/jupyter/"
-      - DomainName: !GetAtt LambdaRunnerFindDomainName.DomainName
+    Condition: IfRunJupyter
+    Description: 'URL for Jupyter Notebooks. Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#urljupyter'
+    Value: !Sub "https://${LoadBalancerPublic.DNSName}/jupyter/"
 
   UrlSwagger:
-    Condition: IfRunSwaggerHttps
-    Description: 'HTTPS URL for Swagger. Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-hosted-zone/#urlswagger'
-    Export:
-      Name: !Sub "${AWS::StackName}-url-swagger"
-    Value: !Sub
-      - "https://${AWS::StackName}.${DomainName}/swagger/"
-      - DomainName: !GetAtt LambdaRunnerFindDomainName.DomainName
+    Condition: IfRunSwagger
+    Description: 'HTTPS URL for Swagger. Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#urlswagger'
+    Value: !Sub "https://${LoadBalancerPublic.DNSName}/swagger/"
 
   UrlWebApp:
-    Condition: IfRunWebAppHttps
-    Description: 'URL for Senzing Web App. Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-hosted-zone/#urlwebapp'
-    Export:
-      Name: !Sub "${AWS::StackName}-url-webapp"
-    Value: !Sub
-      - "https://${AWS::StackName}.${DomainName}/app/"
-      - DomainName: !GetAtt LambdaRunnerFindDomainName.DomainName
+    Condition: IfRunWebApp
+    Description: 'URL for Senzing Web App. Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#urlwebapp'
+    Value: !Sub "https://${LoadBalancerPublic.DNSName}/app/"
 
   UrlXterm:
-    Condition: IfRunXtermHttps
-    Description: 'HTTPS URL for Xterm. Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-hosted-zone/#urlxterm'
-    Export:
-      Name: !Sub "${AWS::StackName}-url-xterm"
-    Value: !Sub
-      - "https://${AWS::StackName}.${DomainName}/xterm/"
-      - DomainName: !GetAtt LambdaRunnerFindDomainName.DomainName
-
-  WebInitPassword:
-    Description: 'One time password for web access. Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-hosted-zone/#webpassword'
-    Export:
-      Name: !Sub "${AWS::StackName}-web-init-password"
-    Value: !GetAtt LambdaRunnerWebPassword.RandomPassword
-
-  WebUsername:
-    Description: 'Username for web access. Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-hosted-zone/#webusername'
-    Export:
-      Name: !Sub "${AWS::StackName}-web-username"
-    Value: !Ref CognitoAdminEmail
+    Condition: IfRunXterm
+    Description: 'HTTPS URL for Xterm. Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#urlxterm'
+    Value: !Sub "https://${LoadBalancerPublic.DNSName}/xterm/"

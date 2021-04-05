@@ -17,6 +17,7 @@ Description: >-
 # -----------------------------------------------------------------------------
 
 Metadata:
+
   AWS::CloudFormation::Interface:
     ParameterGroups:
       -
@@ -270,6 +271,7 @@ Parameters:
 # -----------------------------------------------------------------------------
 
 Rules:
+
   ConfirmEula:
     Assertions:
       - Assert: !Not
@@ -854,15 +856,18 @@ Resources:
       LogGroupName: !Sub "/aws/lambda/${AWS::StackName}-lambda-random-string"
     Type: AWS::Logs::LogGroup
 
+
   LogsLogGroupLambdaRunTask:
     Properties:
       LogGroupName: !Sub "/aws/lambda/${AWS::StackName}-lambda-run-task"
     Type: AWS::Logs::LogGroup
 
+
   LogsLogGroupLambdaRunTaskAndWait:
     Properties:
       LogGroupName: !Sub "/aws/lambda/${AWS::StackName}-lambda-run-task-and-wait"
     Type: AWS::Logs::LogGroup
+
 
   LogsLogGroupLambdaStringToLower:
     Properties:
@@ -2497,6 +2502,8 @@ Resources:
       TargetGroupAttributes:
         - Key: deregistration_delay.timeout_seconds
           Value: '60'
+        - Key: slow_start.duration_seconds
+          Value: '120'
       TargetType: ip
       UnhealthyThresholdCount: 5
       VpcId: !If
@@ -2644,6 +2651,7 @@ Resources:
       HealthyThresholdCount: 2
       Matcher:
         HttpCode: 200-299
+      Name: !Sub "${AWS::StackName}-target-group-xterm"
       Port: 5000
       Protocol: HTTP
       Tags:
