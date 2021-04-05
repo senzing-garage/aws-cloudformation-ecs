@@ -181,7 +181,7 @@ Mappings:
       DataSource: TEST
       EntityType: GENERIC
       InputUrl: https://s3.amazonaws.com/public-read-access/TestDataSets/SenzingTruthSet/truth-set.json
-      RecordMax: 102
+      RecordMax: 0
       RecordMin: 0
 
 

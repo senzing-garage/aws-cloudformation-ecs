@@ -208,7 +208,7 @@ Technical information on AWS Cloudformation parameters can be seen at
 1. **Type:** Boolean
 1. **Allowed values:**
    [ "Yes" | "No" ]
-1. **Default:** No
+1. **Default:** Yes
 
 ### RunStreamLoader
 
@@ -238,7 +238,7 @@ Technical information on AWS Cloudformation parameters can be seen at
 1. **Type:** Boolean
 1. **Allowed values:**
    [ "Yes" | "No" ]
-1. **Default:** No
+1. **Default:** Yes
 
 ### RunSwagger
 
@@ -251,7 +251,7 @@ Technical information on AWS Cloudformation parameters can be seen at
 1. **Type:** Boolean
 1. **Allowed values:**
    [ "Yes" | "No" ]
-1. **Default:** No
+1. **Default:** Yes
 
 ### RunVpcFlowLogs
 
@@ -356,7 +356,7 @@ Technical information on AWS Cloudformation parameters can be seen at
 1. **Allowed pattern:** Numbers. Specifically: `[0-9]*`
 1. **Allowed values:** 0 = Read entire file;  Any positive integer.
 1. **Example:** 15000000
-1. **Default:** 100000 - The largest number before a Senzing license is needed.
+1. **Default:** 0
 
 ### SenzingRecordMin
 
