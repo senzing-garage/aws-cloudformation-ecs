@@ -96,11 +96,14 @@ describing where we can improve.   Now on with the show...
         1. Enter an identifier of your choosing.
            Example: "senzing-demo"
     1. In **Parameters**
+        1. In **Acknowledge insecure system**
+            1. Understand the nature of the security in the deployment.
+            1. Once understood, enter "I AGREE".
         1. In **Senzing installation**
             1. Accept the End User Licence Agreement
-        1. In **Database**
-            1. Enter a database password of your choosing.
-            1. Confirm database password by retyping the password.
+        1. In **Security**
+            1. Enter your email address.
+            1. Choose a hosted zone from the list.
     1. Other parameters are optional.
     1. In lower-right, click "Next" button.
 1. In **Configure stack options**
