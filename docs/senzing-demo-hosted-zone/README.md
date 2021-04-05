@@ -1,12 +1,13 @@
-# Cloudformation: senzing-demo-full-stack
+# Cloudformation: senzing-demo-hosted-zone
 
 ## Synopsis
 
-The `senzing-demo-full-stack` demonstrates a Senzing deployment using an AWS Cloudformation template.
+The `senzing-demo-hosted-zone` demonstrates a Senzing deployment using an AWS Cloudformation template
+using a previously created AWS Route53 Hosted Zone.
 
 ## Overview
 
-The `senzing-demo-full-stack` demonstration is an AWS Cloudformation template that creates the following resources:
+The `senzing-demo-hosted-zone` demonstration is an AWS Cloudformation template that creates the following resources:
 
 1. AWS infrastructure
     1. VPC
@@ -46,7 +47,7 @@ This docker formation brings up the following docker containers:
 1. *[senzing/stream-producer](https://github.com/Senzing/stream-producer)*
 
 Help for
-[senzing-demo-full-stack](https://github.com/Senzing/aws-cloudformation-ecs/tree/main/cloudformation/senzing-demo-full-stack).
+[senzing-demo-hosted-zone](https://github.com/Senzing/aws-cloudformation-ecs/tree/main/cloudformation/senzing-demo-hosted-zone).
 
 ### Contents
 
@@ -88,7 +89,7 @@ describing where we can improve.   Now on with the show...
 
 ### Launch AWS Cloudformation
 
-1. Visit [AWS Cloudformation with Senzing template](https://console.aws.amazon.com/cloudformation/home#/stacks/new?templateURL=https://public-read-access.s3.amazonaws.com/aws-cloudformation-ecs-full-stack/cloudformation.yaml).
+1. Visit [AWS Cloudformation with Senzing template](https://console.aws.amazon.com/cloudformation/home#/stacks/new?templateURL=https://public-read-access.s3.amazonaws.com/aws-cloudformation-ecs-hosted-zone/cloudformation.yaml).
 1. In lower-right, click on "Next" button.
 1. In **Specify stack details**
     1. In **Stack name**
@@ -102,6 +103,7 @@ describing where we can improve.   Now on with the show...
             1. Accept the End User Licence Agreement
         1. In **Security**
             1. Enter your email address.
+            1. Choose a hosted zone from the list.
     1. Other parameters are optional.
     1. In lower-right, click "Next" button.
 1. In **Configure stack options**
@@ -163,66 +165,11 @@ Technical information on AWS Cloudformation parameters can be seen at
 1. **Example:** me@example.com
 1. **Default:** None
 
-### RunApiServer
+### Route53HostedZoneId
 
-1. **Synopsis:**
-   Optionally, run the
-   [Senzing API server](https://github.com/Senzing/senzing-api-server)
-   to create a RESTful API service to the Senzing Engine.
+1. **Synopsis:** The AWS Route53 Hosted Zone to which the cloudformation is added.
 1. **Required:** Yes
-1. **Type:** Boolean
-1. **Allowed values:**
-   [ "Yes" | "No" ]
-1. **Default:** Yes
-
-### RunJupyter
-
-1. **Synopsis:**
-   Optionally, run the
-   [Senzing Jupyter notebooks](https://github.com/Senzing/docker-jupyter)
-   to view Jupyter notebooks showing Senzing code samples.
-1. **Required:** Yes
-1. **Type:** Boolean
-1. **Allowed values:**
-   [ "Yes" | "No" ]
-1. **Default:** No
-
-### RunRedoer
-
-1. **Synopsis:**
-   Optionally, run the
-   [redoer](https://github.com/Senzing/redoer)
-   to process "redo records"
-1. **Required:** Yes
-1. **Type:** Boolean
-1. **Allowed values:**
-   [ "Yes" | "No" ]
-1. **Default:** Yes
-
-### RunSshd
-
-1. **Synopsis:**
-   Optionally, run the
-   [sshd](https://github.com/Senzing/docker-sshd)
-   container that allows `ssh` and `scp` access.
-   Can be used for debugging, copying files to the EFS, or the Senzing Exploratory Tools.
-1. **Required:** Yes
-1. **Type:** Boolean
-1. **Allowed values:**
-   [ "Yes" | "No" ]
-1. **Default:** Yes
-
-### RunStreamLoader
-
-1. **Synopsis:**
-   Optionally, run the
-   [stream-loader](https://github.com/Senzing/stream-loader)'
-   which reads records from the SQS queue and sends them to the Senzing Engine.
-1. **Required:** Yes
-1. **Type:** Boolean
-1. **Allowed values:**
-   [ "Yes" | "No" ]
-1. **Default:** Yes
+1. **Default:** None
 
 ### RunStreamProducer
 
@@ -230,78 +177,11 @@ Technical information on AWS Cloudformation parameters can be seen at
    Optionally, run the
    [stream-producer](https://github.com/Senzing/stream-producer)
    container that fetches JSON lines from a file and pushes them to the SQS queue.
-   If "Yes" is chosen,
-   [SenzingInputUrl](#senzinginputurl),
-   [SenzingRecordMin](#senzingrecordmin),
-   and
-   [SenzingRecordMax](#senzingrecordmax)
-   need to be specified.
 1. **Required:** Yes
 1. **Type:** Boolean
 1. **Allowed values:**
    [ "Yes" | "No" ]
 1. **Default:** Yes
-
-### RunSwagger
-
-1. **Synopsis:**
-   Optionally, run the
-   [swaggerapi/swagger-ui](https://github.com/swagger-api/swagger-ui)
-   container that hosts the SwaggerUI for viewing the
-   [Senzing REST API OpenAPI document](https://github.com/Senzing/senzing-rest-api-specification).
-1. **Required:** Yes
-1. **Type:** Boolean
-1. **Allowed values:**
-   [ "Yes" | "No" ]
-1. **Default:** Yes
-
-### RunVpcFlowLogs
-
-1. **Synopsis:**
-   Optionally, capture information about the IP traffic going to and from network interfaces in your VPC.
-1. **Required:** Yes
-1. **Type:** Boolean
-1. **Allowed values:**
-   [ "Yes" | "No" ]
-1. **Default:** No
-1. **References:**
-    1. [VPC Flow Logs](https://docs.aws.amazon.com/vpc/latest/userguide/flow-logs.html).
-
-### RunWebApp
-
-1. **Synopsis:**
-   Optionally, run the
-   [entity-search-web-app](https://github.com/Senzing/entity-search-web-app)
-   which gives a web-based representation of data stored in the Senzing data model.
-1. **Required:** Yes
-1. **Type:** Boolean
-1. **Allowed values:**
-   [ "Yes" | "No" ]
-1. **Example:**
-1. **Default:** Yes
-
-### RunXterm
-
-1. **Synopsis:**
-   Optionally, run the
-   [Senzing Xterm](https://github.com/Senzing/docker-xterm)
-   which gives a web-base terminal useful in running command line programs.
-1. **Required:** Yes
-1. **Type:** Boolean
-1. **Allowed values:**
-   [ "Yes" | "No" ]
-1. **Example:**
-1. **Default:** Yes
-
-### SenzingInputUrl
-
-1. **Synopsis:**
-   If using [RunStreamProducer](#runstreamproducer), supply the URL of a tar-gzipped file in JSON-lines format containing records to ingest into Senzing.
-1. **Required:** Yes if running Stream Producer, otherwise no.
-1. **Type:** String
-1. **Allowed pattern:**  A URL starting with `http://` or `https://`.
-1. **Example:** `https://www.example.com/my/records.json.gz`
-1. **Default:** `https://public-read-access.s3.amazonaws.com/TestDataSets/test-dataset-100m.json.gz`
 
 ### SenzingLicenseAsBase64
 
@@ -346,60 +226,6 @@ Technical information on AWS Cloudformation parameters can be seen at
    ```
 
 1. **Default:** None
-
-### SenzingRecordMax
-
-1. **Synopsis:**
-   When using [SenzingInputUrl](#senzinginputurl), this indicates the number of the last line that will be
-   read from the file.
-   It is used to limit the number of records ingested into Senzing.
-1. **Required:** Yes if using [SenzingInputUrl](#senzinginputurl), otherwise no.
-1. **Type:** Number
-1. **Allowed pattern:** Numbers. Specifically: `[0-9]*`
-1. **Allowed values:** 0 = Read entire file;  Any positive integer.
-1. **Example:** 15000000
-1. **Default:** 0
-
-### SenzingRecordMin
-
-1. **Synopsis:**
-   When using [SenzingInputUrl](#senzinginputurl), this indicates the number of the first line that will be
-   read from the file.
-   Used to skip lines at the beginning of the file.
-   It is handy if the beginning of the file has already been ingested into Senzing.
-1. **Required:** Yes if using [SenzingInputUrl](#senzinginputurl), otherwise no.
-1. **Type:** Number
-1. **Allowed pattern:** Numbers. Specifically: `[0-9]*`
-1. **Allowed values:** 0 = Read from beginning;  Any positive integer.
-1. **Example:** 100000
-1. **Default:** 0
-
-### VpcAvailabilityZones
-
-1. **Synopsis:**
-   When using [VpcId](#vpcid), list VPC availability zones in which to create subnets.
-   Two availability zones need to be specified.
-   Anything after two will be ignored.
-1. **Required:** Yes if using [VpcId](#vpcid), otherwise no.
-1. **Type:** CommaDelimitedList
-1. **Allowed pattern:** Comma-delimited list of VPC availability zones in which to create subnets.
-1. **Example:** us-east-1a,us-east-1e
-1. **Default:** None - default availability zones used based on
-   [Fn::GetAZs](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/intrinsic-function-reference-getavailabilityzones.html) and
-   [AWS::Region](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/pseudo-parameter-reference.html#cfn-pseudo-param-region)
-1. **References:**
-    1. [Regions and Zones](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-regions-availability-zones.html)
-
-### VpcId
-
-1. **Synopsis:**
-   VPC Id of existing VPC.
-   If not specified, a new VPC will be created.
-1. **Required:** No
-1. **Type:** String
-1. **Allowed pattern:** `vpc-` followed by unique id. Specifically `^(?:vpc-[0-9a-f]{8}|vpc-[0-9a-f]{17}|)$`
-1. **Example:** vpc-1a2b3c4d5e6f7g8h9
-1. **Default:** None - a new VPC will be created
 
 ## Outputs
 
@@ -523,14 +349,12 @@ Technical information on AWS Cloudformation parameters can be seen at
 ### SshPassword
 
 1. **Synopsis:**
-   Password to be used when logging into the
-   [SSHD container](#runsshd).
+   Password to be used when logging into the SSHD container.
 
 ### SshUsername
 
 1. **Synopsis:**
-   User ID to be used when logging into the
-   [SSHD container](#runsshd).
+   User ID to be used when logging into the SSHD container.
 
 ### SubnetPrivate1
 
