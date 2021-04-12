@@ -21,9 +21,9 @@ Metadata:
     ParameterGroups:
       -
         Label:
-          default: Acknowledge insecure system
+          default: Security responsibility
         Parameters:
-          - AcknowledgeInsecureSystem
+          - AcknowledgeSecurityResponsibility
       -
         Label:
           default: Senzing installation
@@ -35,31 +35,31 @@ Metadata:
           default: Security
         Parameters:
           - CognitoAdminEmail
-          - CidrInbound
           - Route53HostedZoneId
       -
         Label:
           default: Options
         Parameters:
           - RunStreamProducer
+          - CidrInbound
     ParameterLabels:
       AcceptEula:
         default: >-
           Required: If you accept the Senzing End User License Agreements at
           https://senzing.com/end-user-license-agreement,
           enter 'I_ACCEPT_THE_SENZING_EULA'.
-      AcknowledgeInsecureSystem:
+      AcknowledgeSecurityResponsibility:
         default: >-
           A default deployment of this template is for public demonstration only.
           Before using authentic PII, ensure the security of your deployment.
           The security of this deployment is your responsibility.
           To acknowledge your understanding and acceptance of the foregoing, type “I AGREE”.
       CidrInbound:
-        default: 'Required: Allowed inbound connections using CIDR notation.'
+        default: 'Optional: Allowed inbound connections using CIDR notation.'
       CognitoAdminEmail:
         default: 'Required: Email address for initial user.'
       Route53HostedZoneId:
-        default: 'Required: Specify a hosted zone.'
+        default: 'Optional: Specify a hosted zone.'
       RunStreamProducer:
         default: 'Optional: Would you like to have sample data imported?'
       SenzingLicenseAsBase64:
@@ -82,11 +82,11 @@ Parameters:
     Type: String
 
 
-  AcknowledgeInsecureSystem:
+  AcknowledgeSecurityResponsibility:
     AllowedPattern: '.+|^I AGREE$'
-    ConstraintDescription: AcknowledgeInsecureSystem parameter must be 'I AGREE'
+    ConstraintDescription: AcknowledgeSecurityResponsibility parameter must be 'I AGREE'
     Default: '_'
-    Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-hosted-zone/#acknowledgeinsecuresystem'
+    Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-hosted-zone/#acknowledgesecurityresponsibility'
     Type: String
 
 
@@ -145,10 +145,10 @@ Rules:
         AssertDescription: 'EULA acceptance incorrect.  Enter "I_ACCEPT_THE_SENZING_EULA"'
 
 
-  ConfirmAcknowledgeInsecureSystem:
+  ConfirmAcknowledgeSecurityResponsibility:
     Assertions:
       - Assert: !Equals
-          - !Ref AcknowledgeInsecureSystem
+          - !Ref AcknowledgeSecurityResponsibility
           - 'I AGREE'
         AssertDescription: 'Entering "I AGREE" is required to proceed.'
 
@@ -174,7 +174,7 @@ Mappings:
       WebApp: Yes
       Xterm: Yes
     Senzing:
-      Version: senzingapi-2.4.1-21064
+      Version: senzingapi-2.4.2-21097
     Stack:
       Name: hosted-zone
     StreamProducer:
@@ -2263,10 +2263,10 @@ Resources:
           - key: Name
             value: !Sub "${AWS::StackName}-lambda-runner-g2configtool-run-task-parameters"
         taskDefinition: !Ref EcsTaskDefinitionG2ConfigTool
+      ServiceToken: !GetAtt LambdaFunctionRunTaskAndWait.Arn
       Tags:
         - Key: Name
           Value: !Sub "${AWS::StackName}-lambda-runner-g2configtool"
-      ServiceToken: !GetAtt LambdaFunctionRunTaskAndWait.Arn
     Type: Custom::LambdaRunnerG2ConfigTool
 
 
@@ -4204,7 +4204,7 @@ Resources:
      - ListenerRuleApiServer
     Properties:
       Cluster: !Ref EcsCluster
-      DesiredCount: 2
+      DesiredCount: 1
       EnableECSManagedTags: true
       LaunchType: FARGATE
       LoadBalancers:
@@ -4242,7 +4242,7 @@ Resources:
      - ListenerRuleJupyter
     Properties:
       Cluster: !Ref EcsCluster
-      DesiredCount: 2
+      DesiredCount: 1
       EnableECSManagedTags: true
       LaunchType: FARGATE
       LoadBalancers:
@@ -4356,7 +4356,7 @@ Resources:
      - ListenerRuleSwagger
     Properties:
       Cluster: !Ref EcsCluster
-      DesiredCount: 2
+      DesiredCount: 1
       EnableECSManagedTags: true
       LaunchType: FARGATE
       LoadBalancers:
@@ -4389,7 +4389,7 @@ Resources:
      - ListenerRuleWebApp
     Properties:
       Cluster: !Ref EcsCluster
-      DesiredCount: 2
+      DesiredCount: 1
       EnableECSManagedTags: true
       LaunchType: FARGATE
       LoadBalancers:
@@ -4423,7 +4423,7 @@ Resources:
      - ListenerRuleXterm
     Properties:
       Cluster: !Ref EcsCluster
-      DesiredCount: 2
+      DesiredCount: 1
       EnableECSManagedTags: true
       LaunchType: FARGATE
       LoadBalancers:
@@ -4546,8 +4546,17 @@ Resources:
 
 Outputs:
 
+  0penFirst:
+    Condition: IfRunWebApp
+    Description: 'URL for Senzing Web App. Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-hosted-zone/#openfirst'
+    Export:
+      Name: !Sub "${AWS::StackName}-open-first"
+    Value: !Sub
+      - "https://${AWS::StackName}.${DomainName}/app/"
+      - DomainName: !GetAtt LambdaRunnerFindDomainName.DomainName
+
   AccountID:
-    Description: 'The accountID'
+    Description: 'The accountID Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-hosted-zone/#accountid'
     Export:
       Name: !Sub "${AWS::StackName}-account-id"
     Value: !Sub "${AWS::AccountId}"

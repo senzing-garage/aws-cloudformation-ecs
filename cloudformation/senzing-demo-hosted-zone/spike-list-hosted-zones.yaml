@@ -1,0 +1,77 @@
+AWSTemplateFormatVersion: 2010-09-09
+
+Description: >-
+  Senzing aws-cloudformation-ecs-spike-list-hosted-zones Version: 0.1.0
+  For more information see https://github.com/Senzing/aws-cloudformation-ecs
+
+# -----------------------------------------------------------------------------
+# Metadata
+# https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/metadata-section-structure.html
+# -----------------------------------------------------------------------------
+
+Metadata:
+
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      -
+        Label:
+          default: Security
+        Parameters:
+          - Route53HostedZoneId
+    ParameterLabels:
+      Route53HostedZoneId:
+        default: 'Optional: Specify a hosted zone or leave blank.'
+
+# -----------------------------------------------------------------------------
+# Parameters
+# https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/parameters-section-structure.html
+# -----------------------------------------------------------------------------
+
+Parameters:
+
+  Route53HostedZoneId:
+    Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-hosted-zone/#route53hostedzoneid'
+    Type: AWS::Route53::HostedZone::Id
+
+# -----------------------------------------------------------------------------
+# Conditions
+# https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/conditions-section-structure.html
+# -----------------------------------------------------------------------------
+
+Conditions:
+
+  IfRoute53HostedZoneId: !Not
+    - !Equals
+      - !Ref Route53HostedZoneId
+      - ''
+
+# -----------------------------------------------------------------------------
+# Resources
+# https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/resources-section-structure.html
+# -----------------------------------------------------------------------------
+
+Resources:
+
+# https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-vpc.html
+
+  Ec2Vpc:
+    Properties:
+      CidrBlock: 10.0.0.0/16
+      EnableDnsHostnames: true
+      EnableDnsSupport: true
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-ec2-vpc"
+    Type: AWS::EC2::VPC
+
+# -----------------------------------------------------------------------------
+# Outputs
+# https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/outputs-section-structure.html
+# -----------------------------------------------------------------------------
+
+Outputs:
+
+  Route53HostedZoneId:
+    Description: 'Route53HostedZoneId'
+    Value: !Ref Route53HostedZoneId
+
