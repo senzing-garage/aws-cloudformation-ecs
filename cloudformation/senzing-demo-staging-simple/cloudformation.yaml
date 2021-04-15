@@ -7,7 +7,7 @@ AWSTemplateFormatVersion: 2010-09-09
 #     aws cloudformation validate-template: https://awscli.amazonaws.com/v2/documentation/api/latest/reference/cloudformation/validate-template.html
 
 Description: >-
-  Senzing aws-cloudformation-ecs-demo-staging Version: 0.6.1
+  Senzing aws-cloudformation-ecs-demo-staging-simple Version: 0.6.2
   For more information see https://github.com/Senzing/aws-cloudformation-ecs/cloudformation/senzing-demo-staging
 
 # -----------------------------------------------------------------------------
@@ -187,7 +187,7 @@ Mappings:
       WebApp: Yes
       Xterm: Yes
     Stack:
-      Name: poc-simple
+      Name: staging-simple
     StreamProducer:
       DataSource: TEST
       EntityType: GENERIC
@@ -3894,7 +3894,7 @@ Resources:
               AuthorizationConfig: {}
               FilesystemId:
                 Ref: EfsFileSystem
-              RootDirectory: /data/1.0.0
+              RootDirectory: /data/2.0.0
         -
           Name: senzing-etc-dir
           EFSVolumeConfiguration:
@@ -5056,7 +5056,7 @@ Outputs:
 
   UrlSwagger:
     Condition: IfRunSwagger
-    Description: 'HTTPS URL for Swagger. Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#urlswagger'
+    Description: 'URL for Swagger. Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#urlswagger'
     Export:
       Name: !Sub "${AWS::StackName}-url-swagger"
     Value: !Sub "https://${LoadBalancerPublic.DNSName}/swagger/"
@@ -5070,7 +5070,7 @@ Outputs:
 
   UrlXterm:
     Condition: IfRunXterm
-    Description: 'HTTPS URL for Xterm. Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#urlxterm'
+    Description: 'URL for Senzing XTerm. Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#urlxterm'
     Export:
       Name: !Sub "${AWS::StackName}-url-xterm"
     Value: !Sub "https://${LoadBalancerPublic.DNSName}/xterm/"
