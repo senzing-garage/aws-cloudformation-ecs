@@ -375,9 +375,59 @@ Conditions:
 
 Resources:
 
+# -- Ssm -----------------------------------------------------------------
+
+# https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ssm-parameter.html
+# AWS Console: https://console.aws.amazon.com/systems-manager/parameters > Search for {stack}
+
+  SsmParameterSenzingEngineConfigurationJson:
+    Properties:
+      Name: !Sub "${AWS::StackName}-ssm-parameter-senzing-engine-configuration-json"
+      Type: String
+      Value: !Sub
+        - >-
+          {
+              "PIPELINE": {
+                  "CONFIGPATH": "/etc/opt/senzing",
+                  "RESOURCEPATH": "/opt/senzing/g2/resources",
+                  "SUPPORTPATH": "/opt/senzing/data"
+              },
+              "SQL": {
+                  "BACKEND": "HYBRID",
+                  "CONNECTION":"postgresql://${DatabaseUsername}:${DatabasePassword}@${DatabaseHostCore}:${DatabasePortCore}:${DatabaseName}"
+              },
+              "C1": {
+                  "CLUSTER_SIZE": "1",
+                  "DB_1": "postgresql://${DatabaseUsername}:${DatabasePassword}@${DatabaseHostRes}:${DatabasePortRes}:${DatabaseName}"
+              },
+              "C2": {
+                  "CLUSTER_SIZE": "1",
+                  "DB_1": "postgresql://${DatabaseUsername}:${DatabasePassword}@${DatabaseHostLibfeat}:${DatabasePortLibfeat}:${DatabaseName}"
+              },
+              "HYBRID": {
+                  "LIB_FEAT": "C2",
+                  "LIB_FEAT_HKEY": "C2",
+                  "RES_FEAT": "C1",
+                  "RES_FEAT_EKEY": "C1",
+                  "RES_FEAT_LKEY": "C1",
+                  "RES_FEAT_STAT": "C1"
+              }
+          }
+        - DatabaseHostLibfeat: !GetAtt RdsDbClusterLibfeat.Endpoint.Address
+          DatabaseHostCore: !GetAtt RdsDbClusterCore.Endpoint.Address
+          DatabaseHostRes: !GetAtt RdsDbClusterRes.Endpoint.Address
+          DatabaseName: !FindInMap [Constants, Database, Name]
+          DatabasePassword: !GetAtt LambdaRunnerDbPassword.RandomString
+          DatabasePortLibfeat: !GetAtt RdsDbClusterLibfeat.Endpoint.Port
+          DatabasePortCore: !GetAtt RdsDbClusterCore.Endpoint.Port
+          DatabasePortRes: !GetAtt RdsDbClusterRes.Endpoint.Port
+          DatabaseUsername: !FindInMap [Constants, Database, Username]
+    Type: AWS::SSM::Parameter
+
 # -- Iam -----------------------------------------------------------------
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-iam-role.html
+# AWS Console: https://console.aws.amazon.com/iam/home?#/roles > Search for {stack}
 
   IamRoleApiServer:
     Properties:
@@ -433,6 +483,25 @@ Resources:
       Tags:
         - Key: Name
           Value: !Sub "${AWS::StackName}-iam-role-flow-log"
+    Type: AWS::IAM::Role
+
+
+  IamRoleG2ConfigTool:
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          -
+            Action:
+              - sts:AssumeRole
+            Effect: Allow
+            Principal:
+              Service:
+                - ecs-tasks.amazonaws.com
+        Version: '2012-10-17'
+      Description: !Sub "${AWS::StackName}-iam-role-g2configtool"
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-iam-role-g2configtool"
     Type: AWS::IAM::Role
 
 
@@ -543,6 +612,7 @@ Resources:
               Service:
                 - ecs-tasks.amazonaws.com
                 - lambda.amazonaws.com
+                - route53.amazonaws.com
                 - sqs.amazonaws.com
         Version: '2012-10-17'
       Description: !Sub "${AWS::StackName}-iam-role-lambda"
@@ -641,6 +711,7 @@ Resources:
             Principal:
               Service:
                 - ecs-tasks.amazonaws.com
+                - route53.amazonaws.com
         Version: '2012-10-17'
       Description: !Sub "${AWS::StackName}-iam-role-swagger"
       Tags:
@@ -679,6 +750,7 @@ Resources:
             Principal:
               Service:
                 - ecs-tasks.amazonaws.com
+                - route53.amazonaws.com
         Version: '2012-10-17'
       Description: !Sub "${AWS::StackName}-iam-role-xterm"
       Tags:
@@ -687,6 +759,7 @@ Resources:
     Type: AWS::IAM::Role
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-iam-policy.html
+# AWS Console: https://console.aws.amazon.com/iam/home?#/roles > Search for {stack} > {role} > inline policy
 
   IamPolicyEfs:
     Properties:
