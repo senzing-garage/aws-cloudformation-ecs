@@ -38,13 +38,12 @@ Metadata:
           - Route53HostedZoneId
       -
         Label:
-          default: 'Optional: Identify existing resources'
+          default: 'Identify existing resources'
         Parameters:
           - VpcId
-          - VpcAvailabilityZones
       -
         Label:
-          default: 'Optional: Stream-producer'
+          default: 'Optional: Initial data load'
         Parameters:
           - RunStreamProducer
           - SenzingInputUrl
@@ -92,7 +91,7 @@ Metadata:
       RunStreamLoader:
         default: 'Optional: Would you like to run stream-producer service?'
       RunStreamProducer:
-        default: 'Optional: Would you like to have sample data imported?'
+        default: 'Optional: Would you like to have an initial set of data imported?'
       RunSwagger:
         default: 'Optional: Would you like to run Swagger service?'
       RunVpcFlowLogs:
@@ -103,7 +102,7 @@ Metadata:
         default: 'Optional: Would you like to run the Senzing XTerm service?'
       SenzingInputUrl:
         default: >-
-          Required if running stream-producer job.
+          Required if initial data load requested.
           URL to file of JSON records to be sent to AWS SQS queue.
       SenzingLicenseAsBase64:
         default: >-
@@ -111,21 +110,17 @@ Metadata:
           Senzing license as base64 encoded string.
       SenzingRecordMax:
         default: >-
-          Required if running stream-producer job.
+          Required if initial data load requested.
           Last record to read from file of JSON records.
           '0' means read to end of file.
       SenzingRecordMin:
         default: >-
-          Required if running stream-producer job.
+          Required if initial data load requested.
           First record to read from file of JSON records.
           '0' means start from the beginning.
-      VpcAvailabilityZones:
-        default: >-
-          Required if specifying existing VPC.
-          Comma-delimited list of VPC availability zones in which to create subnets.
       VpcId:
         default: >-
-          Optional: VPC Id of existing VPC.
+          Required: VPC Id of existing VPC.
           Leave blank to have a new VPC created.
 
 # -----------------------------------------------------------------------------
@@ -149,7 +144,7 @@ Parameters:
     AllowedPattern: '.+|^I AGREE$'
     ConstraintDescription: AcknowledgeSecurityResponsibility parameter must be 'I AGREE'
     Default: '_'
-    Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-user-vpc-hosted-zone/#acknowledgeinsecuresystem'
+    Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-user-vpc-hosted-zone/#acknowledgesecurityresponsibility'
     Type: String
 
 
@@ -221,7 +216,7 @@ Parameters:
     AllowedValues:
       - 'No'
       - 'Yes'
-    Default: 'Yes'
+    Default: 'No'
     Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-user-vpc-hosted-zone/#runstreamproducer'
     Type: String
 
@@ -288,20 +283,9 @@ Parameters:
     Type: Number
 
 
-  VpcAvailabilityZones:
-    Default: ''
-    Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-user-vpc-hosted-zone/#vpcavailabilityzones'
-    Type: CommaDelimitedList
-
-
   VpcId:
-    AllowedPattern: '^(?:vpc-[0-9a-f]{8}|vpc-[0-9a-f]{17}|)$'
-    ConstraintDescription: >-
-      VPC Id must begin with 'vpc-' followed by either an 8 or 17 character
-      identifier, or leave blank to have a new VPC created
-    Default: ''
     Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-user-vpc-hosted-zone/#vpcid'
-    Type: String
+    Type: AWS::EC2::VPC::Id
 
 # -----------------------------------------------------------------------------
 # Rules
@@ -415,13 +399,6 @@ Conditions:
   IfRunXterm: !Equals
     - !Ref RunXterm
     - 'Yes'
-
-  IfUseSpecifiedVpcAvailabilityZones: !Not
-    - !Equals
-      - !Join
-        - ''
-        - !Ref VpcAvailabilityZones
-      - ''
 
 # -----------------------------------------------------------------------------
 # Resources
@@ -1198,12 +1175,7 @@ Resources:
 
   Ec2SubnetPublic1:
     Properties:
-      AvailabilityZone: !If
-        - IfUseSpecifiedVpcAvailabilityZones
-        - !Select
-          - '0'
-          - !Ref VpcAvailabilityZones
-        - !Select
+      AvailabilityZone: !Select
           - '0'
           - !GetAZs
             Ref: AWS::Region
@@ -1223,12 +1195,7 @@ Resources:
 
   Ec2SubnetPublic2:
     Properties:
-      AvailabilityZone: !If
-        - IfUseSpecifiedVpcAvailabilityZones
-        - !Select
-          - '1'
-          - !Ref VpcAvailabilityZones
-        - !Select
+      AvailabilityZone: !Select
           - '1'
           - !GetAZs
             Ref: AWS::Region
