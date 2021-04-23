@@ -133,10 +133,10 @@ to draw attention to this AWS Cloudformation defect.
 
 1. Visit [AWS CloudFormation console](https://console.aws.amazon.com/cloudformation/home).
     1. Make sure correct AWS region is selected.
-1. Wait until "<stack-name>" status is `CREATE_COMPLETE`.
+1. Wait until "{stack-name}" status is `CREATE_COMPLETE`.
     1. Senzing formation takes about 20 minutes to fully deploy.
     1. May have to hit the refresh button a few times to get updated information.
-1. Click on "<stack-name>" stack.
+1. Click on "{stack-name}" stack.
 1. Click on "Outputs" tab.
 1. Click on "0penFirst" value.
     1. You will be prompted for username and password,
