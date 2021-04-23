@@ -47,6 +47,8 @@ Metadata:
         Parameters:
           - RunStreamProducer
           - SenzingInputUrl
+          - SenzingDataSource
+          - SenzingEntityType
           - SenzingRecordMin
           - SenzingRecordMax
       -
@@ -100,6 +102,14 @@ Metadata:
         default: 'Optional: Would you like to run the Senzing WebApp service?'
       RunXterm:
         default: 'Optional: Would you like to run the Senzing XTerm service?'
+      SenzingDataSource:
+        default: >-
+          Required if initial data load requested.
+          The DATA_SOURCE (i.e. origin) of the records.
+      SenzingEntityType:
+        default: >-
+          Required if initial data load requested.
+          The ENTITY_TYPE of the records.
       SenzingInputUrl:
         default: >-
           Required if initial data load requested.
@@ -121,6 +131,8 @@ Metadata:
       VpcId:
         default: >-
           Required: VPC Id of existing VPC.
+          Must have an address range of 10.0.0.0/16 or larger.
+          (i.e. less than or equal to 16)
           Leave blank to have a new VPC created.
 
 # -----------------------------------------------------------------------------
@@ -257,6 +269,18 @@ Parameters:
     Type: String
 
 
+  SenzingDataSource:
+    Default: TEST
+    Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-user-vpc-hosted-zone/#senzingdatasource'
+    Type: String
+
+
+  SenzingEntityType:
+    Default: GENERIC
+    Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-user-vpc-hosted-zone/#senzingentitytype'
+    Type: String
+
+
   SenzingInputUrl:
     Default: https://s3.amazonaws.com/public-read-access/TestDataSets/SenzingTruthSet/truth-set.json
     Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-user-vpc-hosted-zone/#senzinginputurl'
@@ -329,25 +353,20 @@ Mappings:
       Version: senzingapi-2.5.0-21104
     Stack:
       Name: full-stack
-    StreamProducer:
-      DataSource: TEST
-      EntityType: GENERIC
-      InputUrl: https://s3.amazonaws.com/public-read-access/TestDataSets/SenzingTruthSet/truth-set.json
-      RecordMax: 0
-      RecordMin: 0
 
+# NOTE: The CIDRs for subnets may collide with existing subnets.  The values may be altered.
 
   VpcCidrs:
     vpc:
       cidr: 10.0.0.0/16
     pubsubnet1:
-      cidr: 10.0.1.0/24
+      cidr: 10.0.151.0/24
     pubsubnet2:
-      cidr: 10.0.2.0/24
+      cidr: 10.0.152.0/24
     privsubnet1:
-      cidr: 10.0.3.0/24
+      cidr: 10.0.153.0/24
     privsubnet2:
-      cidr: 10.0.4.0/24
+      cidr: 10.0.154.0/24
 
 # -----------------------------------------------------------------------------
 # Conditions
@@ -3718,6 +3737,8 @@ Resources:
             -
               Name: SENZING_G2CONFIG_GTC
               Value: |
+                addDataSource !Ref SenzingDataType
+                addEntityType !Ref SenzingEntityType
                 addDataSource CUSTOMER
                 addDataSource WATCHLIST
                 save
@@ -4344,10 +4365,10 @@ Resources:
           Environment:
             -
               Name: SENZING_DEFAULT_DATA_SOURCE
-              Value: !FindInMap [Constants, StreamProducer, DataSource]
+              Value: !Ref SenzingDataSource
             -
               Name: SENZING_DEFAULT_ENTITY_TYPE
-              Value: !FindInMap [Constants, StreamProducer, EntityType]
+              Value: !Ref SenzingEntityType
             -
               Name: SENZING_INPUT_URL
               Value: !Sub "${SenzingInputUrl}"
