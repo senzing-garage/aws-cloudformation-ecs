@@ -3740,12 +3740,12 @@ Resources:
               Name: SENZING_G2CONFIG_GTC
               Value: !Sub
                 - |
-                  addDataSource ${SenzingDataType}
+                  addDataSource ${SenzingDataSource}
                   addEntityType ${SenzingEntityType}
                   addDataSource CUSTOMER
                   addDataSource WATCHLIST
                   save
-                - SenzingDataType: !Ref SenzingDataType
+                - SenzingDataSource: !Ref SenzingDataSource
                   SenzingEntityType: !Ref SenzingEntityType
             -
               Name: SENZING_LICENSE_BASE64_ENCODED
