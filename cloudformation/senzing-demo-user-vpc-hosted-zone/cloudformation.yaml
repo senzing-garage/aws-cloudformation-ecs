@@ -3283,7 +3283,9 @@ Resources:
               </p>
               </html>
             - Contact: !Ref CognitoAdminEmail
-              Host: !GetAtt LoadBalancerPublic.DNSName
+              Host: !Sub
+                - "${AWS::StackName}.${DomainName}"
+                - DomainName: !GetAtt LambdaRunnerFindDomainName.DomainName
           EmailSubject: !Sub 'Information for AWS Cloudformation ${AWS::StackName} stack'
           SMSMessage: 'Use the username {username} and the temporary password {####} to log in for the first time.'
       AutoVerifiedAttributes:
@@ -3740,10 +3742,10 @@ Resources:
               Name: SENZING_G2CONFIG_GTC
               Value: !Sub
                 - |
-                  addDataSource ${SenzingDataSource}
-                  addEntityType ${SenzingEntityType}
                   addDataSource CUSTOMER
                   addDataSource WATCHLIST
+                  addDataSource ${SenzingDataSource}
+                  addEntityType ${SenzingEntityType}
                   save
                 - SenzingDataSource: !Ref SenzingDataSource
                   SenzingEntityType: !Ref SenzingEntityType
@@ -5113,7 +5115,6 @@ Outputs:
     Description: 'Host name of public services. Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-user-vpc-hosted-zone/#host'
     Export:
       Name: !Sub "${AWS::StackName}-host"
-    Value: !Sub "${LambdaRunnerFindDomainName.DomainName}"
     Value: !Sub
       - "${AWS::StackName}.${DomainName}"
       - DomainName: !GetAtt LambdaRunnerFindDomainName.DomainName
