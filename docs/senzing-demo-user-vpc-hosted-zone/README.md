@@ -53,8 +53,10 @@ GitHub repository for
 
 1. [Preamble](#preamble)
     1. [Legend](#legend)
-1. [Expectations](#expectations)
 1. [Demonstrate using AWS Console](#demonstrate-using-aws-console)
+1. [A Hack](#a-hack)
+1. [Using deployment](#using-deployment)
+1. [Additional topics](#additional-topics)
 1. [Parameters](#parameters)
 1. [Outputs](#outputs)
 
@@ -83,20 +85,13 @@ describing where we can improve.   Now on with the show...
 ### Prerequisites
 
 1. AWS VPC
-    1. The VPC must have "DNS hostnames" set to "Enabled"
     1. [AWS VPC console](https://console.aws.amazon.com/vpc/home#vpcs:)
+    1. The VPC must have "DNS hostnames" set to "Enabled"
 1. AWS Route53 Hosted Zone
     1. [AWS Route53 Hosted Zone console](https://console.aws.amazon.com/route53/v2/hostedzones#)
-
 1. Certificate
     1. [AWS Certificate Manager](https://console.aws.amazon.com/acm/home)
     1. Make sure the certificate is in the AWS region of the deployment.
-
-https://us-east-2.console.aws.amazon.com/acm/home?region=us-east-2#/?id=arn:aws:acm:us-east-2:488776654093:certificate%2F606d6f8c-c0f2-46f5-9663-07eb666e87ba
-
-
-
-eb666e87ba
 
 ### Launch AWS Cloudformation
 
@@ -104,7 +99,7 @@ eb666e87ba
    With appropriate permissions, the
    [AWS Cost Explorer](https://aws.amazon.com/aws-cost-management/aws-cost-explorer/)
    can help evaluate costs.
-1. FIXME: Visit [AWS Cloudformation with Senzing template](https://console.aws.amazon.com/cloudformation/home#/stacks/new?templateURL=https://public-read-access.s3.amazonaws.com/aws-cloudformation-ecs-full-stack/cloudformation.yaml).
+1. Visit [AWS Cloudformation with Senzing template](https://console.aws.amazon.com/cloudformation/home#/stacks/new?templateURL=https://s3.amazonaws.com/public-read-access/aws-cloudformation-ecs-user-vpc-hosted-zone/cloudformation.yaml).
 1. In lower-right, click on "Next" button.
 1. In **Specify stack details**
     1. In **Stack name**

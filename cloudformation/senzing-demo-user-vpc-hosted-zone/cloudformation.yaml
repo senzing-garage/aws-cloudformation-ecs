@@ -3738,12 +3738,15 @@ Resources:
               Value: !GetAtt SsmParameterSenzingEngineConfigurationJson.Value
             -
               Name: SENZING_G2CONFIG_GTC
-              Value: |
-                addDataSource !Ref SenzingDataType
-                addEntityType !Ref SenzingEntityType
-                addDataSource CUSTOMER
-                addDataSource WATCHLIST
-                save
+              Value: !Sub
+                - |
+                  addDataSource ${SenzingDataType}
+                  addEntityType ${SenzingEntityType}
+                  addDataSource CUSTOMER
+                  addDataSource WATCHLIST
+                  save
+                - SenzingDataType: !Ref SenzingDataType
+                  SenzingEntityType: !Ref SenzingEntityType
             -
               Name: SENZING_LICENSE_BASE64_ENCODED
               Value: !Sub "${SenzingLicenseAsBase64}"
@@ -5111,6 +5114,9 @@ Outputs:
     Export:
       Name: !Sub "${AWS::StackName}-host"
     Value: !Sub "${LambdaRunnerFindDomainName.DomainName}"
+    Value: !Sub
+      - "${AWS::StackName}.${DomainName}"
+      - DomainName: !GetAtt LambdaRunnerFindDomainName.DomainName
 
   QueueDeadLetter:
     Description: 'URL of the dead-letter queue. Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-user-vpc-hosted-zone/#queuedeadletter'
