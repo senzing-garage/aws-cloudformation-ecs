@@ -99,7 +99,7 @@ describing where we can improve.   Now on with the show...
             1. Understand the nature of the security in the deployment.
             1. Once understood, enter "I AGREE".
         1. In **Senzing installation**
-            1. Accept the End User Licence Agreement
+            1. Accept the End User License Agreement
         1. In **Security**
             1. Enter your email address.
     1. Other parameters are optional.

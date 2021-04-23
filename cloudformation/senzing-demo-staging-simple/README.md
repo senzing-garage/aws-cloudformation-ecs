@@ -24,7 +24,7 @@ For use in testing versions of Senzing located on the staging server.
             1. Enter the version of `senzingapi` you want to test.
                Example:
                 1. `2.5.0-21104`
-            1. Accept the End User Licence Agreement
+            1. Accept the End User License Agreement
         1. In **Security**
             1. Enter your email address.  Example: `me@senzing.com`
     1. Other parameters are optional.

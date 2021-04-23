@@ -32,15 +32,15 @@ Metadata:
           - SenzingLicenseAsBase64
       -
         Label:
-          default: Security
-        Parameters:
-          - CognitoAdminEmail
-          - Route53HostedZoneId
-      -
-        Label:
           default: 'Identify existing resources'
         Parameters:
           - VpcId
+          - Route53HostedZoneId
+      -
+        Label:
+          default: Users
+        Parameters:
+          - CognitoAdminEmail
       -
         Label:
           default: 'Optional: Initial data load'
@@ -360,13 +360,13 @@ Mappings:
     vpc:
       cidr: 10.0.0.0/16
     pubsubnet1:
-      cidr: 10.0.151.0/24
+      cidr: 10.0.1.0/24
     pubsubnet2:
-      cidr: 10.0.152.0/24
+      cidr: 10.0.2.0/24
     privsubnet1:
-      cidr: 10.0.153.0/24
+      cidr: 10.0.3.0/24
     privsubnet2:
-      cidr: 10.0.154.0/24
+      cidr: 10.0.4.0/24
 
 # -----------------------------------------------------------------------------
 # Conditions
