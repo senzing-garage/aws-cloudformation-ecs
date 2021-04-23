@@ -28,7 +28,7 @@ The `aws-cloudformation-ecs / staging-test` is used for testing a version of Sen
            Example: `mjd-4001`
     1. In **Parameters**
         1. In **Senzing installation**
-            1. Accept the End User Licence Agreement
+            1. Accept the End User License Agreement
     1. In **Testing**
         1. Enter the name of the package on the staging server for Yum to install.
         1. To find packages on staging server, run:
