@@ -242,32 +242,6 @@ Technical information on AWS Cloudformation parameters can be seen at
 1. **Allowed values:** See [SENZING_ACCEPT_EULA](https://github.com/Senzing/knowledge-base/blob/master/lists/environment-variables.md#senzing_accept_eula).
 1. **Default:** None
 
-### AcknowledgeSecurityResponsibility
-
-1. **Synopsis:**
-   The Senzing proof-of-concept AWS Cloudformation uses
-   [AWS Cognito](https://aws.amazon.com/cognito/) for authentication,
-   and HTTPS (using a self-signed certificate) for encrypted network traffic
-   to expose services through a single, internet-facing AWS Elastic Load Balancer.
-   With exception of the
-   [senzing/sshd](https://github.com/Senzing/docker-sshd) container,
-   no tasks in the AWS Elastic Container Service (ECS) have public IP addresses.
-
-   To enable additional security measures for the deployment in your specific environment,
-   you'll need to consult with your AWS administrator.
-   Examples of additional security measures:
-    - [AWS Route53](https://aws.amazon.com/route53/) with genuine X.509 certificate
-    - [AWS Web Application Firewall (WAF)](https://aws.amazon.com/waf/)
-    - [AWS Shield](https://aws.amazon.com/shield/)
-    - [AWS Firewall Manager](https://aws.amazon.com/firewall-manager/)
-    - [Amazon API Gateway](https://aws.amazon.com/api-gateway/)
-    - Restrictive value for [CidrInbound](#cidrinbound)
-1. **Required:** Yes
-1. **Type:** String
-1. **Allowed values:**
-    1. "I AGREE"
-1. **Default:** None
-
 ### CidrInbound
 
 1. **Synopsis:** A Classless Inter-Domain Routing (CIDR) value used to limit access to the system.
@@ -303,9 +277,20 @@ Technical information on AWS Cloudformation parameters can be seen at
    `{stack-name}.{hosted-zone-domain-name}`.
    To see available Hosted Zones, visit the
    [AWS Route53 Hosted Zone console](https://console.aws.amazon.com/route53/v2/hostedzones#).
-1. **Required:** No
-1. **Type:** HostedZoneId
-1. **Default:** If no hosted zone is selected, a self-signed certificate will be created to support HTTPS over the AWS Elastic Load Balancer.
+1. **Required:** Yes
+1. **Type:** List of `AWS::Route53::HostedZone::Id`
+
+### RunApiServer
+
+1. **Synopsis:**
+   Optionally, run the
+   [senzing-api-server](https://github.com/Senzing/senzing-api-server)
+   which provides an HTTP REST API to the Senzing Engine.
+1. **Required:** Yes
+1. **Type:** Boolean
+1. **Allowed values:**
+   [ "Yes" | "No" ]
+1. **Default:** Yes
 
 ### RunJupyter
 
@@ -368,11 +353,16 @@ Technical information on AWS Cloudformation parameters can be seen at
    and
    [SenzingRecordMax](#senzingrecordmax)
    need to be specified.
+   If the JSON data in the [SenzingInputUrl](#senzinginputurl)
+   has `DATA_SOURCE` and/or `ENTITY_TYPE` values,
+   then [SenzingDataSource](#senzingdatasource)
+   and [SenzingEntityType](#senzingentitytype)
+   are required.
 1. **Required:** Yes
 1. **Type:** Boolean
 1. **Allowed values:**
    [ "Yes" | "No" ]
-1. **Default:** Yes
+1. **Default:** No
 
 ### RunSwagger
 
@@ -425,15 +415,59 @@ Technical information on AWS Cloudformation parameters can be seen at
 1. **Example:**
 1. **Default:** Yes
 
+### SecurityResponsibility
+
+1. **Synopsis:**
+   The Senzing proof-of-concept AWS Cloudformation uses
+   [AWS Cognito](https://aws.amazon.com/cognito/) for authentication,
+   and HTTPS (using a self-signed certificate) for encrypted network traffic
+   to expose services through a single, internet-facing AWS Elastic Load Balancer.
+   With exception of the
+   [senzing/sshd](https://github.com/Senzing/docker-sshd) container,
+   no tasks in the AWS Elastic Container Service (ECS) have public IP addresses.
+
+   To enable additional security measures for the deployment in your specific environment,
+   you'll need to consult with your AWS administrator.
+   Examples of additional security measures:
+    - [AWS Route53](https://aws.amazon.com/route53/) with genuine X.509 certificate
+    - [AWS Web Application Firewall (WAF)](https://aws.amazon.com/waf/)
+    - [AWS Shield](https://aws.amazon.com/shield/)
+    - [AWS Firewall Manager](https://aws.amazon.com/firewall-manager/)
+    - [Amazon API Gateway](https://aws.amazon.com/api-gateway/)
+    - Restrictive value for [CidrInbound](#cidrinbound)
+1. **Required:** Yes
+1. **Type:** String
+1. **Allowed values:**
+    1. "I AGREE"
+1. **Default:** None
+
+### SenzingDataSource
+
+1. **Synopsis:**
+   If using [RunStreamProducer](#runstreamproducer), supply the `DATA_SOURCE` value to be used.
+1. **Required:** Yes
+1. **Type:** String
+1. **Default:** `TEST`
+
+### SenzingEntityType
+
+1. **Synopsis:**
+   If using [RunStreamProducer](#runstreamproducer), supply the `ENTITY_TYPE` value to be used.
+1. **Required:** Yes
+1. **Type:** String
+1. **Default:** `GENERIC`
+
 ### SenzingInputUrl
 
 1. **Synopsis:**
    If using [RunStreamProducer](#runstreamproducer), supply the URL of a tar-gzipped file in JSON-lines format containing records to ingest into Senzing.
-1. **Required:** Yes if running Stream Producer, otherwise no.
+1. **Required:** Yes if running
+   [Stream Producer](#runstreamproducer),
+   otherwise no.
 1. **Type:** String
 1. **Allowed pattern:**  A URL starting with `http://` or `https://`.
-1. **Example:** `https://www.example.com/my/records.json.gz`
-1. **Default:** `https://public-read-access.s3.amazonaws.com/TestDataSets/test-dataset-100m.json.gz`
+1. **Example:** `https://www.example.com/my/records.json`
+1. **Default:** `https://s3.amazonaws.com/public-read-access/TestDataSets/SenzingTruthSet/truth-set.json`
 
 ### SenzingLicenseAsBase64
 
@@ -528,9 +562,7 @@ Technical information on AWS Cloudformation parameters can be seen at
    VPC Id of existing VPC.
    If not specified, a new VPC will be created.
 1. **Required:** No
-1. **Type:** String
-1. **Allowed pattern:** `vpc-` followed by unique id. Specifically `^(?:vpc-[0-9a-f]{8}|vpc-[0-9a-f]{17}|)$`
-1. **Example:** vpc-1a2b3c4d5e6f7g8h9
+1. **Type:** List of `AWS::EC2::VPC::Id`
 1. **Default:** None - a new VPC will be created
 
 ## Outputs

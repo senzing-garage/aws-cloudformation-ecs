@@ -91,7 +91,7 @@ Metadata:
       RunSshd:
         default: 'Optional: Would you like to run sshd service?'
       RunStreamLoader:
-        default: 'Optional: Would you like to run stream-producer service?'
+        default: 'Optional: Would you like to run stream-loader service?'
       RunStreamProducer:
         default: 'Optional: Would you like to have an initial set of data imported?'
       RunSwagger:
@@ -156,7 +156,7 @@ Parameters:
     AllowedPattern: '.+|^I AGREE$'
     ConstraintDescription: AcknowledgeSecurityResponsibility parameter must be 'I AGREE'
     Default: '_'
-    Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-user-vpc-hosted-zone/#acknowledgesecurityresponsibility'
+    Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-user-vpc-hosted-zone/#securityresponsibility'
     Type: String
 
 
