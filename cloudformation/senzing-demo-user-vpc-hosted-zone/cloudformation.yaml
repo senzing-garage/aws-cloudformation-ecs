@@ -2061,6 +2061,8 @@ Resources:
 
                       acm_client = boto3.client('acm')
                       certificate_list = acm_client.list_certificates()
+                      logger.info("certificate_list = {0}".format(certificate_list))
+
                       certificate_arn = find_certificate_arn(certificate_domain_name, certificate_list)
                       response["CertificateArn"] = certificate_arn
                       logger.info("certificate_arn = {0}".format(certificate_arn))
@@ -5108,7 +5110,7 @@ Outputs:
     Description: 'Host name of public services. Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-user-vpc-hosted-zone/#host'
     Export:
       Name: !Sub "${AWS::StackName}-host"
-    Value: !Sub "${LoadBalancerPublic.DNSName}"
+    Value: !Sub "${LambdaRunnerFindDomainName.DomainName}"
 
   QueueDeadLetter:
     Description: 'URL of the dead-letter queue. Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-user-vpc-hosted-zone/#queuedeadletter'

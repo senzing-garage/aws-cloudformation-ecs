@@ -3,6 +3,7 @@
 ## Synopsis
 
 The `senzing-demo-user-vpc-hosted-zone` demonstrates a Senzing deployment using an AWS Cloudformation template.
+In this formation, the user supplies the AWS VPC and Route53 Hosted Zone.
 
 ## Overview
 
@@ -20,16 +21,15 @@ The `senzing-demo-user-vpc-hosted-zone` demonstration is an AWS Cloudformation t
     1. AWS Elastic File System (EFS)
     1. AWS Relational Data Service (RDS) Aurora Postgres Serverless
     1. AWS Simple Queue Service (SQS)
-1. Senzing services
+1. Optional Senzing services
     1. Senzing API server
     1. Senzing Entity Search Web App
     1. Senzing Redoer
     1. Senzing SSH access
     1. Senzing Stream-Loader
+    1. Senzing Stream-producer
     1. Senzing Xterm
     1. SwaggerUI
-1. Optional services:
-    1. Senzing Stream-producer
 
 The following diagram shows the relationship of the docker containers in this docker composition.
 Arrows represent data flow.
@@ -79,6 +79,24 @@ describing where we can improve.   Now on with the show...
 1. :warning: - A "warning" icon means that something tricky is happening, so pay attention.
 
 ## Demonstrate using AWS Console
+
+### Prerequisites
+
+1. AWS VPC
+    1. The VPC must have "DNS hostnames" set to "Enabled"
+    1. [AWS VPC console](https://console.aws.amazon.com/vpc/home#vpcs:)
+1. AWS Route53 Hosted Zone
+    1. [AWS Route53 Hosted Zone console](https://console.aws.amazon.com/route53/v2/hostedzones#)
+
+1. Certificate
+    1. [AWS Certificate Manager](https://console.aws.amazon.com/acm/home)
+    1. Make sure the certificate is in the AWS region of the deployment.
+
+https://us-east-2.console.aws.amazon.com/acm/home?region=us-east-2#/?id=arn:aws:acm:us-east-2:488776654093:certificate%2F606d6f8c-c0f2-46f5-9663-07eb666e87ba
+
+
+
+eb666e87ba
 
 ### Launch AWS Cloudformation
 
