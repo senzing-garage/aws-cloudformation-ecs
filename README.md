@@ -28,9 +28,9 @@
     | S   | Y       | senzing-demo-hosted-zone | |
 
 1. VPC
-    1. 'S' = Static. User cannot specify.
-    1. 'D' = Dynamic. User can specify.
+    1. 'S' = Static. User cannot specify VPC.
+    1. 'D' = Dynamic. User can specify existing VPC.
 1. Route53
-    1. 'Y' = Route53 Hosted Zone specified by user.
+    1. 'Y' = Existing Route53 Hosted Zone specified by user.
     1. 'N' = Self-signed certificate used.
     1. 'U' = User-supplied certificate.
