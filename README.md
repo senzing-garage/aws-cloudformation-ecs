@@ -15,6 +15,8 @@
 
 ## Details
 
+1. Variations among Cloudformation templates
+
     | VPC | Route53 | Name | Comments |
     |:---:|:-------:|------|----------|
     | D   | N       | senzing-demo-full-stack | |
