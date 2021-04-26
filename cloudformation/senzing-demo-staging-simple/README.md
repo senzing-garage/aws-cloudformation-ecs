@@ -2,8 +2,12 @@
 
 For use in testing versions of Senzing located on the staging server.
 
-## Deploy
+### Launch AWS Cloudformation
 
+1. :thinking: **Warning:** This Cloudformation deployment will accrue AWS costs.
+   With appropriate permissions, the
+   [AWS Cost Explorer](https://aws.amazon.com/aws-cost-management/aws-cost-explorer/)
+   can help evaluate costs.
 1. Visit [AWS Cloudformation console](https://console.aws.amazon.com/cloudformation/home)
 1. In upper-right, click "Create stack" > "With new resources (standard)"
 1. In **Create stack** page
@@ -22,16 +26,16 @@ For use in testing versions of Senzing located on the staging server.
             1. Once understood, enter "I AGREE".
         1. In **Senzing installation**
             1. Enter the version of `senzingapi` you want to test.
-               Example:
-                1. `2.5.0-21104`
+               Example: `2.5.0-21104`
             1. Accept the End User License Agreement
         1. In **Security**
-            1. Enter your email address.  Example: `me@senzing.com`
+            1. Enter your email address.  Example: `me@example.com`
     1. Other parameters are optional.
+       The default values are fine.
     1. In lower-right, click "Next" button.
 1. In **Configure stack options**
     1. In lower-right, click "Next" button.
-1. In **Review <stack-name>**
+1. In **Review {stack-name}**
     1. Near the bottom, in **Capabilities**
         1. Check ":ballot_box_with_check: I acknowledge that AWS CloudFormation might create IAM resources."
     1. In lower-right, click "Create stack" button.
