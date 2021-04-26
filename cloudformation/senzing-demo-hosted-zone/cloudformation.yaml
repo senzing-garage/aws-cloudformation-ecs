@@ -8,7 +8,7 @@ AWSTemplateFormatVersion: 2010-09-09
 
 Description: >-
   Senzing aws-cloudformation-ecs-senzing-demo-hosted-zone Version: 0.7.2
-  For more information see https://github.com/Senzing/aws-cloudformation-ecs
+  For more information see https://github.com/Senzing/aws-cloudformation-ecs/cloudformation/senzing-demo-hosted-zone
 
 # -----------------------------------------------------------------------------
 # Metadata
@@ -23,7 +23,7 @@ Metadata:
         Label:
           default: Security responsibility
         Parameters:
-          - AcknowledgeSecurityResponsibility
+          - SecurityResponsibility
       -
         Label:
           default: Senzing installation
@@ -35,25 +35,23 @@ Metadata:
           default: Security
         Parameters:
           - CognitoAdminEmail
+          - CidrInbound
+      -
+        Label:
+          default: 'Identify existing resources'
+        Parameters:
           - Route53HostedZoneId
       -
         Label:
-          default: Options
+          default: 'Optional: Initial data load'
         Parameters:
           - RunStreamProducer
-          - CidrInbound
     ParameterLabels:
       AcceptEula:
         default: >-
           Required: If you accept the Senzing End User License Agreement at
           https://senzing.com/end-user-license-agreement,
           enter 'I_ACCEPT_THE_SENZING_EULA'.
-      AcknowledgeSecurityResponsibility:
-        default: >-
-          Required: A default deployment of this template is for public demonstration only.
-          Before using authentic PII, ensure the security of your deployment.
-          The security of this deployment is your responsibility.
-          To acknowledge your understanding and acceptance of the foregoing, type “I AGREE”.
       CidrInbound:
         default: 'Optional: Allowed inbound connections using CIDR notation.'
       CognitoAdminEmail:
@@ -61,7 +59,13 @@ Metadata:
       Route53HostedZoneId:
         default: 'Required: Choose a hosted zone.'
       RunStreamProducer:
-        default: 'Optional: Would you like to have sample data imported?'
+        default: 'Optional: Would you like to have an initial set of data imported?'
+      SecurityResponsibility:
+        default: >-
+          Required: A default deployment of this template is for public demonstration only.
+          Before using authentic PII, ensure the security of your deployment.
+          The security of this deployment is your responsibility.
+          To acknowledge your understanding and acceptance of the foregoing, type “I AGREE”.
       SenzingLicenseAsBase64:
         default: >-
           Required if inserting more than 100K records.
@@ -81,14 +85,6 @@ Parameters:
     ConstraintDescription: AcceptEula parameter must be 'I_ACCEPT_THE_SENZING_EULA'
     Default: '_'
     Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-hosted-zone/#accepteula'
-    Type: String
-
-
-  AcknowledgeSecurityResponsibility:
-    AllowedPattern: '.+|^I AGREE$'
-    ConstraintDescription: AcknowledgeSecurityResponsibility parameter must be 'I AGREE'
-    Default: '_'
-    Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-hosted-zone/#acknowledgesecurityresponsibility'
     Type: String
 
 
@@ -120,6 +116,14 @@ Parameters:
     Type: String
 
 
+  SecurityResponsibility:
+    AllowedPattern: '.+|^I AGREE$'
+    ConstraintDescription: SecurityResponsibility parameter must be 'I AGREE'
+    Default: '_'
+    Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-hosted-zone/#securityresponsibility'
+    Type: String
+
+
   SenzingLicenseAsBase64:
 #   AllowedPattern: ' ^$|[^-A-Za-z0-9+\/=\s]|=[^=]|={3,}$'
     ConstraintDescription: 'Must contain only Base64 characters. see http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-full-stack#senzinglicenseasbase64'
@@ -147,10 +151,10 @@ Rules:
         AssertDescription: 'EULA acceptance incorrect.  Enter "I_ACCEPT_THE_SENZING_EULA"'
 
 
-  ConfirmAcknowledgeSecurityResponsibility:
+  ConfirmSecurityResponsibility:
     Assertions:
       - Assert: !Equals
-          - !Ref AcknowledgeSecurityResponsibility
+          - !Ref SecurityResponsibility
           - 'I AGREE'
         AssertDescription: 'Entering "I AGREE" is required to proceed.'
 
@@ -1848,6 +1852,8 @@ Resources:
 
                       acm_client = boto3.client('acm')
                       certificate_list = acm_client.list_certificates()
+                      logger.info("certificate_list = {0}".format(certificate_list))
+
                       certificate_arn = find_certificate_arn(certificate_domain_name, certificate_list)
                       response["CertificateArn"] = certificate_arn
                       logger.info("certificate_arn = {0}".format(certificate_arn))
@@ -4789,7 +4795,7 @@ Outputs:
 
   0penFirst:
     Condition: IfRunWebApp
-    Description: 'URL for Senzing Web App. Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-hosted-zone/#openfirst'
+    Description: 'URL for Senzing Web App. Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-hosted-zone/#0penfirst'
     Export:
       Name: !Sub "${AWS::StackName}-open-first"
     Value: !Sub
@@ -4797,7 +4803,7 @@ Outputs:
       - DomainName: !GetAtt LambdaRunnerFindDomainName.DomainName
 
   AccountID:
-    Description: 'The accountID Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-hosted-zone/#accountid'
+    Description: 'The accountID. Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-hosted-zone/#accountid'
     Export:
       Name: !Sub "${AWS::StackName}-account-id"
     Value: !Sub "${AWS::AccountId}"

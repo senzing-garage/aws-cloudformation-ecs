@@ -20,6 +20,11 @@ Metadata:
     ParameterGroups:
       -
         Label:
+          default: Security responsibility
+        Parameters:
+          - SecurityResponsibility
+      -
+        Label:
           default: Senzing installation
         Parameters:
           - AcceptEula

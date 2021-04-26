@@ -7,8 +7,8 @@ AWSTemplateFormatVersion: 2010-09-09
 #     aws cloudformation validate-template: https://awscli.amazonaws.com/v2/documentation/api/latest/reference/cloudformation/validate-template.html
 
 Description: >-
-  Senzing senzing-demo-user-vpc-hosted-zone Version: 0.7.2
-  For more information see https://github.com/Senzing/aws-cloudformation-ecs
+  Senzing aws-cloudformation-ecs-demo-user-vpc-hosted-zone Version: 0.7.2
+  For more information see https://github.com/Senzing/aws-cloudformation-ecs/cloudformation/senzing-demo-user-vpc-hosted-zone
 
 # -----------------------------------------------------------------------------
 # Metadata
@@ -23,7 +23,7 @@ Metadata:
         Label:
           default: Security responsibility
         Parameters:
-          - AcknowledgeSecurityResponsibility
+          - SecurityResponsibility
       -
         Label:
           default: Senzing installation
@@ -32,15 +32,16 @@ Metadata:
           - SenzingLicenseAsBase64
       -
         Label:
+          default: Security
+        Parameters:
+          - CognitoAdminEmail
+          - CidrInbound
+      -
+        Label:
           default: 'Identify existing resources'
         Parameters:
           - VpcId
           - Route53HostedZoneId
-      -
-        Label:
-          default: Users
-        Parameters:
-          - CognitoAdminEmail
       -
         Label:
           default: 'Optional: Initial data load'
@@ -64,18 +65,14 @@ Metadata:
           - RunVpcFlowLogs
           - RunWebApp
           - RunXterm
+
+
     ParameterLabels:
       AcceptEula:
         default: >-
           Required: If you accept the Senzing End User License Agreement at
           https://senzing.com/end-user-license-agreement,
           enter 'I_ACCEPT_THE_SENZING_EULA'.
-      AcknowledgeSecurityResponsibility:
-        default: >-
-          Required: A default deployment of this template is for public demonstration only.
-          Before using authentic PII, ensure the security of your deployment.
-          The security of this deployment is your responsibility.
-          To acknowledge your understanding and acceptance of the foregoing, type “I AGREE”.
       CidrInbound:
         default: 'Optional: Allowed inbound connections using CIDR notation.'
       CognitoAdminEmail:
@@ -102,6 +99,12 @@ Metadata:
         default: 'Optional: Would you like to run the Senzing WebApp service?'
       RunXterm:
         default: 'Optional: Would you like to run the Senzing XTerm service?'
+      SecurityResponsibility:
+        default: >-
+          Required: A default deployment of this template is for public demonstration only.
+          Before using authentic PII, ensure the security of your deployment.
+          The security of this deployment is your responsibility.
+          To acknowledge your understanding and acceptance of the foregoing, type “I AGREE”.
       SenzingDataSource:
         default: >-
           Required if initial data load requested.
@@ -149,14 +152,6 @@ Parameters:
     ConstraintDescription: AcceptEula parameter must be 'I_ACCEPT_THE_SENZING_EULA'
     Default: '_'
     Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-user-vpc-hosted-zone/#accepteula'
-    Type: String
-
-
-  AcknowledgeSecurityResponsibility:
-    AllowedPattern: '.+|^I AGREE$'
-    ConstraintDescription: AcknowledgeSecurityResponsibility parameter must be 'I AGREE'
-    Default: '_'
-    Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-user-vpc-hosted-zone/#securityresponsibility'
     Type: String
 
 
@@ -269,6 +264,14 @@ Parameters:
     Type: String
 
 
+  SecurityResponsibility:
+    AllowedPattern: '.+|^I AGREE$'
+    ConstraintDescription: SecurityResponsibility parameter must be 'I AGREE'
+    Default: '_'
+    Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-user-vpc-hosted-zone/#securityresponsibility'
+    Type: String
+
+
   SenzingDataSource:
     Default: TEST
     Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-user-vpc-hosted-zone/#senzingdatasource'
@@ -331,10 +334,10 @@ Rules:
         AssertDescription: 'EULA acceptance incorrect.  Enter "I_ACCEPT_THE_SENZING_EULA"'
 
 
-  ConfirmAcknowledgeSecurityResponsibility:
+  ConfirmSecurityResponsibility:
     Assertions:
       - Assert: !Equals
-          - !Ref AcknowledgeSecurityResponsibility
+          - !Ref SecurityResponsibility
           - 'I AGREE'
         AssertDescription: 'Entering "I AGREE" is required to proceed.'
 
@@ -5029,7 +5032,7 @@ Outputs:
 
   0penFirst:
     Condition: IfRunWebApp
-    Description: 'URL for Senzing Web App. Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-user-vpc-hosted-zone/#openfirst'
+    Description: 'URL for Senzing Web App. Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-user-vpc-hosted-zone/#0penfirst'
     Export:
       Name: !Sub "${AWS::StackName}-open-first"
     Value: !Sub

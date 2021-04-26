@@ -567,6 +567,14 @@ Technical information on AWS Cloudformation parameters can be seen at
 
 ## Outputs
 
+### 0penFirst
+
+1. **Synopsis:**
+   An alias for [UrlWebApp](#urlwebapp).
+   Since it's one of the first things to look at, it is listed first.
+1. **Details:**
+   It is listed first because the name "cheats" and uses a zero instead of a capital "o".
+
 ### AccountID
 
 1. **Synopsis:**
@@ -656,14 +664,6 @@ Technical information on AWS Cloudformation parameters can be seen at
 1. **Details:**
    More information at [AWS Load Balancers console](https://console.aws.amazon.com/ec2/v2/home?#LoadBalancers:).
    Also used as the `host` value when using [UrlSwagger](#urlswagger).
-
-### OpenFirst
-
-1. **Synopsis:**
-   An alias for [UrlWebApp](#urlwebapp).
-   Since it's one of the first things to look at, it is listed first.
-1. **Details:**
-   It is listed first because the name "cheats" and uses a zero instead of a capital "o".
 
 ### Queue
 

@@ -39,12 +39,12 @@ Metadata:
           default: Security
         Parameters:
           - CognitoAdminEmail
+          - CidrInbound
       -
         Label:
-          default: Options
+          default: 'Optional: Initial data load'
         Parameters:
           - RunStreamProducer
-          - CidrInbound
     ParameterLabels:
       AcceptEula:
         default: >-
@@ -4736,7 +4736,7 @@ Outputs:
 
   0penFirst:
     Condition: IfRunWebApp
-    Description: 'URL for Senzing Web App. Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging-simple/#openfirst'
+    Description: 'URL for Senzing Web App. Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging-simple/#0penfirst'
     Export:
       Name: !Sub "${AWS::StackName}-open-first"
     Value: !Sub "https://${LoadBalancerPublic.DNSName}/app/"
