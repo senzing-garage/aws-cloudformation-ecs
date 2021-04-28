@@ -41,7 +41,6 @@ Metadata:
           default: 'Identify existing resources'
         Parameters:
           - VpcId
-          - Route53HostedZoneId
       -
         Label:
           default: 'Optional: Initial data load'
@@ -77,8 +76,6 @@ Metadata:
         default: 'Optional: Allowed inbound connections using CIDR notation.'
       CognitoAdminEmail:
         default: 'Required: Email address for initial user.'
-      Route53HostedZoneId:
-        default: 'Required: Choose a hosted zone.'
       RunApiServer:
         default: 'Optional: Would you like to run Senzing API server?'
       RunJupyter:
@@ -166,12 +163,6 @@ Parameters:
   CognitoAdminEmail:
     Type: String
     Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-full-stack/#cognitoadminemail'
-
-
-  Route53HostedZoneId:
-    Default: ''
-    Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-full-stack/#route53hostedzoneid'
-    Type: AWS::Route53::HostedZone::Id
 
 
   RunApiServer:
@@ -310,12 +301,6 @@ Parameters:
     Type: Number
 
 
-  VpcAvailabilityZones:
-    Default: ''
-    Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-full-stack/#vpcavailabilityzones'
-    Type: CommaDelimitedList
-
-
   VpcId:
     Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-full-stack/#vpcid'
     Type: AWS::EC2::VPC::Id
@@ -362,9 +347,6 @@ Mappings:
       Version: senzingapi-2.5.0-21104
     Stack:
       Name: full-stack
-    StreamProducer:
-      DataSource: TEST
-      EntityType: GENERIC
     Url:
       Certificate: http://senzing.dockter.com/files/certificates/test-certificate-2.json
 
@@ -3812,10 +3794,15 @@ Resources:
               Value: !GetAtt SsmParameterSenzingEngineConfigurationJson.Value
             -
               Name: SENZING_G2CONFIG_GTC
-              Value: |
-                addDataSource CUSTOMER
-                addDataSource WATCHLIST
-                save
+              Value: !Sub
+                - |
+                  addDataSource CUSTOMER
+                  addDataSource WATCHLIST
+                  addDataSource ${SenzingDataSource}
+                  addEntityType ${SenzingEntityType}
+                  save
+                - SenzingDataSource: !Ref SenzingDataSource
+                  SenzingEntityType: !Ref SenzingEntityType
             -
               Name: SENZING_LICENSE_BASE64_ENCODED
               Value: !Sub "${SenzingLicenseAsBase64}"
@@ -4439,10 +4426,10 @@ Resources:
           Environment:
             -
               Name: SENZING_DEFAULT_DATA_SOURCE
-              Value: !FindInMap [Constants, StreamProducer, DataSource]
+              Value: !Ref SenzingDataSource
             -
               Name: SENZING_DEFAULT_ENTITY_TYPE
-              Value: !FindInMap [Constants, StreamProducer, EntityType]
+              Value: !Ref SenzingEntityType
             -
               Name: SENZING_INPUT_URL
               Value: !Sub "${SenzingInputUrl}"
@@ -5099,9 +5086,7 @@ Outputs:
     Description: 'URL for Senzing Web App. Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-hosted-zone/#0penfirst'
     Export:
       Name: !Sub "${AWS::StackName}-open-first"
-    Value: !Sub
-      - "https://${AWS::StackName}.${DomainName}/app/"
-      - DomainName: !GetAtt LambdaRunnerFindDomainName.DomainName
+    Value: !Sub "https://${LoadBalancerPublic.DNSName}/app/"
 
   AccountID:
     Description: 'The accountID. Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-hosted-zone/#accountid'

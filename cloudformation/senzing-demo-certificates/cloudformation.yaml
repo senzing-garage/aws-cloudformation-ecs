@@ -48,12 +48,20 @@ Metadata:
         default: 'Certificate body.'
       CidrInbound:
         default: 'Optional: Allowed inbound connections using CIDR notation.'
+      CognitoAdminEmail:
+        default: 'Required: Email address for initial user.'
       SenzingLicenseAsBase64:
         default: >-
           Required if inserting more than 100K records.
           Senzing license as base64 encoded string.
       PrivateKey:
         default: 'Private key.'
+      SecurityResponsibility:
+        default: >-
+          Required: A default deployment of this template is for public demonstration only.
+          Before using authentic PII, ensure the security of your deployment.
+          The security of this deployment is your responsibility.
+          To acknowledge your understanding and acceptance of the foregoing, type “I AGREE”.
 
 # -----------------------------------------------------------------------------
 # Parameters
@@ -111,6 +119,11 @@ Parameters:
     Type: String
 
 
+  CognitoAdminEmail:
+    Type: String
+    Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-full-stack/#cognitoadminemail'
+
+
   PrivateKey:
     Type: String
     Description: Te private key of certificate
@@ -143,6 +156,14 @@ Parameters:
       7XA7a2yuaf/Ww4vToy5bo1HqhQBak1PP2wzuWiUkJcyTRTGryLvnIR9fDonJ9TAd
       0GsjqdfyAqjsvycLNvwR0wk=
       -----END PRIVATE KEY-----
+
+
+  SecurityResponsibility:
+    AllowedPattern: '.+|^I AGREE$'
+    ConstraintDescription: SecurityResponsibility parameter must be 'I AGREE'
+    Default: '_'
+    Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-full-stack/#securityresponsibility'
+    Type: String
 
 
   SenzingLicenseAsBase64:
@@ -4739,9 +4760,7 @@ Outputs:
     Description: 'URL for Senzing Web App. Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-certificates/#0penfirst'
     Export:
       Name: !Sub "${AWS::StackName}-open-first"
-    Value: !Sub
-      - "https://${AWS::StackName}.${DomainName}/app/"
-      - DomainName: !GetAtt LambdaRunnerFindDomainName.DomainName
+    Value: !Sub "https://${LoadBalancerPublic.DNSName}/app/"
 
   AccountID:
     Description: 'The accountID. Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-certificates/#accountid'
