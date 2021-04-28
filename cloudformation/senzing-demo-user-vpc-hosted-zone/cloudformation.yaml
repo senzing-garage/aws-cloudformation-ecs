@@ -7,7 +7,7 @@ AWSTemplateFormatVersion: 2010-09-09
 #     aws cloudformation validate-template: https://awscli.amazonaws.com/v2/documentation/api/latest/reference/cloudformation/validate-template.html
 
 Description: >-
-  Senzing aws-cloudformation-ecs-demo-user-vpc-hosted-zone Version: 0.7.2
+  Senzing aws-cloudformation-demo-user-vpc-hosted-zone Version: 0.7.2
   For more information see https://github.com/Senzing/aws-cloudformation-ecs/cloudformation/senzing-demo-user-vpc-hosted-zone
 
 # -----------------------------------------------------------------------------
@@ -133,7 +133,7 @@ Metadata:
           '0' means start from the beginning.
       VpcId:
         default: >-
-          Required: VPC Id of existing VPC.
+          Optional: VPC Id of existing VPC.
           Must have an address range of 10.0.0.0/16 or larger.
           (i.e. less than or equal to 16)
           Leave blank to have a new VPC created.
@@ -292,7 +292,7 @@ Parameters:
 
   SenzingLicenseAsBase64:
 #   AllowedPattern: ' ^$|[^-A-Za-z0-9+\/=\s]|=[^=]|={3,}$'
-    ConstraintDescription: 'Must contain only Base64 characters. see http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-full-stack#senzinglicenseasbase64'
+    ConstraintDescription: 'Must contain only Base64 characters. see http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-user-vpc-hosted-zone/#senzinglicenseasbase64'
     Default: ' '
     Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-user-vpc-hosted-zone/#senzinglicenseasbase64'
     Type: String
@@ -355,7 +355,7 @@ Mappings:
     Senzing:
       Version: senzingapi-2.5.0-21104
     Stack:
-      Name: full-stack
+      Name: user-vpc-hosted
 
 # NOTE: The CIDRs for subnets may collide with existing subnets.  The values may be altered.
 
@@ -964,6 +964,23 @@ Resources:
     Type: AWS::IAM::Policy
 
 
+  IamPolicyS3:
+    Properties:
+      PolicyName: !Sub "${AWS::StackName}-iam-policy-s3"
+      PolicyDocument:
+        Statement:
+          -
+            Action:
+              - s3:GetObject
+            Effect: Allow
+            Resource:
+              - '*'
+        Version: '2012-10-17'
+      Roles:
+       - !Ref IamRoleLambda
+    Type: AWS::IAM::Policy
+
+
   IamPolicySqsConsumer:
     Properties:
       PolicyName: !Sub "${AWS::StackName}-iam-policy-sqs-consumer"
@@ -1044,7 +1061,7 @@ Resources:
   LogsLogGroupDbClusterCore:
     Properties:
       LogGroupName: !Sub
-        - "/aws/rds/cluster/${StackNameAsLower}-aurora-senzing-cluster-core/postgresql"
+        - "/aws/rds/cluster/${StackNameAsLower}-aurora-senzing-core-cluster/postgresql"
         - StackNameAsLower: !GetAtt LambdaRunnerStackNameAsLower.OutputString
     Type: AWS::Logs::LogGroup
 
@@ -1052,7 +1069,7 @@ Resources:
   LogsLogGroupDbClusterLibfeat:
     Properties:
       LogGroupName: !Sub
-        - "/aws/rds/cluster/${StackNameAsLower}-aurora-senzing-cluster-libfeat/postgresql"
+        - "/aws/rds/cluster/${StackNameAsLower}-aurora-senzing-libfeat-cluster/postgresql"
         - StackNameAsLower: !GetAtt LambdaRunnerStackNameAsLower.OutputString
     Type: AWS::Logs::LogGroup
 
@@ -1060,7 +1077,7 @@ Resources:
   LogsLogGroupDbClusterRes:
     Properties:
       LogGroupName: !Sub
-        - "/aws/rds/cluster/${StackNameAsLower}-aurora-senzing-cluster-res/postgresql"
+        - "/aws/rds/cluster/${StackNameAsLower}-aurora-senzing-res-cluster/postgresql"
         - StackNameAsLower: !GetAtt LambdaRunnerStackNameAsLower.OutputString
     Type: AWS::Logs::LogGroup
 
@@ -1724,7 +1741,7 @@ Resources:
         - !GetAtt Ec2SubnetPrivate1.AvailabilityZone
         - !GetAtt Ec2SubnetPrivate2.AvailabilityZone
       DatabaseName: G2
-      DBClusterIdentifier: !Sub "${AWS::StackName}-aurora-senzing-cluster-core"
+      DBClusterIdentifier: !Sub "${AWS::StackName}-aurora-senzing-core-cluster"
       DBClusterParameterGroupName:
         Ref: RdsDbClusterParameterGroup
       # FIXME: Tricky code.  See https://console.aws.amazon.com/support/home#/case/?displayId=7725760511
@@ -1750,7 +1767,7 @@ Resources:
       StorageEncrypted: true
       Tags:
         - Key: Name
-          Value: !Sub "${AWS::StackName}-rds-db-cluster-core"
+          Value: !Sub "${AWS::StackName}-rds-db-core-cluster"
       VpcSecurityGroupIds:
         - !Ref Ec2SecurityGroupInternal
     Type: AWS::RDS::DBCluster
@@ -1765,7 +1782,7 @@ Resources:
         - !GetAtt Ec2SubnetPrivate1.AvailabilityZone
         - !GetAtt Ec2SubnetPrivate2.AvailabilityZone
       DatabaseName: G2
-      DBClusterIdentifier: !Sub "${AWS::StackName}-aurora-senzing-cluster-libfeat"
+      DBClusterIdentifier: !Sub "${AWS::StackName}-aurora-senzing-libfeat-cluster"
       DBClusterParameterGroupName:
         Ref: RdsDbClusterParameterGroup
       # FIXME: Tricky code.  See https://console.aws.amazon.com/support/home#/case/?displayId=7725760511
@@ -1791,7 +1808,7 @@ Resources:
       StorageEncrypted: true
       Tags:
         - Key: Name
-          Value: !Sub "${AWS::StackName}-rds-db-cluster-libfeat"
+          Value: !Sub "${AWS::StackName}-rds-db-libfeat-cluster"
       VpcSecurityGroupIds:
         - !Ref Ec2SecurityGroupInternal
     Type: AWS::RDS::DBCluster
@@ -1806,7 +1823,7 @@ Resources:
         - !GetAtt Ec2SubnetPrivate1.AvailabilityZone
         - !GetAtt Ec2SubnetPrivate2.AvailabilityZone
       DatabaseName: G2
-      DBClusterIdentifier: !Sub "${AWS::StackName}-aurora-senzing-cluster-res"
+      DBClusterIdentifier: !Sub "${AWS::StackName}-aurora-senzing-res-cluster"
       DBClusterParameterGroupName:
         Ref: RdsDbClusterParameterGroup
       # FIXME: Tricky code.  See https://console.aws.amazon.com/support/home#/case/?displayId=7725760511
@@ -1832,7 +1849,7 @@ Resources:
       StorageEncrypted: true
       Tags:
         - Key: Name
-          Value: !Sub "${AWS::StackName}-rds-db-cluster-res"
+          Value: !Sub "${AWS::StackName}-rds-db-res-cluster"
       VpcSecurityGroupIds:
         - !Ref Ec2SecurityGroupInternal
     Type: AWS::RDS::DBCluster

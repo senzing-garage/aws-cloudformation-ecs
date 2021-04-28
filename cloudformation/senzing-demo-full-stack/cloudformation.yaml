@@ -7,7 +7,7 @@ AWSTemplateFormatVersion: 2010-09-09
 #     aws cloudformation validate-template: https://awscli.amazonaws.com/v2/documentation/api/latest/reference/cloudformation/validate-template.html
 
 Description: >-
-  Senzing aws-cloudformation-ecs-senzing-demo-full-stack Version: 0.7.2
+  Senzing aws-cloudformation-demo-full-stack Version: 0.7.2
   For more information see https://github.com/Senzing/aws-cloudformation-ecs/cloudformation/senzing-demo-full-stack
 
 # -----------------------------------------------------------------------------
@@ -41,7 +41,7 @@ Metadata:
           default: 'Identify existing resources'
         Parameters:
           - VpcId
-          - VpcAvailabilityZones
+          - Route53HostedZoneId
       -
         Label:
           default: 'Optional: Initial data load'
@@ -77,6 +77,8 @@ Metadata:
         default: 'Optional: Allowed inbound connections using CIDR notation.'
       CognitoAdminEmail:
         default: 'Required: Email address for initial user.'
+      Route53HostedZoneId:
+        default: 'Required: Choose a hosted zone.'
       RunApiServer:
         default: 'Optional: Would you like to run Senzing API server?'
       RunJupyter:
@@ -86,9 +88,9 @@ Metadata:
       RunSshd:
         default: 'Optional: Would you like to run sshd service?'
       RunStreamLoader:
-        default: 'Optional: Would you like to run stream-producer service?'
+        default: 'Optional: Would you like to run stream-loader service?'
       RunStreamProducer:
-        default: 'Optional: Would you like to have sample data imported?'
+        default: 'Optional: Would you like to have an initial set of data imported?'
       RunSwagger:
         default: 'Optional: Would you like to run Swagger service?'
       RunVpcFlowLogs:
@@ -103,9 +105,17 @@ Metadata:
           Before using authentic PII, ensure the security of your deployment.
           The security of this deployment is your responsibility.
           To acknowledge your understanding and acceptance of the foregoing, type “I AGREE”.
+      SenzingDataSource:
+        default: >-
+          Required if initial data load requested.
+          The DATA_SOURCE (i.e. origin) of the records.
+      SenzingEntityType:
+        default: >-
+          Required if initial data load requested.
+          The ENTITY_TYPE of the records.
       SenzingInputUrl:
         default: >-
-          Required if running stream-producer job.
+          Required if initial data load requested.
           URL to file of JSON records to be sent to AWS SQS queue.
       SenzingLicenseAsBase64:
         default: >-
@@ -113,21 +123,19 @@ Metadata:
           Senzing license as base64 encoded string.
       SenzingRecordMax:
         default: >-
-          Required if running stream-producer job.
+          Required if initial data load requested.
           Last record to read from file of JSON records.
           '0' means read to end of file.
       SenzingRecordMin:
         default: >-
-          Required if running stream-producer job.
+          Required if initial data load requested.
           First record to read from file of JSON records.
           '0' means start from the beginning.
-      VpcAvailabilityZones:
-        default: >-
-          Required if specifying existing VPC.
-          Comma-delimited list of VPC availability zones in which to create subnets.
       VpcId:
         default: >-
           Optional: VPC Id of existing VPC.
+          Must have an address range of 10.0.0.0/16 or larger.
+          (i.e. less than or equal to 16)
           Leave blank to have a new VPC created.
 
 # -----------------------------------------------------------------------------
@@ -158,6 +166,12 @@ Parameters:
   CognitoAdminEmail:
     Type: String
     Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-full-stack/#cognitoadminemail'
+
+
+  Route53HostedZoneId:
+    Default: ''
+    Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-full-stack/#route53hostedzoneid'
+    Type: AWS::Route53::HostedZone::Id
 
 
   RunApiServer:
@@ -254,7 +268,19 @@ Parameters:
     AllowedPattern: '.+|^I AGREE$'
     ConstraintDescription: SecurityResponsibility parameter must be 'I AGREE'
     Default: '_'
-    Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-hosted-zone/#securityresponsibility'
+    Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-full-stack/#securityresponsibility'
+    Type: String
+
+
+  SenzingDataSource:
+    Default: TEST
+    Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-full-stack/#senzingdatasource'
+    Type: String
+
+
+  SenzingEntityType:
+    Default: GENERIC
+    Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-full-stack/#senzingentitytype'
     Type: String
 
 
@@ -291,13 +317,8 @@ Parameters:
 
 
   VpcId:
-    AllowedPattern: '^(?:vpc-[0-9a-f]{8}|vpc-[0-9a-f]{17}|)$'
-    ConstraintDescription: >-
-      VPC Id must begin with 'vpc-' followed by either an 8 or 17 character
-      identifier, or leave blank to have a new VPC created
-    Default: ''
     Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-full-stack/#vpcid'
-    Type: String
+    Type: AWS::EC2::VPC::Id
 
 # -----------------------------------------------------------------------------
 # Rules
@@ -347,6 +368,7 @@ Mappings:
     Url:
       Certificate: http://senzing.dockter.com/files/certificates/test-certificate-2.json
 
+# NOTE: The CIDRs for subnets may collide with existing subnets.  The values may be altered.
 
   VpcCidrs:
     vpc:
@@ -410,13 +432,6 @@ Conditions:
   IfRunXterm: !Equals
     - !Ref RunXterm
     - 'Yes'
-
-  IfUseSpecifiedVpcAvailabilityZones: !Not
-    - !Equals
-      - !Join
-        - ''
-        - !Ref VpcAvailabilityZones
-      - ''
 
 # -----------------------------------------------------------------------------
 # Resources
@@ -978,6 +993,23 @@ Resources:
     Type: AWS::IAM::Policy
 
 
+  IamPolicyS3:
+    Properties:
+      PolicyName: !Sub "${AWS::StackName}-iam-policy-s3"
+      PolicyDocument:
+        Statement:
+          -
+            Action:
+              - s3:GetObject
+            Effect: Allow
+            Resource:
+              - '*'
+        Version: '2012-10-17'
+      Roles:
+       - !Ref IamRoleLambda
+    Type: AWS::IAM::Policy
+
+
   IamPolicySqsConsumer:
     Properties:
       PolicyName: !Sub "${AWS::StackName}-iam-policy-sqs-consumer"
@@ -1058,7 +1090,7 @@ Resources:
   LogsLogGroupDbClusterCore:
     Properties:
       LogGroupName: !Sub
-        - "/aws/rds/cluster/${StackNameAsLower}-aurora-senzing-cluster-core/postgresql"
+        - "/aws/rds/cluster/${StackNameAsLower}-aurora-senzing-core-cluster/postgresql"
         - StackNameAsLower: !GetAtt LambdaRunnerStackNameAsLower.OutputString
     Type: AWS::Logs::LogGroup
 
@@ -1066,7 +1098,7 @@ Resources:
   LogsLogGroupDbClusterLibfeat:
     Properties:
       LogGroupName: !Sub
-        - "/aws/rds/cluster/${StackNameAsLower}-aurora-senzing-cluster-libfeat/postgresql"
+        - "/aws/rds/cluster/${StackNameAsLower}-aurora-senzing-libfeat-cluster/postgresql"
         - StackNameAsLower: !GetAtt LambdaRunnerStackNameAsLower.OutputString
     Type: AWS::Logs::LogGroup
 
@@ -1074,7 +1106,7 @@ Resources:
   LogsLogGroupDbClusterRes:
     Properties:
       LogGroupName: !Sub
-        - "/aws/rds/cluster/${StackNameAsLower}-aurora-senzing-cluster-res/postgresql"
+        - "/aws/rds/cluster/${StackNameAsLower}-aurora-senzing-res-cluster/postgresql"
         - StackNameAsLower: !GetAtt LambdaRunnerStackNameAsLower.OutputString
     Type: AWS::Logs::LogGroup
 
@@ -1211,12 +1243,7 @@ Resources:
 
   Ec2SubnetPublic1:
     Properties:
-      AvailabilityZone: !If
-        - IfUseSpecifiedVpcAvailabilityZones
-        - !Select
-          - '0'
-          - !Ref VpcAvailabilityZones
-        - !Select
+      AvailabilityZone: !Select
           - '0'
           - !GetAZs
             Ref: AWS::Region
@@ -1236,12 +1263,7 @@ Resources:
 
   Ec2SubnetPublic2:
     Properties:
-      AvailabilityZone: !If
-        - IfUseSpecifiedVpcAvailabilityZones
-        - !Select
-          - '1'
-          - !Ref VpcAvailabilityZones
-        - !Select
+      AvailabilityZone: !Select
           - '1'
           - !GetAZs
             Ref: AWS::Region
@@ -1758,7 +1780,7 @@ Resources:
         - !GetAtt Ec2SubnetPrivate1.AvailabilityZone
         - !GetAtt Ec2SubnetPrivate2.AvailabilityZone
       DatabaseName: G2
-      DBClusterIdentifier: !Sub "${AWS::StackName}-aurora-senzing-cluster-core"
+      DBClusterIdentifier: !Sub "${AWS::StackName}-aurora-senzing-core-cluster"
       DBClusterParameterGroupName:
         Ref: RdsDbClusterParameterGroup
       # FIXME: Tricky code.  See https://console.aws.amazon.com/support/home#/case/?displayId=7725760511
@@ -1784,7 +1806,7 @@ Resources:
       StorageEncrypted: true
       Tags:
         - Key: Name
-          Value: !Sub "${AWS::StackName}-rds-db-cluster-core"
+          Value: !Sub "${AWS::StackName}-rds-db-core-cluster"
       VpcSecurityGroupIds:
         - !Ref Ec2SecurityGroupInternal
     Type: AWS::RDS::DBCluster
@@ -1799,7 +1821,7 @@ Resources:
         - !GetAtt Ec2SubnetPrivate1.AvailabilityZone
         - !GetAtt Ec2SubnetPrivate2.AvailabilityZone
       DatabaseName: G2
-      DBClusterIdentifier: !Sub "${AWS::StackName}-aurora-senzing-cluster-libfeat"
+      DBClusterIdentifier: !Sub "${AWS::StackName}-aurora-senzing-libfeat-cluster"
       DBClusterParameterGroupName:
         Ref: RdsDbClusterParameterGroup
       # FIXME: Tricky code.  See https://console.aws.amazon.com/support/home#/case/?displayId=7725760511
@@ -1825,7 +1847,7 @@ Resources:
       StorageEncrypted: true
       Tags:
         - Key: Name
-          Value: !Sub "${AWS::StackName}-rds-db-cluster-libfeat"
+          Value: !Sub "${AWS::StackName}-rds-db-libfeat-cluster"
       VpcSecurityGroupIds:
         - !Ref Ec2SecurityGroupInternal
     Type: AWS::RDS::DBCluster
@@ -1840,7 +1862,7 @@ Resources:
         - !GetAtt Ec2SubnetPrivate1.AvailabilityZone
         - !GetAtt Ec2SubnetPrivate2.AvailabilityZone
       DatabaseName: G2
-      DBClusterIdentifier: !Sub "${AWS::StackName}-aurora-senzing-cluster-res"
+      DBClusterIdentifier: !Sub "${AWS::StackName}-aurora-senzing-res-cluster"
       DBClusterParameterGroupName:
         Ref: RdsDbClusterParameterGroup
       # FIXME: Tricky code.  See https://console.aws.amazon.com/support/home#/case/?displayId=7725760511
@@ -1866,7 +1888,7 @@ Resources:
       StorageEncrypted: true
       Tags:
         - Key: Name
-          Value: !Sub "${AWS::StackName}-rds-db-cluster-res"
+          Value: !Sub "${AWS::StackName}-rds-db-res-cluster"
       VpcSecurityGroupIds:
         - !Ref Ec2SecurityGroupInternal
     Type: AWS::RDS::DBCluster

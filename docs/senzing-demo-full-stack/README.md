@@ -110,7 +110,7 @@ describing where we can improve.   Now on with the show...
     1. Near the bottom, in **Capabilities**
         1. Check ":ballot_box_with_check: I acknowledge that AWS CloudFormation might create IAM resources."
     1. In lower-right, click "Create stack" button.
-1. Senzing formation takes about 15 minutes to fully deploy.
+1. Senzing formation takes about 20 minutes to fully deploy.
 
 ### View results
 

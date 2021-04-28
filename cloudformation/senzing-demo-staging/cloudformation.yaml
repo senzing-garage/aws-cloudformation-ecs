@@ -43,7 +43,6 @@ Metadata:
           default: 'Identify existing resources'
         Parameters:
           - VpcId
-          - VpcAvailabilityZones
       -
         Label:
           default: 'Optional: Initial data load'
@@ -135,13 +134,11 @@ Metadata:
         default: >-
           Version of Senzing to deploy.
           Format:  M.m.P-YYddd
-      VpcAvailabilityZones:
-        default: >-
-          Required if specifying existing VPC.
-          Comma-delimited list of VPC availability zones in which to create subnets.
       VpcId:
         default: >-
           Optional: VPC Id of existing VPC.
+          Must have an address range of 10.0.0.0/16 or larger.
+          (i.e. less than or equal to 16)
           Leave blank to have a new VPC created.
 
 # -----------------------------------------------------------------------------
@@ -311,15 +308,9 @@ Parameters:
 
 
   SenzingVersion:
-    Default: senzingapi-M.m.P-nnnnn
+    Default: '2.5.0-21104'
     Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#senzingversion'
     Type: String
-
-
-  VpcAvailabilityZones:
-    Default: ''
-    Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#vpcavailabilityzones'
-    Type: CommaDelimitedList
 
 
   VpcId:
@@ -431,13 +422,6 @@ Conditions:
   IfRunXterm: !Equals
     - !Ref RunXterm
     - 'Yes'
-
-  IfUseSpecifiedVpcAvailabilityZones: !Not
-    - !Equals
-      - !Join
-        - ''
-        - !Ref VpcAvailabilityZones
-      - ''
 
 # -----------------------------------------------------------------------------
 # Resources
@@ -999,6 +983,23 @@ Resources:
     Type: AWS::IAM::Policy
 
 
+  IamPolicyS3:
+    Properties:
+      PolicyName: !Sub "${AWS::StackName}-iam-policy-s3"
+      PolicyDocument:
+        Statement:
+          -
+            Action:
+              - s3:GetObject
+            Effect: Allow
+            Resource:
+              - '*'
+        Version: '2012-10-17'
+      Roles:
+       - !Ref IamRoleLambda
+    Type: AWS::IAM::Policy
+
+
   IamPolicySqsConsumer:
     Properties:
       PolicyName: !Sub "${AWS::StackName}-iam-policy-sqs-consumer"
@@ -1079,7 +1080,7 @@ Resources:
   LogsLogGroupDbClusterCore:
     Properties:
       LogGroupName: !Sub
-        - "/aws/rds/cluster/${StackNameAsLower}-aurora-senzing-cluster-core/postgresql"
+        - "/aws/rds/cluster/${StackNameAsLower}-aurora-senzing-core-cluster/postgresql"
         - StackNameAsLower: !GetAtt LambdaRunnerStackNameAsLower.OutputString
     Type: AWS::Logs::LogGroup
 
@@ -1087,7 +1088,7 @@ Resources:
   LogsLogGroupDbClusterLibfeat:
     Properties:
       LogGroupName: !Sub
-        - "/aws/rds/cluster/${StackNameAsLower}-aurora-senzing-cluster-libfeat/postgresql"
+        - "/aws/rds/cluster/${StackNameAsLower}-aurora-senzing-libfeat-cluster/postgresql"
         - StackNameAsLower: !GetAtt LambdaRunnerStackNameAsLower.OutputString
     Type: AWS::Logs::LogGroup
 
@@ -1095,7 +1096,7 @@ Resources:
   LogsLogGroupDbClusterRes:
     Properties:
       LogGroupName: !Sub
-        - "/aws/rds/cluster/${StackNameAsLower}-aurora-senzing-cluster-res/postgresql"
+        - "/aws/rds/cluster/${StackNameAsLower}-aurora-senzing-res-cluster/postgresql"
         - StackNameAsLower: !GetAtt LambdaRunnerStackNameAsLower.OutputString
     Type: AWS::Logs::LogGroup
 
@@ -1103,13 +1104,6 @@ Resources:
   LogsLogGroupLambdaCognitoCreateUser:
     Properties:
       LogGroupName: !Sub "/aws/lambda/${AWS::StackName}-lambda-cognito-create-user"
-    Type: AWS::Logs::LogGroup
-
-
-  LogsLogGroupLambdaFindDomainName:
-    Condition: IfRoute53HostedZoneId
-    Properties:
-      LogGroupName: !Sub "/aws/lambda/${AWS::StackName}-lambda-find-domain-name"
     Type: AWS::Logs::LogGroup
 
 
@@ -1239,12 +1233,7 @@ Resources:
 
   Ec2SubnetPublic1:
     Properties:
-      AvailabilityZone: !If
-        - IfUseSpecifiedVpcAvailabilityZones
-        - !Select
-          - '0'
-          - !Ref VpcAvailabilityZones
-        - !Select
+      AvailabilityZone: !Select
           - '0'
           - !GetAZs
             Ref: AWS::Region
@@ -1264,12 +1253,7 @@ Resources:
 
   Ec2SubnetPublic2:
     Properties:
-      AvailabilityZone: !If
-        - IfUseSpecifiedVpcAvailabilityZones
-        - !Select
-          - '1'
-          - !Ref VpcAvailabilityZones
-        - !Select
+      AvailabilityZone: !Select
           - '1'
           - !GetAZs
             Ref: AWS::Region
@@ -1776,7 +1760,7 @@ Resources:
         - !GetAtt Ec2SubnetPrivate1.AvailabilityZone
         - !GetAtt Ec2SubnetPrivate2.AvailabilityZone
       DatabaseName: G2
-      DBClusterIdentifier: !Sub "${AWS::StackName}-aurora-senzing-cluster-core"
+      DBClusterIdentifier: !Sub "${AWS::StackName}-aurora-senzing-core-cluster"
       DBClusterParameterGroupName:
         Ref: RdsDbClusterParameterGroup
       # FIXME: Tricky code.  See https://console.aws.amazon.com/support/home#/case/?displayId=7725760511
@@ -1802,7 +1786,7 @@ Resources:
       StorageEncrypted: true
       Tags:
         - Key: Name
-          Value: !Sub "${AWS::StackName}-rds-db-cluster-core"
+          Value: !Sub "${AWS::StackName}-rds-db-core-cluster"
       VpcSecurityGroupIds:
         - !Ref Ec2SecurityGroupInternal
     Type: AWS::RDS::DBCluster
@@ -1817,7 +1801,7 @@ Resources:
         - !GetAtt Ec2SubnetPrivate1.AvailabilityZone
         - !GetAtt Ec2SubnetPrivate2.AvailabilityZone
       DatabaseName: G2
-      DBClusterIdentifier: !Sub "${AWS::StackName}-aurora-senzing-cluster-libfeat"
+      DBClusterIdentifier: !Sub "${AWS::StackName}-aurora-senzing-libfeat-cluster"
       DBClusterParameterGroupName:
         Ref: RdsDbClusterParameterGroup
       # FIXME: Tricky code.  See https://console.aws.amazon.com/support/home#/case/?displayId=7725760511
@@ -1843,7 +1827,7 @@ Resources:
       StorageEncrypted: true
       Tags:
         - Key: Name
-          Value: !Sub "${AWS::StackName}-rds-db-cluster-libfeat"
+          Value: !Sub "${AWS::StackName}-rds-db-libfeat-cluster"
       VpcSecurityGroupIds:
         - !Ref Ec2SecurityGroupInternal
     Type: AWS::RDS::DBCluster
@@ -1858,7 +1842,7 @@ Resources:
         - !GetAtt Ec2SubnetPrivate1.AvailabilityZone
         - !GetAtt Ec2SubnetPrivate2.AvailabilityZone
       DatabaseName: G2
-      DBClusterIdentifier: !Sub "${AWS::StackName}-aurora-senzing-cluster-res"
+      DBClusterIdentifier: !Sub "${AWS::StackName}-aurora-senzing-res-cluster"
       DBClusterParameterGroupName:
         Ref: RdsDbClusterParameterGroup
       # FIXME: Tricky code.  See https://console.aws.amazon.com/support/home#/case/?displayId=7725760511
@@ -1884,7 +1868,7 @@ Resources:
       StorageEncrypted: true
       Tags:
         - Key: Name
-          Value: !Sub "${AWS::StackName}-rds-db-cluster-res"
+          Value: !Sub "${AWS::StackName}-rds-db-res-cluster"
       VpcSecurityGroupIds:
         - !Ref Ec2SecurityGroupInternal
     Type: AWS::RDS::DBCluster
@@ -2074,95 +2058,6 @@ Resources:
     Type: AWS::Lambda::Function
 
 
-  LambdaFunctionFindDomainName:
-    Condition: IfRoute53HostedZoneId
-    DependsOn:
-     - IamPolicyRoute53
-    Properties:
-      Code:
-        ZipFile: |
-          #!/usr/bin/env python3
-
-          import boto3
-          import cfnresponse
-          import datetime
-          import json
-          import logging
-          import traceback
-          from json import JSONEncoder
-
-          logger = logging.getLogger()
-          logger.setLevel(logging.INFO)
-
-          class DateTimeEncoder(JSONEncoder):
-              def default(self, obj):
-                  if isinstance(obj, (datetime.date, datetime.datetime)):
-                      return obj.isoformat()
-
-          def find_certificate_arn(certificate_domain_name, certificate_list):
-              certificate_summary_list = certificate_list.get('CertificateSummaryList', [])
-              for certificate_summary in certificate_summary_list:
-                  if certificate_summary.get('DomainName') == certificate_domain_name:
-                     return certificate_summary.get('CertificateArn')
-              return ""
-
-          def handler(event, context):
-              result = cfnresponse.SUCCESS
-              response = {}
-              try:
-                  logger.info("Event: {0}".format(json.dumps(event)))
-                  if event['RequestType'] in ['Create', 'Update']:
-                      properties = event.get('ResourceProperties', {})
-                      hosted_zone_id = properties.get('HostedZoneId', {})
-
-                      # Find domain in AWS Route53
-                      # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/route53.html
-
-                      route53 = boto3.client('route53')
-                      hosted_zone_dict = route53.get_hosted_zone(Id=hosted_zone_id)
-                      name = hosted_zone_dict.get("HostedZone", {}).get("Name", " ")
-                      response["Name"] = name
-                      response["DomainName"] = name[:-1]
-
-                      # Find Certificate in AWS Certificate Manager
-                      # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/acm.html
-
-                      certificate_domain_name = "*.{0}".format(response["DomainName"])
-                      logger.info("domain_name = {0}".format(certificate_domain_name))
-
-                      acm_client = boto3.client('acm')
-                      certificate_list = acm_client.list_certificates()
-                      logger.info("certificate_list = {0}".format(certificate_list))
-
-                      certificate_arn = find_certificate_arn(certificate_domain_name, certificate_list)
-                      response["CertificateArn"] = certificate_arn
-                      logger.info("certificate_arn = {0}".format(certificate_arn))
-
-                      if not certificate_arn:
-                          logger.warning("Cannot find certificate for '{0}'".format(certificate_domain_name))
-                          result = cfnresponse.FAILED
-
-                  logger.info("Response: {0}".format(json.dumps(response, cls=DateTimeEncoder)))
-
-              except Exception as e:
-                  logger.error(e)
-                  traceback.print_exc()
-                  result = cfnresponse.FAILED
-              finally:
-                  cfnresponse.send(event, context, result, response)
-
-      Description: Gets Route53 hosted zone information.
-      FunctionName: !Sub "${AWS::StackName}-lambda-find-domain-name"
-      Handler: index.handler
-      Role: !GetAtt IamRoleLambda.Arn
-      Runtime: python3.8
-      Tags:
-        - Key: Name
-          Value: !Sub "${AWS::StackName}-lambda-find-domain-name"
-      Timeout: 30
-    Type: AWS::Lambda::Function
-
-
   LambdaFunctionGenerateCertificate:
     Properties:
       Code:
@@ -2179,63 +2074,6 @@ Resources:
           Value: !Sub "${AWS::StackName}-lambda-generate-certificate"
       Timeout: 600
     Type: AWS::Lambda::Function
-
-
-# LambdaFunctionInitEfs:
-#   Type: AWS::Lambda::Function
-#   DependsOn:
-#     - EfsMountTarget1
-#     - EfsMountTarget2
-#   Properties:
-#     Code:
-#       ZipFile: |
-#         #!/usr/bin/env python3
-#
-#         import cfnresponse
-#         import json
-#         import logging
-#         import time
-#         import os
-#         import traceback
-#
-#         logger = logging.getLogger()
-#         logger.setLevel(logging.INFO)
-#
-#         def handler(event, context):
-#             result = cfnresponse.SUCCESS
-#             try:
-#                 logger.info("Event: {0}".format(json.dumps(event)))
-#                 if event['RequestType'] in ['Create', 'Update']:
-#                     os.makedirs('/mnt/efs0/data/1.0.0', exist_ok=True)
-#                     os.makedirs('/mnt/efs0/etc', exist_ok=True)
-#                     os.makedirs('/mnt/efs0/g2', exist_ok=True)
-#                     os.makedirs('/mnt/efs0/var', exist_ok=True)
-#             except Exception as e:
-#                 logger.error(e)
-#                 traceback.print_exc()
-#                 result = cfnresponse.FAILED
-#             finally:
-#                 cfnresponse.send(event, context, result, {})
-#
-#     Description: Create subdirectories on EFS
-#     FileSystemConfigs:
-#       -
-#         Arn: !GetAtt EfsAccessPoint.Arn
-#         LocalMountPath: "/mnt/efs0"
-#     FunctionName: !Sub "${AWS::StackName}-lambda-init-efs"
-#     Handler: index.handler
-#     Role: !GetAtt IamRoleLambda.Arn
-#     Runtime: python3.8
-#     Tags:
-#       - Key: Name
-#         Value: !Sub "${AWS::StackName}-lambda-init-efs"
-#     Timeout: 300
-#     VpcConfig:
-#       SecurityGroupIds:
-#         - !Ref EcsSecurityGroupInternal
-#       SubnetIds:
-#         - !Ref Ec2SubnetPublic1
-#         - !Ref Ec2SubnetPublic2
 
 
   LambdaFunctionRandomPassword:
@@ -2493,50 +2331,6 @@ Resources:
     Type: AWS::Lambda::Function
 
 
-# LambdaFunctionSleeper:
-#   Properties:
-#     Code:
-#       ZipFile: |
-#         #!/usr/bin/env python3
-#
-#         import cfnresponse
-#         import json
-#         import logging
-#         import time
-#         import traceback
-#
-#         logger = logging.getLogger()
-#         logger.setLevel(logging.INFO)
-#
-#         def handler(event, context):
-#             result = cfnresponse.SUCCESS
-#             try:
-#                 logger.info("Event: {0}".format(json.dumps(event)))
-#                 if event['RequestType'] in ['Create', 'Update']:
-#                     properties = event.get('ResourceProperties', {})
-#                     sleep_time_in_seconds = int(properties.get('SleepTimeInSeconds', 0))
-#                     logger.info("Sleeping {0} seconds.".format(sleep_time_in_seconds))
-#                     time.sleep(sleep_time_in_seconds)
-#                     logger.info("Awake.")
-#             except Exception as e:
-#                 logger.error(e)
-#                 traceback.print_exc()
-#                 result = cfnresponse.FAILED
-#             finally:
-#                 cfnresponse.send(event, context, result, {})
-#
-#     Description: Sleeps for a period of time
-#     FunctionName: !Sub "${AWS::StackName}-lambda-sleep"
-#     Handler: index.handler
-#     Role: !GetAtt IamRoleLambda.Arn
-#     Runtime: python3.8
-#     Tags:
-#       - Key: Name
-#         Value: !Sub "${AWS::StackName}-lambda-sleep"
-#     Timeout: 600
-#   Type: AWS::Lambda::Function
-
-
   LambdaFunctionStringToLower:
     Properties:
       Code:
@@ -2635,24 +2429,6 @@ Resources:
       Timeout: 600
     Type: AWS::Lambda::Function
 
-# -- Wait for backing services to come up -------------------------------------
-
-# https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-waitconditionhandle.html
-
-# WaitConditionHandleEfs:
-#   Type: AWS::CloudFormation::WaitConditionHandle
-
-# https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-waitcondition.html
-
-# WaitConditionEfs:
-#   DependsOn:
-#     - EfsMountTarget1
-#     - EfsMountTarget2
-#   Properties:
-#     Handle: !Ref WaitConditionHandle
-#     Timeout: 600
-#   Type: AWS::CloudFormation::WaitCondition
-
 # -- Run ECS tasks-------------------------------------------------------------
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/template-custom-resources.html
@@ -2681,28 +2457,6 @@ Resources:
         - Key: Name
           Value: !Sub "${AWS::StackName}-lambda-runner-db-password"
     Type: Custom::LambdaRunnerDbPassword
-
-
-# LambdaRunnerDebug:
-#   DependsOn: LambdaFunctionDebug
-#   Properties:
-#     ServiceToken: !GetAtt LambdaFunctionDebug.Arn
-#     Tags:
-#       - Key: Name
-#         Value: !Sub "${AWS::StackName}-lambda-runner-debug"
-#   Type: Custom::LambdaRunnerDebug
-
-
-# LambdaRunnerFindDomainName:
-#   Condition: IfRoute53HostedZoneId
-#   Properties:
-#     ClusterId: !Ref EcsCluster
-#     HostedZoneId: !Ref Route53HostedZoneId
-#     ServiceToken: !GetAtt LambdaFunctionFindDomainName.Arn
-#     Tags:
-#       - Key: Name
-#         Value: !Sub "${AWS::StackName}-lambda-runner-find-domain-name"
-#   Type: Custom::LambdaRunnerFindDomainName
 
 
   LambdaRunnerG2ConfigTool:
@@ -2745,15 +2499,6 @@ Resources:
         - Key: Name
           Value: !Sub "${AWS::StackName}-lambda-runner-generate-certificate"
     Type: Custom::LambdaRunnerGenerateCertificate
-
-
-# LambdaRunnerInitEfs:
-#   DependsOn:
-#     - EfsMountTarget1
-#     - EfsMountTarget2
-#   Properties:
-#     ServiceToken: !GetAtt LambdaFunctionInitEfs.Arn
-#   Type: Custom::LambdaRunnerInitEfs
 
 
   LambdaRunnerInitEfs:
@@ -2940,13 +2685,6 @@ Resources:
         - Key: Name
           Value: !Sub "${AWS::StackName}-lambda-runner-init-senzing"
     Type: Custom::LambdaRunnerInitSenzing
-
-
-# LambdaRunnerSleeper:
-#   Properties:
-#     ServiceToken: !GetAtt LambdaFunctionSleeper.Arn
-#     SleepTimeInSeconds: 180
-#   Type: Custom::LambdaRunnerSleeper
 
 
   LambdaRunnerSshPassword:
@@ -3452,29 +3190,6 @@ Resources:
       ListenerArn: !Ref ListenerPort443
       Priority: 3
     Type: "AWS::ElasticLoadBalancingV2::ListenerRule"
-
-# -- Route53RecordSet ---------------------------------------------------------
-
-# https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-route53-recordset.html
-# AWS Console: https://console.aws.amazon.com/route53/v2/hostedzones# > {Domain name} > "Records" tab
-
-# Route53RecordSet:
-#   Condition: IfRoute53HostedZoneId
-#   Properties:
-#     AliasTarget:
-#       DNSName: !Sub
-#         - "dualstack.${LoadBalancerPublicDNSName}"
-#         - LoadBalancerPublicDNSName: !GetAtt LoadBalancerPublic.DNSName
-#       EvaluateTargetHealth: true
-#       HostedZoneId: !GetAtt LoadBalancerPublic.CanonicalHostedZoneID
-#     Comment: !Sub "${AWS::StackName} RecordSet"
-#     HostedZoneId: !Ref Route53HostedZoneId
-#     Name: !Sub
-#       - "${StackName}.${DomainName}"
-#       - StackName: !Ref AWS::StackName
-#         DomainName: !GetAtt LambdaRunnerFindDomainName.Name
-#     Type: A
-#   Type: AWS::Route53::RecordSet
 
 # -- UserPool -----------------------------------------------------------------
 
