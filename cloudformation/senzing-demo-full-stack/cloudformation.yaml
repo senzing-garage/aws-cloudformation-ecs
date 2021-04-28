@@ -130,7 +130,7 @@ Metadata:
           '0' means start from the beginning.
       VpcId:
         default: >-
-          Optional: VPC Id of existing VPC.
+          Required: VPC Id of existing VPC.
           Must have an address range of 10.0.0.0/16 or larger.
           (i.e. less than or equal to 16)
           Leave blank to have a new VPC created.
@@ -331,6 +331,15 @@ Rules:
           - !Ref SecurityResponsibility
           - 'I AGREE'
         AssertDescription: 'Entering "I AGREE" is required to proceed.'
+
+
+  ConfirmVpcId:
+    Assertions:
+      - Assert: !Not
+          - !Equals
+            - !Ref VpcId
+            - ''
+        AssertDescription: 'VPC needs to be selected."'
 
 # -----------------------------------------------------------------------------
 # Mappings

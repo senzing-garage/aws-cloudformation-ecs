@@ -136,7 +136,7 @@ Metadata:
           Format:  M.m.P-YYddd
       VpcId:
         default: >-
-          Optional: VPC Id of existing VPC.
+          Required: VPC Id of existing VPC.
           Must have an address range of 10.0.0.0/16 or larger.
           (i.e. less than or equal to 16)
           Leave blank to have a new VPC created.
