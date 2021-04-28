@@ -38,6 +38,11 @@ Metadata:
           - CidrInbound
           - CertificateBody
           - PrivateKey
+      -
+        Label:
+          default: 'Optional: Initial data load'
+        Parameters:
+          - RunStreamProducer
     ParameterLabels:
       AcceptEula:
         default: >-
@@ -50,18 +55,20 @@ Metadata:
         default: 'Optional: Allowed inbound connections using CIDR notation.'
       CognitoAdminEmail:
         default: 'Required: Email address for initial user.'
-      SenzingLicenseAsBase64:
-        default: >-
-          Required if inserting more than 100K records.
-          Senzing license as base64 encoded string.
       PrivateKey:
         default: 'Private key.'
+      RunStreamProducer:
+        default: 'Optional: Would you like to have an initial set of data imported?'
       SecurityResponsibility:
         default: >-
           Required: A default deployment of this template is for public demonstration only.
           Before using authentic PII, ensure the security of your deployment.
           The security of this deployment is your responsibility.
           To acknowledge your understanding and acceptance of the foregoing, type “I AGREE”.
+      SenzingLicenseAsBase64:
+        default: >-
+          Required if inserting more than 100K records.
+          Senzing license as base64 encoded string.
 
 # -----------------------------------------------------------------------------
 # Parameters
@@ -158,6 +165,15 @@ Parameters:
       -----END PRIVATE KEY-----
 
 
+  RunStreamProducer:
+    AllowedValues:
+      - 'No'
+      - 'Yes'
+    Default: 'Yes'
+    Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#runstreamproducer'
+    Type: String
+
+
   SecurityResponsibility:
     AllowedPattern: '.+|^I AGREE$'
     ConstraintDescription: SecurityResponsibility parameter must be 'I AGREE'
@@ -217,7 +233,6 @@ Mappings:
       Redoer: Yes
       Sshd: Yes
       StreamLoader: Yes
-      StreamProducer: Yes
       Swagger: Yes
       VpcFlowLogs: No
       WebApp: Yes
@@ -229,9 +244,10 @@ Mappings:
     StreamProducer:
       DataSource: TEST
       EntityType: GENERIC
-      InputUrl: https://public-read-access.s3.amazonaws.com/TestDataSets/test-dataset-100m.json.gz
-      RecordMax: 20000
+      InputUrl: https://s3.amazonaws.com/public-read-access/TestDataSets/SenzingTruthSet/truth-set.json
+      RecordMax: 0
       RecordMin: 0
+
 
   VpcCidrs:
     vpc:
@@ -273,8 +289,8 @@ Conditions:
     - Yes
 
   IfRunStreamProducer: !Equals
-    - !FindInMap [Constants, Run, StreamProducer]
-    - Yes
+    - !Ref RunStreamProducer
+    - 'Yes'
 
   IfRunSwagger: !Equals
     - !FindInMap [Constants, Run, Swagger]
@@ -4832,7 +4848,7 @@ Outputs:
     Description: 'Host name of public services. Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-certificates/#host'
     Export:
       Name: !Sub "${AWS::StackName}-host"
-    Value: !Sub "${LoadBalancerPublic.DNSName}"
+    Value: !GetAtt LoadBalancerPublic.DNSName
 
   QueueDeadLetter:
     Description: 'URL of the dead-letter queue. Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-certificates/#queuedeadletter'
