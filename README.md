@@ -1,11 +1,21 @@
 # aws-cloudformation-ecs
 
-1. Checkmarks represent where you supply pre-existing AWS Resources:
+## Synopsis
 
-    |   | VPC | Route53 | RDS | Instructions | Launch |
-    |--:|:---:|:-------:|:---:|:------------:|:------:|
-    | 1 | | | | [instructions](https://github.com/Senzing/aws-cloudformation-ecs-poc-simple) | [:arrow_forward:](https://console.aws.amazon.com/cloudformation/home#/stacks/new?stackName=senzing-poc&templateURL=https://s3.amazonaws.com/public-read-access/aws-cloudformation-ecs-poc-simple/cloudformation.yaml) |
-    | 2 | :heavy_check_mark: | :heavy_check_mark: | | [instructions](docs/senzing-demo-user-vpc-hosted-zone) | [:arrow_forward:](https://console.aws.amazon.com/cloudformation/home#/stacks/new?templateURL=https://s3.amazonaws.com/public-read-access/aws-cloudformation-ecs-user-vpc-hosted-zone/cloudformation.yaml) |
+In the demonstration Cloudformation templates,
+some templates create AWS resources,
+other templates require pre-existing AWS Resources.
+
+1. :heavy_check_mark: - The Cloudformation creates the resource
+1. :x": - A pre-existing AWS Resources is required.
+
+
+|   | VPC | Route53 | RDS | Instructions | Launch |
+|--:|:---:|:-------:|:---:|:------------:|:------:|
+| 1 | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | [instructions](https://github.com/Senzing/aws-cloudformation-ecs-poc-simple) | [:arrow_forward:](https://console.aws.amazon.com/cloudformation/home#/stacks/new?stackName=senzing-poc&templateURL=https://s3.amazonaws.com/public-read-access/aws-cloudformation-ecs-poc-simple/cloudformation.yaml) |
+| 2 | :x: | :x: | :heavy_check_mark: | [instructions](docs/senzing-demo-user-vpc-hosted-zone) | [:arrow_forward:](https://console.aws.amazon.com/cloudformation/home#/stacks/new?templateURL=https://s3.amazonaws.com/public-read-access/aws-cloudformation-ecs-user-vpc-hosted-zone/cloudformation.yaml) |
+
+
 
 1. How to create AWS Resources:
     1. VPC
