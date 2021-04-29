@@ -1076,30 +1076,6 @@ Resources:
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-logs-loggroup.html
 # AWS Console: https://console.aws.amazon.com/cloudwatch/home?#logsV2:log-groups > Search for {stack}
 
-# LogsLogGroupDbClusterCore:
-#   Properties:
-#     LogGroupName: !Sub
-#       - "/aws/rds/cluster/${StackNameAsLower}-aurora-senzing-core-cluster/postgresql"
-#       - StackNameAsLower: !GetAtt LambdaRunnerStackNameAsLower.OutputString
-#   Type: AWS::Logs::LogGroup
-
-
-# LogsLogGroupDbClusterLibfeat:
-#   Properties:
-#     LogGroupName: !Sub
-#       - "/aws/rds/cluster/${StackNameAsLower}-aurora-senzing-libfeat-cluster/postgresql"
-#       - StackNameAsLower: !GetAtt LambdaRunnerStackNameAsLower.OutputString
-#   Type: AWS::Logs::LogGroup
-
-
-# LogsLogGroupDbClusterRes:
-#   Properties:
-#     LogGroupName: !Sub
-#       - "/aws/rds/cluster/${StackNameAsLower}-aurora-senzing-res-cluster/postgresql"
-#       - StackNameAsLower: !GetAtt LambdaRunnerStackNameAsLower.OutputString
-#   Type: AWS::Logs::LogGroup
-
-
   LogsLogGroupLambdaCognitoCreateUser:
     Properties:
       LogGroupName: !Sub "/aws/lambda/${AWS::StackName}-lambda-cognito-create-user"
@@ -1642,7 +1618,7 @@ Resources:
       RouteTableId: !Ref Ec2RouteTablePrivate
       SubnetId:
         Fn::ImportValue:
-          Fn::Sub: '${DatabaseStack}-subnet-private-1'
+          Fn::Sub: '${DatabaseStack}-subnet-private-2'
     Type: AWS::EC2::SubnetRouteTableAssociation
 
 
@@ -1709,173 +1685,6 @@ Resources:
 #     FileSystemId: !Ref EfsFileSystem
 #     RootDirectory:
 #       Path: "/efs0"
-
-# -- Database -----------------------------------------------------------------
-
-# https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-rds-dbsubnet-group.html
-# AWS Console: https://console.aws.amazon.com/rds/home#db-subnet-groups-list: > Search for {stack}
-
-# RdsDbSubnetGroup:
-#   Properties:
-#     DBSubnetGroupDescription: !Sub "${AWS::StackName}-db-subnet-description"
-#     DBSubnetGroupName: !Sub "${AWS::StackName}-db-subnet"
-#     SubnetIds:
-#       - !Ref Ec2SubnetPrivate1
-#       - !Ref Ec2SubnetPrivate2
-#     Tags:
-#       - Key: Name
-#         Value: !Sub "${AWS::StackName}-rds-db-subnet-group"
-#   Type: AWS::RDS::DBSubnetGroup
-
-# https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-rds-dbclusterparametergroup.html
-# AWS Console: https://console.aws.amazon.com/rds/home?#parameter-groups: > Search for {stack}
-
-# RdsDbClusterParameterGroup:
-#   Properties:
-#     Description: !Sub "${AWS::StackName}-rds-db-cluster-parameter-group-description"
-#     Family: aurora-postgresql10
-#     Parameters:
-#       'synchronous_commit': 'off'
-#     Tags:
-#       - Key: Name
-#         Value: !Sub "${AWS::StackName}-rds-db-cluster-parameter-group"
-#   Type: AWS::RDS::DBClusterParameterGroup
-
-# https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-rds-dbcluster.html
-# AWS Console: https://console.aws.amazon.com/rds/home?#databases: > Search for {stack}
-
-
-# RdsDbClusterCore:
-#   !ImportValue
-#     'Fn::Sub': '${DatabaseStack}-database-core'
-
-# RdsDbClusterCore:
-#   DependsOn:
-#    - LogsLogGroupDbClusterCore
-#    - RdsDbSubnetGroup
-#   Properties:
-#     AvailabilityZones:
-#       - !GetAtt Ec2SubnetPrivate1.AvailabilityZone
-#       - !GetAtt Ec2SubnetPrivate2.AvailabilityZone
-#     DatabaseName: G2
-#     DBClusterIdentifier: !Sub "${AWS::StackName}-aurora-senzing-core-cluster"
-#     DBClusterParameterGroupName:
-#       Ref: RdsDbClusterParameterGroup
-#     # FIXME: Tricky code.  See https://console.aws.amazon.com/support/home#/case/?displayId=7725760511
-#     DBSubnetGroupName: !Sub
-#       - "${StackNameAsLower}-db-subnet"
-#       - StackNameAsLower: !GetAtt LambdaRunnerStackNameAsLower.OutputString
-#     DeletionProtection: false
-#     EnableHttpEndpoint: true
-#     Engine: aurora-postgresql
-#     EngineMode: serverless
-#     EngineVersion: '10.12'
-#     MasterUsername: !FindInMap [Constants, Database, Username]
-#     MasterUserPassword: !GetAtt LambdaRunnerDbPassword.RandomString
-#     ScalingConfiguration:
-#       AutoPause: true
-#       MaxCapacity: 192
-#       MinCapacity: 2
-#       SecondsUntilAutoPause: 3600
-#       FIXME:  Uncomment once 'TimeoutAction' is supported.
-#       https://github.com/aws-cloudformation/aws-cloudformation-coverage-roadmap/issues/298
-#       https://console.aws.amazon.com/support/home#/case/?displayId=7705681311&language=en
-#       TimeoutAction: ForceApplyCapacityChange
-#     StorageEncrypted: true
-#     Tags:
-#       - Key: Name
-#         Value: !Sub "${AWS::StackName}-rds-db-core-cluster"
-#     VpcSecurityGroupIds:
-#       - !Ref Ec2SecurityGroupInternal
-#   Type: AWS::RDS::DBCluster
-
-# RdsDbClusterLibfeat:
-#   !ImportValue
-#     'Fn::Sub': '${DatabaseStack}-database-libfeat'
-
-# RdsDbClusterLibfeat:
-#   DependsOn:
-#    - LogsLogGroupDbClusterLibfeat
-#    - RdsDbSubnetGroup
-#   Properties:
-#     AvailabilityZones:
-#       - !GetAtt Ec2SubnetPrivate1.AvailabilityZone
-#       - !GetAtt Ec2SubnetPrivate2.AvailabilityZone
-#     DatabaseName: G2
-#     DBClusterIdentifier: !Sub "${AWS::StackName}-aurora-senzing-libfeat-cluster"
-#     DBClusterParameterGroupName:
-#       Ref: RdsDbClusterParameterGroup
-#     # FIXME: Tricky code.  See https://console.aws.amazon.com/support/home#/case/?displayId=7725760511
-#     DBSubnetGroupName: !Sub
-#       - "${StackNameAsLower}-db-subnet"
-#       - StackNameAsLower: !GetAtt LambdaRunnerStackNameAsLower.OutputString
-#     DeletionProtection: false
-#     EnableHttpEndpoint: true
-#     Engine: aurora-postgresql
-#     EngineMode: serverless
-#     EngineVersion: '10.12'
-#     MasterUsername: !FindInMap [Constants, Database, Username]
-#     MasterUserPassword: !GetAtt LambdaRunnerDbPassword.RandomString
-#     ScalingConfiguration:
-#       AutoPause: true
-#       MaxCapacity: 192
-#       MinCapacity: 2
-#       SecondsUntilAutoPause: 3600
-#       FIXME:  Uncomment once 'TimeoutAction' is supported.
-#       https://github.com/aws-cloudformation/aws-cloudformation-coverage-roadmap/issues/298
-#       https://console.aws.amazon.com/support/home#/case/?displayId=7705681311&language=en
-#       TimeoutAction: ForceApplyCapacityChange
-#     StorageEncrypted: true
-#     Tags:
-#       - Key: Name
-#         Value: !Sub "${AWS::StackName}-rds-db-libfeat-cluster"
-#     VpcSecurityGroupIds:
-#       - !Ref Ec2SecurityGroupInternal
-#   Type: AWS::RDS::DBCluster
-
-# RdsDbClusterRes:
-#   !ImportValue
-#     'Fn::Sub': '${DatabaseStack}-database-res'
-
-# RdsDbClusterRes:
-#   DependsOn:
-#    - LogsLogGroupDbClusterRes
-#    - RdsDbSubnetGroup
-#   Properties:
-#     AvailabilityZones:
-#       - !GetAtt Ec2SubnetPrivate1.AvailabilityZone
-#       - !GetAtt Ec2SubnetPrivate2.AvailabilityZone
-#     DatabaseName: G2
-#     DBClusterIdentifier: !Sub "${AWS::StackName}-aurora-senzing-res-cluster"
-#     DBClusterParameterGroupName:
-#       Ref: RdsDbClusterParameterGroup
-#     # FIXME: Tricky code.  See https://console.aws.amazon.com/support/home#/case/?displayId=7725760511
-#     DBSubnetGroupName: !Sub
-#       - "${StackNameAsLower}-db-subnet"
-#       - StackNameAsLower: !GetAtt LambdaRunnerStackNameAsLower.OutputString
-#     DeletionProtection: false
-#     EnableHttpEndpoint: true
-#     Engine: aurora-postgresql
-#     EngineMode: serverless
-#     EngineVersion: '10.12'
-#     MasterUsername: !FindInMap [Constants, Database, Username]
-#     MasterUserPassword: !GetAtt LambdaRunnerDbPassword.RandomString
-#     ScalingConfiguration:
-#       AutoPause: true
-#       MaxCapacity: 192
-#       MinCapacity: 2
-#       SecondsUntilAutoPause: 3600
-#       FIXME:  Uncomment once 'TimeoutAction' is supported.
-#       https://github.com/aws-cloudformation/aws-cloudformation-coverage-roadmap/issues/298
-#       https://console.aws.amazon.com/support/home#/case/?displayId=7705681311&language=en
-#       TimeoutAction: ForceApplyCapacityChange
-#     StorageEncrypted: true
-#     Tags:
-#       - Key: Name
-#         Value: !Sub "${AWS::StackName}-rds-db-res-cluster"
-#     VpcSecurityGroupIds:
-#       - !Ref Ec2SecurityGroupInternal
-#   Type: AWS::RDS::DBCluster
 
 # -- Queue --------------------------------------------------------------------
 
@@ -2911,6 +2720,8 @@ Resources:
 
 
   LoadBalancerPublic:
+    DependsOn:
+      - Ec2VpcGatewayAttachment
     Properties:
       Name: !Sub "${AWS::StackName}-alb-public"
       Scheme: internet-facing
@@ -4805,7 +4616,7 @@ Resources:
      - LambdaRunnerInitSenzing
     Properties:
       Cluster: !Ref EcsCluster
-      DesiredCount: 2
+      DesiredCount: 1
       EnableECSManagedTags: true
       LaunchType: FARGATE
       NetworkConfiguration:
