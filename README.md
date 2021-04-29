@@ -1,6 +1,5 @@
 # aws-cloudformation-ecs
 
-
 1. Checkmarks represent where you supply pre-existing AWS Resources:
 
     |   | VPC | Route53 | RDS | Instructions | Launch |
@@ -14,3 +13,27 @@
     1. Route53
         1. [AWS Route53 Hosted Zone console](https://console.aws.amazon.com/route53/v2/hostedzones#)
 
+## Details
+
+1. Variations among Cloudformation templates
+
+    | VPC | Route53 | Phase | Name | Comments |
+    |:---:|:-------:|:-----:|------|----------|
+    | D   | N       | P     | senzing-demo-full-stack | |
+    | D   | N       | T     | senzing-demo-staging | Used to test releases |
+    | D   | Y       | P     | senzing-demo-user-vpc-hosted-zone |
+    | S   | N       | P     | senzing-demo-poc-simple | A "no user options" formation |
+    | S   | N       | T     | senzing-demo-staging-simple | Used to test releases |
+    | S   | U       | T     | senzing-demo-certificates | Input: certificate, private key |
+    | S   | Y       | P     | senzing-demo-hosted-zone | |
+
+1. VPC
+    1. 'S' = Static. User cannot specify VPC.
+    1. 'D' = Dynamic. User can specify existing VPC.
+1. Route53
+    1. 'Y' = Existing Route53 Hosted Zone specified by user.
+    1. 'N' = Self-signed certificate used.
+    1. 'U' = User-supplied certificate.
+1. Phase
+    1. 'P' - For Public use
+    1. 'T' - For Testing purposes

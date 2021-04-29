@@ -56,7 +56,7 @@ The `aws-cloudformation-ecs / staging-test` is used for testing a version of Sen
 1. Visit [AWS CloudFormation console](https://console.aws.amazon.com/cloudformation/home).
     1. Make sure correct AWS region is selected.
 1. Wait until "{stack-name}" status is `CREATE_COMPLETE`.
-    1. Senzing formation takes about 15 minutes to fully deploy.
+    1. Senzing formation takes about 20 minutes to fully deploy.
     1. May have to hit the refresh button a few times to get updated information.
 1. Click on "{stack-name}" stack
 1. Click on "Outputs" tab

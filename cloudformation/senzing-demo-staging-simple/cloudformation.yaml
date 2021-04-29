@@ -10,8 +10,8 @@ AWSTemplateFormatVersion: 2010-09-09
 # But tailored to run use Senzing RPMs from the staging server.
 
 Description: >-
-  Senzing aws-cloudformation-ecs-demo-staging-simple Version: 0.7.0
-  For more information see https://github.com/Senzing/aws-cloudformation-ecs/cloudformation/senzing-demo-staging
+  Senzing aws-cloudformation-ecs-demo-staging-simple Version: 0.7.2
+  For more information see https://github.com/Senzing/aws-cloudformation-ecs/cloudformation/senzing-demo-staging-simple
 
 # -----------------------------------------------------------------------------
 # Metadata
@@ -26,7 +26,7 @@ Metadata:
         Label:
           default: Security responsibility
         Parameters:
-          - AcknowledgeSecurityResponsibility
+          - SecurityResponsibility
       -
         Label:
           default: Senzing installation
@@ -39,33 +39,30 @@ Metadata:
           default: Security
         Parameters:
           - CognitoAdminEmail
-#         - Route53HostedZoneId
+          - CidrInbound
       -
         Label:
-          default: Options
+          default: 'Optional: Initial data load'
         Parameters:
           - RunStreamProducer
-          - CidrInbound
     ParameterLabels:
       AcceptEula:
         default: >-
           Required: If you accept the Senzing End User License Agreement at
           https://senzing.com/end-user-license-agreement,
           enter 'I_ACCEPT_THE_SENZING_EULA'.
-      AcknowledgeSecurityResponsibility:
+      CidrInbound:
+        default: 'Optional: Allowed inbound connections using CIDR notation.'
+      CognitoAdminEmail:
+        default: 'Required: Email address for initial user.'
+      RunStreamProducer:
+        default: 'Optional: Would you like to have an initial set of data imported?'
+      SecurityResponsibility:
         default: >-
           Required: A default deployment of this template is for public demonstration only.
           Before using authentic PII, ensure the security of your deployment.
           The security of this deployment is your responsibility.
           To acknowledge your understanding and acceptance of the foregoing, type “I AGREE”.
-      CidrInbound:
-        default: 'Optional: Allowed inbound connections using CIDR notation.'
-      CognitoAdminEmail:
-        default: 'Required: Email address for initial user.'
-#     Route53HostedZoneId:
-#S      default: 'Optional: Specify a hosted zone.'
-      RunStreamProducer:
-        default: 'Optional: Would you like to have sample data imported?'
       SenzingLicenseAsBase64:
         default: >-
           Required if inserting more than 100K records.
@@ -92,14 +89,6 @@ Parameters:
     Type: String
 
 
-  AcknowledgeSecurityResponsibility:
-    AllowedPattern: '.+|^I AGREE$'
-    ConstraintDescription: AcknowledgeSecurityResponsibility parameter must be 'I AGREE'
-    Default: '_'
-    Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging-simple/#acknowledgesecurityresponsibility'
-    Type: String
-
-
   CidrInbound:
     AllowedPattern: '(?:\d{1,3}\.){3}\d{1,3}(?:/\d\d?)?'
     ConstraintDescription: Inbound CIDR must be in the format n.n.n.n/n
@@ -113,18 +102,20 @@ Parameters:
     Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging-simple/#cognitoadminemail'
 
 
-# Route53HostedZoneId:
-#   Default: ''
-#   Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging-simple/#route53hostedzoneid'
-#   Type: AWS::Route53::HostedZone::Id
-
-
   RunStreamProducer:
     AllowedValues:
       - 'No'
       - 'Yes'
     Default: 'Yes'
     Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging-simple/#runstreamproducer'
+    Type: String
+
+
+  SecurityResponsibility:
+    AllowedPattern: '.+|^I AGREE$'
+    ConstraintDescription: SecurityResponsibility parameter must be 'I AGREE'
+    Default: '_'
+    Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging-simple/#securityresponsibility'
     Type: String
 
 
@@ -161,10 +152,10 @@ Rules:
         AssertDescription: 'EULA acceptance incorrect.  Enter "I_ACCEPT_THE_SENZING_EULA"'
 
 
-  ConfirmAcknowledgeSecurityResponsibility:
+  ConfirmSecurityResponsibility:
     Assertions:
       - Assert: !Equals
-          - !Ref AcknowledgeSecurityResponsibility
+          - !Ref SecurityResponsibility
           - 'I AGREE'
         AssertDescription: 'Entering "I AGREE" is required to proceed.'
 
@@ -217,16 +208,6 @@ Mappings:
 # -----------------------------------------------------------------------------
 
 Conditions:
-
-# IfRoute53HostedZoneId: !Not
-#   - !Equals
-#     - !Ref Route53HostedZoneId
-#     - ''
-
-# FIXME:  Remove after Route53 is implemented.
-  IfRoute53HostedZoneId: !Equals
-      - 'temporarily'
-      - 'halt'
 
   IfRunApiServer: !Equals
     - !FindInMap [Constants, Run, ApiServer]
@@ -828,6 +809,23 @@ Resources:
     Type: AWS::IAM::Policy
 
 
+  IamPolicyS3:
+    Properties:
+      PolicyName: !Sub "${AWS::StackName}-iam-policy-s3"
+      PolicyDocument:
+        Statement:
+          -
+            Action:
+              - s3:GetObject
+            Effect: Allow
+            Resource:
+              - '*'
+        Version: '2012-10-17'
+      Roles:
+       - !Ref IamRoleLambda
+    Type: AWS::IAM::Policy
+
+
   IamPolicySqsConsumer:
     Properties:
       PolicyName: !Sub "${AWS::StackName}-iam-policy-sqs-consumer"
@@ -908,7 +906,7 @@ Resources:
   LogsLogGroupDbClusterCore:
     Properties:
       LogGroupName: !Sub
-        - "/aws/rds/cluster/${StackNameAsLower}-aurora-senzing-cluster-core/postgresql"
+        - "/aws/rds/cluster/${StackNameAsLower}-aurora-senzing-core-cluster/postgresql"
         - StackNameAsLower: !GetAtt LambdaRunnerStackNameAsLower.OutputString
     Type: AWS::Logs::LogGroup
 
@@ -916,7 +914,7 @@ Resources:
   LogsLogGroupDbClusterLibfeat:
     Properties:
       LogGroupName: !Sub
-        - "/aws/rds/cluster/${StackNameAsLower}-aurora-senzing-cluster-libfeat/postgresql"
+        - "/aws/rds/cluster/${StackNameAsLower}-aurora-senzing-libfeat-cluster/postgresql"
         - StackNameAsLower: !GetAtt LambdaRunnerStackNameAsLower.OutputString
     Type: AWS::Logs::LogGroup
 
@@ -924,7 +922,7 @@ Resources:
   LogsLogGroupDbClusterRes:
     Properties:
       LogGroupName: !Sub
-        - "/aws/rds/cluster/${StackNameAsLower}-aurora-senzing-cluster-res/postgresql"
+        - "/aws/rds/cluster/${StackNameAsLower}-aurora-senzing-res-cluster/postgresql"
         - StackNameAsLower: !GetAtt LambdaRunnerStackNameAsLower.OutputString
     Type: AWS::Logs::LogGroup
 
@@ -932,13 +930,6 @@ Resources:
   LogsLogGroupLambdaCognitoCreateUser:
     Properties:
       LogGroupName: !Sub "/aws/lambda/${AWS::StackName}-lambda-cognito-create-user"
-    Type: AWS::Logs::LogGroup
-
-
-  LogsLogGroupLambdaFindDomainName:
-    Condition: IfRoute53HostedZoneId
-    Properties:
-      LogGroupName: !Sub "/aws/lambda/${AWS::StackName}-lambda-find-domain-name"
     Type: AWS::Logs::LogGroup
 
 
@@ -1555,7 +1546,7 @@ Resources:
         - !GetAtt Ec2SubnetPrivate1.AvailabilityZone
         - !GetAtt Ec2SubnetPrivate2.AvailabilityZone
       DatabaseName: G2
-      DBClusterIdentifier: !Sub "${AWS::StackName}-aurora-senzing-cluster-core"
+      DBClusterIdentifier: !Sub "${AWS::StackName}-aurora-senzing-core-cluster"
       DBClusterParameterGroupName:
         Ref: RdsDbClusterParameterGroup
       # FIXME: Tricky code.  See https://console.aws.amazon.com/support/home#/case/?displayId=7725760511
@@ -1581,7 +1572,7 @@ Resources:
       StorageEncrypted: true
       Tags:
         - Key: Name
-          Value: !Sub "${AWS::StackName}-rds-db-cluster-core"
+          Value: !Sub "${AWS::StackName}-rds-db-core-cluster"
       VpcSecurityGroupIds:
         - !Ref Ec2SecurityGroupInternal
     Type: AWS::RDS::DBCluster
@@ -1596,7 +1587,7 @@ Resources:
         - !GetAtt Ec2SubnetPrivate1.AvailabilityZone
         - !GetAtt Ec2SubnetPrivate2.AvailabilityZone
       DatabaseName: G2
-      DBClusterIdentifier: !Sub "${AWS::StackName}-aurora-senzing-cluster-libfeat"
+      DBClusterIdentifier: !Sub "${AWS::StackName}-aurora-senzing-libfeat-cluster"
       DBClusterParameterGroupName:
         Ref: RdsDbClusterParameterGroup
       # FIXME: Tricky code.  See https://console.aws.amazon.com/support/home#/case/?displayId=7725760511
@@ -1622,7 +1613,7 @@ Resources:
       StorageEncrypted: true
       Tags:
         - Key: Name
-          Value: !Sub "${AWS::StackName}-rds-db-cluster-libfeat"
+          Value: !Sub "${AWS::StackName}-rds-db-libfeat-cluster"
       VpcSecurityGroupIds:
         - !Ref Ec2SecurityGroupInternal
     Type: AWS::RDS::DBCluster
@@ -1637,7 +1628,7 @@ Resources:
         - !GetAtt Ec2SubnetPrivate1.AvailabilityZone
         - !GetAtt Ec2SubnetPrivate2.AvailabilityZone
       DatabaseName: G2
-      DBClusterIdentifier: !Sub "${AWS::StackName}-aurora-senzing-cluster-res"
+      DBClusterIdentifier: !Sub "${AWS::StackName}-aurora-senzing-res-cluster"
       DBClusterParameterGroupName:
         Ref: RdsDbClusterParameterGroup
       # FIXME: Tricky code.  See https://console.aws.amazon.com/support/home#/case/?displayId=7725760511
@@ -1663,7 +1654,7 @@ Resources:
       StorageEncrypted: true
       Tags:
         - Key: Name
-          Value: !Sub "${AWS::StackName}-rds-db-cluster-res"
+          Value: !Sub "${AWS::StackName}-rds-db-res-cluster"
       VpcSecurityGroupIds:
         - !Ref Ec2SecurityGroupInternal
     Type: AWS::RDS::DBCluster
@@ -1853,98 +1844,11 @@ Resources:
     Type: AWS::Lambda::Function
 
 
-  LambdaFunctionFindDomainName:
-    Condition: IfRoute53HostedZoneId
-    DependsOn:
-     - IamPolicyRoute53
-    Properties:
-      Code:
-        ZipFile: |
-          #!/usr/bin/env python3
-
-          import boto3
-          import cfnresponse
-          import datetime
-          import json
-          import logging
-          import traceback
-          from json import JSONEncoder
-
-          logger = logging.getLogger()
-          logger.setLevel(logging.INFO)
-
-          class DateTimeEncoder(JSONEncoder):
-              def default(self, obj):
-                  if isinstance(obj, (datetime.date, datetime.datetime)):
-                      return obj.isoformat()
-
-          def find_certificate_arn(certificate_domain_name, certificate_list):
-              certificate_summary_list = certificate_list.get('CertificateSummaryList', [])
-              for certificate_summary in certificate_summary_list:
-                  if certificate_summary.get('DomainName') == certificate_domain_name:
-                     return certificate_summary.get('CertificateArn')
-              return ""
-
-          def handler(event, context):
-              result = cfnresponse.SUCCESS
-              response = {}
-              try:
-                  logger.info("Event: {0}".format(json.dumps(event)))
-                  if event['RequestType'] in ['Create', 'Update']:
-                      properties = event.get('ResourceProperties', {})
-                      hosted_zone_id = properties.get('HostedZoneId', {})
-
-                      # Find domain in AWS Route53
-                      # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/route53.html
-
-                      route53 = boto3.client('route53')
-                      hosted_zone_dict = route53.get_hosted_zone(Id=hosted_zone_id)
-                      name = hosted_zone_dict.get("HostedZone", {}).get("Name", " ")
-                      response["Name"] = name
-                      response["DomainName"] = name[:-1]
-
-                      # Find Certificate in AWS Certificate Manager
-                      # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/acm.html
-
-                      certificate_domain_name = "*.{0}".format(response["DomainName"])
-                      logger.info("domain_name = {0}".format(certificate_domain_name))
-
-                      acm_client = boto3.client('acm')
-                      certificate_list = acm_client.list_certificates()
-                      certificate_arn = find_certificate_arn(certificate_domain_name, certificate_list)
-                      response["CertificateArn"] = certificate_arn
-                      logger.info("certificate_arn = {0}".format(certificate_arn))
-
-                      if not certificate_arn:
-                          logger.warning("Cannot find certificate for '{0}'".format(certificate_domain_name))
-                          result = cfnresponse.FAILED
-
-                  logger.info("Response: {0}".format(json.dumps(response, cls=DateTimeEncoder)))
-
-              except Exception as e:
-                  logger.error(e)
-                  traceback.print_exc()
-                  result = cfnresponse.FAILED
-              finally:
-                  cfnresponse.send(event, context, result, response)
-
-      Description: Gets Route53 hosted zone information.
-      FunctionName: !Sub "${AWS::StackName}-lambda-find-domain-name"
-      Handler: index.handler
-      Role: !GetAtt IamRoleLambda.Arn
-      Runtime: python3.8
-      Tags:
-        - Key: Name
-          Value: !Sub "${AWS::StackName}-lambda-find-domain-name"
-      Timeout: 30
-    Type: AWS::Lambda::Function
-
-
   LambdaFunctionGenerateCertificate:
     Properties:
       Code:
         # This code can be seen at https://github.com/Senzing/aws-lambda-self-signed-certificate
-        S3Bucket: public-read-access
+        S3Bucket: !Sub "senzing-public-${AWS::Region}"
         S3Key: aws-lambda-self-signed-certificate/self-signed-certificate.zip
       Description: Generate Public/Private key pair.
       FunctionName: !Sub "${AWS::StackName}-lambda-generate-certificate"
@@ -2339,18 +2243,6 @@ Resources:
         - Key: Name
           Value: !Sub "${AWS::StackName}-lambda-runner-db-password"
     Type: Custom::LambdaRunnerDbPassword
-
-
-# LambdaRunnerFindDomainName:
-#   Condition: IfRoute53HostedZoneId
-#   Properties:
-#     ClusterId: !Ref EcsCluster
-#     HostedZoneId: !Ref Route53HostedZoneId
-#     ServiceToken: !GetAtt LambdaFunctionFindDomainName.Arn
-#     Tags:
-#       - Key: Name
-#         Value: !Sub "${AWS::StackName}-lambda-runner-find-domain-name"
-#   Type: Custom::LambdaRunnerFindDomainName
 
 
   LambdaRunnerG2ConfigTool:
@@ -3066,29 +2958,6 @@ Resources:
       ListenerArn: !Ref ListenerPort443
       Priority: 3
     Type: "AWS::ElasticLoadBalancingV2::ListenerRule"
-
-# -- Route53RecordSet ---------------------------------------------------------
-
-# https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-route53-recordset.html
-# AWS Console: https://console.aws.amazon.com/route53/v2/hostedzones# > {Domain name} > "Records" tab
-
-# Route53RecordSet:
-#   Condition: IfRoute53HostedZoneId
-#   Properties:
-#     AliasTarget:
-#       DNSName: !Sub
-#         - "dualstack.${LoadBalancerPublicDNSName}"
-#         - LoadBalancerPublicDNSName: !GetAtt LoadBalancerPublic.DNSName
-#       EvaluateTargetHealth: true
-#       HostedZoneId: !GetAtt LoadBalancerPublic.CanonicalHostedZoneID
-#     Comment: !Sub "${AWS::StackName} RecordSet"
-#     HostedZoneId: !Ref Route53HostedZoneId
-#     Name: !Sub
-#       - "${StackName}.${DomainName}"
-#       - StackName: !Ref AWS::StackName
-#         DomainName: !GetAtt LambdaRunnerFindDomainName.Name
-#     Type: A
-#   Type: AWS::Route53::RecordSet
 
 # -- UserPool -----------------------------------------------------------------
 
@@ -4884,7 +4753,7 @@ Outputs:
 
   0penFirst:
     Condition: IfRunWebApp
-    Description: 'URL for Senzing Web App. Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging-simple/#openfirst'
+    Description: 'URL for Senzing Web App. Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging-simple/#0penfirst'
     Export:
       Name: !Sub "${AWS::StackName}-open-first"
     Value: !Sub "https://${LoadBalancerPublic.DNSName}/app/"
@@ -5001,7 +4870,7 @@ Outputs:
     Description: 'The Senzing Engine version installed. Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging-simple/#senzingversion'
     Export:
       Name: !Sub "${AWS::StackName}-senzing-version"
-    Value: !Sub "senzing-api-${SenzingVersion}"
+    Value: !Sub "senzingapi-${SenzingVersion}"
 
   SshPassword:
     Description: 'The randomly generated password for SSH access. Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging-simple/#sshpassword'
