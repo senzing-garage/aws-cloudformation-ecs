@@ -1,13 +1,13 @@
-# Cloudformation: senzing-demo-hosted-zone
+# Cloudformation: senzing-demo-certificates
 
 ## Synopsis
 
-The `senzing-demo-hosted-zone` demonstrates a Senzing deployment using an AWS Cloudformation template
-using a previously created AWS Route53 Hosted Zone.
+The `senzing-demo-certificates` demonstrates a Senzing deployment using an AWS Cloudformation template
+using an X.509 certificate and private key.
 
 ## Overview
 
-The `senzing-demo-hosted-zone` demonstration is an AWS Cloudformation template that creates the following resources:
+The `senzing-demo-certificates` demonstration is an AWS Cloudformation template that creates the following resources:
 
 1. AWS infrastructure
     1. VPC
@@ -47,7 +47,7 @@ This docker formation brings up the following docker containers:
 1. *[senzing/stream-producer](https://github.com/Senzing/stream-producer)*
 
 Help for
-[senzing-demo-hosted-zone](https://github.com/Senzing/aws-cloudformation-ecs/tree/main/cloudformation/senzing-demo-hosted-zone).
+[senzing-demo-certificates](https://github.com/Senzing/aws-cloudformation-ecs/tree/main/cloudformation/senzing-demo-certificates).
 
 ### Contents
 
@@ -137,14 +137,41 @@ Technical information on AWS Cloudformation parameters can be seen at
 1. **Allowed values:** See [SENZING_ACCEPT_EULA](https://github.com/Senzing/knowledge-base/blob/master/lists/environment-variables.md#senzing_accept_eula).
 1. **Default:** None
 
-### AcknowledgeInsecureSystem
+### CertificateBody
 
 1. **Synopsis:**
-   Acknowledgement of the security level of the system.
+   The X.509 certificate
 1. **Required:** Yes
 1. **Type:** String
-1. **Allowed values:** "I AGREE"
-1. **Default:** None
+1. **Example:**
+
+   ```console
+   -----BEGIN CERTIFICATE-----
+   MIIEHTCCAwWgAwIBAgIDAJojMA0GCSqGSIb3DQEBCwUAMIGLMQswCQYDVQQGEwJV
+   UzETMBEGA1UECAwKQ2FsaWZvcm5pYTEWMBQGA1UEBwwNU2FuIEZyYW5jaXNjbzEX
+   MBUGA1UECgwOTXlPcmdhbml6YXRpb24xHTAbBgNVBAsMFE15T3JnYW5pemF0aW9u
+   YWxVbml0MRcwFQYDVQQDDA5NeSBvd24gUm9vdCBDQTAeFw0yMTAzMTExNTAwNDla
+   Fw0zMDAzMDkxNTAwNDlaMIGIMQswCQYDVQQGEwJVUzETMBEGA1UECAwKQ2FsaWZv
+   cm5pYTEWMBQGA1UEBwwNU2FuIEZyYW5jaXNjbzEXMBUGA1UECgwOTXlPcmdhbml6
+   YXRpb24xHTAbBgNVBAsMFE15T3JnYW5pemF0aW9uYWxVbml0MRQwEgYDVQQDDAtl
+   eGFtcGxlLmNvbTCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAMnKQhQG
+   pRuxcO5RF8VMyAmWe4rs4XWeodVQflYtJVY+mCg/JidmgYe1EYXvE2Qqf1Xzi2O2
+   oEJJSAs/s+Wb91yzunnoHVR/5uTHdjN2e6HRhEmUFlJuconjlmBxVKe1LG4Ra8yr
+   JA+E0tS2kzrGCLNcFpghQ982GJjuvRWm9nAAsCJPm7N8a/Gm1opMdUkiH1b/3d47
+   0wugisz6fYRHQ61UIYfjNUWlg/tV1thGOScAB2RyusQJdTB422BQAlpD4TTX8uj8
+   Wd0GhYjpM8DWWpSUOFsoYOHBc3bPr7ctpOoIG8gZcs56zDwZi9CVda4viS/8HPnC
+   r8jXaQW1pqwP8ekCAwEAAaOBijCBhzAJBgNVHRMEAjAAMB0GA1UdDgQWBBTaOaPu
+   XmtLDTJVv++VYBiQr9gHCTAfBgNVHSMEGDAWgBTaOaPuXmtLDTJVv++VYBiQr9gH
+   CTATBgNVHSUEDDAKBggrBgEFBQcDATALBgNVHQ8EBAMCB4AwGAYDVR0RBBEwD4IN
+   Ki5leGFtcGxlLmNvbTANBgkqhkiG9w0BAQsFAAOCAQEAWIZu4sma7MmWTXSMwKSP
+   stQDWdIvcwthD8ozHkLsNdl5eKqOEndAc0wb7mSk1z8rRkSsd0D0T2zaKyduCYrs
+   eBAMhS2+NnHWcXxhn0VOkmXhw5kO8Un14KIptRH0y8FIqHMJ8LrSiK9g9fWCRlI9
+   g7eBipu43hzGyMiBP3K0EQ4m49QXlIEwG3OIWak5hdR29h3cD6xXMXaUtlOswsAN
+   3PDG/gcjZWZpkwPlaVzwjV8MRsYLmQIYdHPr/qF1FWddYPvK89T0nzpgiuFdBOTY
+   W6I1TeTAXFXG2Qf4trXsh5vsFNAisxlRF3mkpixYP5OmVXTOyN7cCOSPOUh6Uctv
+   eg==
+   -----END CERTIFICATE-----
+   ```
 
 ### CidrInbound
 
@@ -165,11 +192,44 @@ Technical information on AWS Cloudformation parameters can be seen at
 1. **Example:** me@example.com
 1. **Default:** None
 
-### Route53HostedZoneId
+### PrivateKey
 
-1. **Synopsis:** The AWS Route53 Hosted Zone to which the cloudformation is added.
+1. **Synopsis:**
+   Private key
 1. **Required:** Yes
-1. **Default:** None
+1. **Type:** String
+1. **Example:**
+
+   ```console
+   -----BEGIN PRIVATE KEY-----
+   MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQDJykIUBqUbsXDu
+   URfFTMgJlnuK7OF1nqHVUH5WLSVWPpgoPyYnZoGHtRGF7xNkKn9V84tjtqBCSUgL
+   P7Plm/dcs7p56B1Uf+bkx3Yzdnuh0YRJlBZSbnKJ45ZgcVSntSxuEWvMqyQPhNLU
+   tpM6xgizXBaYIUPfNhiY7r0VpvZwALAiT5uzfGvxptaKTHVJIh9W/93eO9MLoIrM
+   +n2ER0OtVCGH4zVFpYP7VdbYRjknAAdkcrrECXUweNtgUAJaQ+E01/Lo/FndBoWI
+   6TPA1lqUlDhbKGDhwXN2z6+3LaTqCBvIGXLOesw8GYvQlXWuL4kv/Bz5wq/I12kF
+   taasD/HpAgMBAAECggEAKePgBdI/UllqrT6OZboDyOHBcdytDULKK8NTBsbGenny
+   EmDRpdpEx4xSP/CaoO+lkY1GgYO3DyuxVgx6Zw8Ssd7ptkb2V8VZhGLX6eUN01Dw
+   WmnwnForUu65F/pO7aXRvGPHciyRBtu2/MuOEuRrh/h1BE3bjinnv0/IVwdbH3LW
+   pLiJoxzlSJDDomaIAOtB3u6Lw1/6kXiYT9lvXnUpBzR+1uMApTPQN0NJuxLiA0Rs
+   es2kBTZ/weEQW+GeJaSYmEXX9zCKGMVCq5EZfS3sH0TrkDENVqW40J+OF3Ee6r12
+   CoWLWkC+DPtfHvwh1zp89HFYZ7I6lyycBb31yHb1kQKBgQDuURbpgWxP7XaSgPuI
+   6rv2ApjZQav58kNj1K1pRIcnoZsfz3LX3xfft0PKyoKDmndN8nS9KKL9T//XIBaO
+   PeD3XzlSvQQ/SvNdaBHqOzkkwldGng3swR3c8RELoaKU9yBdhlMFYXkZsIp5hZgG
+   MPVdihamFfUk9J/sdYAr9vjnVQKBgQDYw1TWyBi4UTkMox62hqSUgWw3llaliHkP
+   tEinMKF3i0oZzGzWDIHV9YoPPuu2L5cy+j2wLe8r6DWvsKd0dqeNS/yXYj7eIDVz
+   fff9SmP25RdtV8h6fkAiLD708G7P0w94G+LhakuVpeTpMNSDPWUk6bl+K81ZRvm6
+   DKS7aOM4RQKBgEhQFrG38dO27Fm8BZcgEvStCRAzWym2lzg9mnjssE4YPWfDnMdg
+   DHB3vXxVQpEIV9cxELctE3flxG3UcMOshwzIui4e6KED7yCSqYz3d3lt9umYoAUM
+   /DDEfTWYUCr/abS3Q43Ia+SdqwcAwIZwaKN/eSvgUchq6fPoG4I7qH8ZAoGBAMRS
+   ndtuHZ2Kyw3cC6wrZJKwabAq9M02PtdvZMIwdH3OZU3abdSsPUfo/KL0TQ6UKfBc
+   31RbNhzhUwaODAyajwSVhvAhZmlOaLryo5IAN2vdcAtzjzsKb9HDmz3DKcoHEiKp
+   tyKMYGrodtyRglhfWeVF3uAckf9DHllYrDalN+61AoGAP9OrCgoDnjtTasFzibZ8
+   jb+xYG9E42smB2gep03Jj8l5gqnWTFh0TyA1Z7+RJNvSzkqK8bU/uAH/TgJAqviE
+   7XA7a2yuaf/Ww4vToy5bo1HqhQBak1PP2wzuWiUkJcyTRTGryLvnIR9fDonJ9TAd
+   0GsjqdfyAqjsvycLNvwR0wk=
+   -----END PRIVATE KEY-----
+   ```
 
 ### RunStreamProducer
 
@@ -182,6 +242,15 @@ Technical information on AWS Cloudformation parameters can be seen at
 1. **Allowed values:**
    [ "Yes" | "No" ]
 1. **Default:** Yes
+
+### SecurityResponsibility
+
+1. **Synopsis:**
+   Acknowledgement of the security level of the system.
+1. **Required:** Yes
+1. **Type:** String
+1. **Allowed values:** "I AGREE"
+1. **Default:** None
 
 ### SenzingLicenseAsBase64
 
@@ -229,18 +298,12 @@ Technical information on AWS Cloudformation parameters can be seen at
 
 ## Outputs
 
+### 0penFirst
+
 ### AccountID
 
 1. **Synopsis:**
    AWS account from which Cloudformation was deployed.
-
-### CertificateArn
-
-1. **Synopsis:**
-   Amazon Resource Name (ARN) of certificate used for SSL support.
-   More information at
-   [AWS LoadBalancer Console](https://console.aws.amazon.com/ec2/v2/home#LoadBalancers).
-   Select a load balancer, view the "Listeners" tab, then click "View/edit certificates".
 
 ### DatabaseHostCore
 
@@ -318,13 +381,6 @@ Technical information on AWS Cloudformation parameters can be seen at
    [AWS Load Balancers Console](https://console.aws.amazon.com/ec2/v2/home?region=us-east-1#LoadBalancers).
    Select a load balancer, view the "Description" tab, view **DNS name**.
 
-### Queue
-
-1. **Synopsis:**
-   The queue from which records are ingested into Senzing Engine.
-   In otherwords, this is the queue where records are sent to be inserted into the Senzing Engine.
-   More information at [AWS SQS Console](https://console.aws.amazon.com/sqs/v2/home?#/queues).
-
 ### QueueDeadLetter
 
 1. **Synopsis:**
@@ -332,13 +388,24 @@ Technical information on AWS Cloudformation parameters can be seen at
    In otherwords, if the JSON message is malformed, or Senzing d into the Senzing Engine.
    More information at [AWS SQS Console](https://console.aws.amazon.com/sqs/v2/home?#/queues).
 
-### QueueInfo
+### QueueInput
+
+1. **Synopsis:**
+   The queue from which records are ingested into Senzing Engine.
+   In otherwords, this is the queue where records are sent to be inserted into the Senzing Engine.
+   More information at [AWS SQS Console](https://console.aws.amazon.com/sqs/v2/home?#/queues).
+
+### QueueOutput
 
 1. **Synopsis:**
    The queue to which "WithInfo" results are sent by the
    [stream-loader](https://github.com/Senzing/stream-loader)
-   after ingesting records from the [Queue](#queue).
+   after ingesting records from the [QueueInput](#queueinput).
    More information at [AWS SQS Console](https://console.aws.amazon.com/sqs/v2/home?#/queues).
+
+### QueueRedoerInput
+
+### QueueRedoerOutput
 
 ### SenzingVersion
 
@@ -406,7 +473,7 @@ Technical information on AWS Cloudformation parameters can be seen at
    A URL showing how to reach the
    [Senzing Xterm](https://github.com/Senzing/docker-xterm).
 
-### WebInitPassword
+### UserInitPassword
 
 1. **Synopsis:**
    A one-time password for logging into AWS Cognito.
@@ -414,7 +481,7 @@ Technical information on AWS Cloudformation parameters can be seen at
    [AWS User Pools](https://console.aws.amazon.com/cognito/users/).
    Select User Pool, select Users and Groups.
 
-### WebUsername
+### UserName
 
 1. **Synopsis:**
    The initial AWS Cognito user defined by the CloudFormation deployment.
@@ -422,3 +489,5 @@ Technical information on AWS Cloudformation parameters can be seen at
    more information at
    [AWS User Pools](https://console.aws.amazon.com/cognito/users/).
    Select User Pool, select "Users and Groups", select "Create user"
+
+### UserPool
