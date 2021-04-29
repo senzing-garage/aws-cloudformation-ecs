@@ -517,6 +517,24 @@ Outputs:
       Name: !Sub "${AWS::StackName}-account-id"
     Value: !Sub "${AWS::AccountId}"
 
+  DatabaseCore:
+    Description: 'The connection endpoint for the DB cluster. Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-database-only/#databasehostcore'
+    Export:
+      Name: !Sub "${AWS::StackName}-database-core"
+    Value: !Ref RdsDbClusterCore
+
+  DatabaseLibfeat:
+    Description: 'The connection endpoint for the DB cluster. Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-database-only/#databasehostlibfeat'
+    Export:
+      Name: !Sub "${AWS::StackName}-database-libfeat"
+    Value: !Ref RdsDbClusterLibfeat
+
+  DatabaseHostRes:
+    Description: 'The connection endpoint for the DB cluster. Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-database-only/#databasehostres'
+    Export:
+      Name: !Sub "${AWS::StackName}-database-res"
+    Value: !Ref RdsDbClusterRes
+
   DatabaseHostCore:
     Description: 'The connection endpoint for the DB cluster. Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-database-only/#databasehostcore'
     Export:
@@ -586,5 +604,5 @@ Outputs:
   VpcId:
     Description: 'The ID of the VPC. Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-database-only/#vpcid'
     Export:
-      Name: !Sub "${AWS::StackName}-ec2-VpcId"
+      Name: !Sub "${AWS::StackName}-VpcId"
     Value: !Ref VpcId
