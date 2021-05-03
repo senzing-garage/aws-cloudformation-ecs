@@ -92,7 +92,10 @@ Resources:
             Effect: Allow
             Principal:
               Service:
+                - ecs-tasks.amazonaws.com
                 - lambda.amazonaws.com
+                - route53.amazonaws.com
+                - sqs.amazonaws.com
         Version: '2012-10-17'
       Description: !Sub "${AWS::StackName}-iam-role-lambda"
       Tags:

@@ -352,10 +352,10 @@ Mappings:
       cidr: 10.0.1.0/24
     pubsubnet2:
       cidr: 10.0.2.0/24
-    privsubnet1:
-      cidr: 10.0.3.0/24
-    privsubnet2:
-      cidr: 10.0.4.0/24
+#   privsubnet1:
+#     cidr: 10.0.3.0/24
+#   privsubnet2:
+#     cidr: 10.0.4.0/24
 
 # -----------------------------------------------------------------------------
 # Conditions
@@ -1128,20 +1128,20 @@ Resources:
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-flowlog.html
 # https://docs.aws.amazon.com/vpc/latest/userguide/flow-logs-cwl.html
 
-  Ec2FlowLog:
-    Condition: IfRunVpcFlowLogs
-    Properties:
-      DeliverLogsPermissionArn: !GetAtt IamRoleFlowLog.Arn
-      LogGroupName: !Ref LogsLogGroupMain
-      ResourceId:
-        Fn::ImportValue:
-          Fn::Sub: '${DatabaseStack}-VpcId'
-      ResourceType: VPC
-      Tags:
-        - Key: Name
-          Value: !Sub "${AWS::StackName}-ec2-flow-log"
-      TrafficType: ALL
-    Type: AWS::EC2::FlowLog
+# Ec2FlowLog:
+#   Condition: IfRunVpcFlowLogs
+#   Properties:
+#     DeliverLogsPermissionArn: !GetAtt IamRoleFlowLog.Arn
+#     LogGroupName: !Ref LogsLogGroupMain
+#     ResourceId:
+#       Fn::ImportValue:
+#         Fn::Sub: '${DatabaseStack}-VpcId'
+#     ResourceType: VPC
+#     Tags:
+#       - Key: Name
+#         Value: !Sub "${AWS::StackName}-ec2-flow-log"
+#     TrafficType: ALL
+#   Type: AWS::EC2::FlowLog
 
 # -- Cloud, subnets, routing --------------------------------------------------
 
