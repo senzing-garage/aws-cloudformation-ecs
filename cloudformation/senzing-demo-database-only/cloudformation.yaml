@@ -532,7 +532,7 @@ Outputs:
       Name: !Sub "${AWS::StackName}-database-libfeat"
     Value: !Ref RdsDbClusterLibfeat
 
-  DatabaseHostRes:
+  DatabaseRes:
     Description: 'The connection endpoint for the DB cluster. Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-database-only/#databasehostres'
     Export:
       Name: !Sub "${AWS::StackName}-database-res"
