@@ -189,9 +189,9 @@ Mappings:
     vpc:
       cidr: 10.0.0.0/16
     pubsubnet1:
-      cidr: 10.0.1.0/24
+      cidr: 10.0.3.0/24
     pubsubnet2:
-      cidr: 10.0.2.0/24
+      cidr: 10.0.4.0/24
 
 # -----------------------------------------------------------------------------
 # Conditions
@@ -1326,26 +1326,7 @@ Resources:
       ToPort: 5000
     Type: AWS::EC2::SecurityGroupIngress
 
-# https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-internetgateway.html
-# AWS Console: https://console.aws.amazon.com/vpc/home?#igws > Search for {stack}
 
-  Ec2InternetGateway:
-    Properties:
-      Tags:
-        - Key: Name
-          Value: !Sub "${AWS::StackName}-ec2-internet-gateway"
-    Type: AWS::EC2::InternetGateway
-
-# https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-vpc-gateway-attachment.html
-# AWS Console: https://console.aws.amazon.com/vpc/home?#igws > Search for {stack} > State & VPI ID
-
-  Ec2VpcGatewayAttachment:
-    Properties:
-      InternetGatewayId: !Ref Ec2InternetGateway
-      VpcId:
-        Fn::ImportValue:
-          Fn::Sub: '${DatabaseStack}-VpcId'
-    Type: AWS::EC2::VPCGatewayAttachment
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-route-table.html
 # AWS Console: https://console.aws.amazon.com/vpc/home?#RouteTables > Search for {stack}
@@ -1383,11 +1364,11 @@ Resources:
 
 
   Ec2RoutePublic:
-    DependsOn:
-     - Ec2VpcGatewayAttachment
     Properties:
       DestinationCidrBlock: 0.0.0.0/0
-      GatewayId: !Ref Ec2InternetGateway
+      GatewayId:
+        Fn::ImportValue:
+          Fn::Sub: '${DatabaseStack}-internet-gateway'
       RouteTableId: !Ref Ec2RouteTablePublic
     Type: AWS::EC2::Route
 

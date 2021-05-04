@@ -30,9 +30,9 @@ Mappings:
     vpc:
       cidr: 10.0.0.0/16
     privsubnet1:
-      cidr: 10.0.3.0/24
+      cidr: 10.0.1.0/24
     privsubnet2:
-      cidr: 10.0.4.0/24
+      cidr: 10.0.2.0/24
 
 # -----------------------------------------------------------------------------
 # Resources
@@ -117,6 +117,7 @@ Resources:
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-subnet.html
 # AWS Console: https://console.aws.amazon.com/vpc/home?#subnets > Search for {stack}
+
 
   Ec2SubnetPrivate1:
     Properties:
@@ -267,6 +268,25 @@ Resources:
           Value: !Sub "${AWS::StackName}-ec2-security-group-internal"
       VpcId: !Ref VpcId
     Type: AWS::EC2::SecurityGroup
+
+# https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-internetgateway.html
+# AWS Console: https://console.aws.amazon.com/vpc/home?#igws > Search for {stack}
+
+  Ec2InternetGateway:
+    Properties:
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-ec2-internet-gateway"
+    Type: AWS::EC2::InternetGateway
+
+# https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-vpc-gateway-attachment.html
+# AWS Console: https://console.aws.amazon.com/vpc/home?#igws > Search for {stack} > State & VPI ID
+
+  Ec2VpcGatewayAttachment:
+    Properties:
+      InternetGatewayId: !Ref Ec2InternetGateway
+      VpcId: !Ref VpcId
+    Type: AWS::EC2::VPCGatewayAttachment
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-route-table.html
 # AWS Console: https://console.aws.amazon.com/vpc/home?#RouteTables > Search for {stack}
@@ -654,6 +674,12 @@ Outputs:
     Export:
       Name: !Sub "${AWS::StackName}-database-username"
     Value: !FindInMap [Constants, Database, Username]
+
+  InternetGateway:
+    Description: 'Internet Gateway. Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-database-only/#internetgateway'
+    Export:
+      Name: !Sub "${AWS::StackName}-internet-gateway"
+    Value: !Ref Ec2InternetGateway
 
   SubnetPrivate1:
     Description: 'The ID of private subnet 1. Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-database-only/#subnetprivate1'
