@@ -25,4 +25,5 @@
 
 ## 5
 
-1. Goal:  Remove conflicts with subnets.
+1. Goal: Remove conflicts with subnets.
+1. Goal: Make it so that ingresses to `Ec2SecurityGroupInternal:` are added by "downstream" cloudformations.
