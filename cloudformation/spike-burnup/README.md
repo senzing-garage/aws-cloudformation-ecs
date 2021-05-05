@@ -5,13 +5,11 @@
 1. A simple cloudformation that simply brings up `senzing/sshd`.
    This is to verify that that SSHD container can be reached via public IP address
 
-
 ## 1
 
 1. Split up #0 to see if the VPC (1.1) can be separated from the application (1.2)
 
 ## 2
-
 
 ## 3
 
@@ -22,4 +20,9 @@
 
 ## 4
 
-1. Move the Gateway to the "VPC" cloudformation
+1. Move the Gateway to the "VPC" cloudformation.
+1. Works
+
+## 5
+
+1. Goal:  Remove conflicts with subnets.
