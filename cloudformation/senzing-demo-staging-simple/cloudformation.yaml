@@ -10,7 +10,7 @@ AWSTemplateFormatVersion: 2010-09-09
 # But tailored to run use Senzing RPMs from the staging server.
 
 Description: >-
-  Senzing aws-cloudformation-ecs-demo-staging-simple Version: 0.7.2
+  Senzing aws-cloudformation-ecs-demo-staging-simple Version: 0.7.3
   For more information see https://github.com/Senzing/aws-cloudformation-ecs/cloudformation/senzing-demo-staging-simple
 
 # -----------------------------------------------------------------------------
@@ -3131,10 +3131,10 @@ Resources:
               Protocol: tcp
           Privileged: false
           ReadonlyRootFilesystem: false
-      Cpu: '1024'
+      Cpu: '2048'
       ExecutionRoleArn: !GetAtt IamRoleApiServer.Arn
       Family: !Sub "${AWS::StackName}-task-definition-api-server"
-      Memory: '8192'
+      Memory: '16384'
       NetworkMode: awsvpc
       RequiresCompatibilities:
         - FARGATE
