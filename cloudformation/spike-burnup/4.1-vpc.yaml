@@ -1,7 +1,7 @@
 AWSTemplateFormatVersion: 2010-09-09
 
 Description: >-
-  Senzing aws-cloudformation-burnup-3.1: 0.7.2
+  Senzing aws-cloudformation-burnup-4.1: 0.7.2
 
 # -----------------------------------------------------------------------------
 # Mappings
