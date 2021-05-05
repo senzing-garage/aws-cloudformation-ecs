@@ -1,7 +1,7 @@
 AWSTemplateFormatVersion: 2010-09-09
 
 Description: >-
-  Senzing aws-cloudformation-burnup-1.1: 0.7.2
+  Senzing aws-cloudformation-burnup-3.1: 0.7.2
 
 # -----------------------------------------------------------------------------
 # Mappings
@@ -538,7 +538,6 @@ Resources:
 
   LambdaRunnerDbPassword:
     Properties:
-#     ClusterId: !Ref EcsCluster
       Length: 16
       ServiceToken: !GetAtt LambdaFunctionRandomString.Arn
       Tags:
@@ -549,7 +548,6 @@ Resources:
 
   LambdaRunnerStackNameAsLower:
     Properties:
-#     ClusterId: !Ref EcsCluster
       InputString: !Sub "${AWS::StackName}"
       ServiceToken: !GetAtt LambdaFunctionStringToLower.Arn
       Tags:
@@ -643,4 +641,3 @@ Outputs:
     Export:
       Name: !Sub "${AWS::StackName}-subnet-private-2"
     Value: !Ref Ec2SubnetPrivate2
-
