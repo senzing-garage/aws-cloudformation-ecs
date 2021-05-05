@@ -18,9 +18,9 @@ Mappings:
     vpc:
       cidr: 10.0.0.0/16
     privsubnet1:
-      cidr: 10.0.3.0/24
+      cidr: 10.0.1.0/24
     privsubnet2:
-      cidr: 10.0.4.0/24
+      cidr: 10.0.2.0/24
 
 # -----------------------------------------------------------------------------
 # Resources
@@ -83,7 +83,6 @@ Resources:
         - StackNameAsLower: !GetAtt LambdaRunnerStackNameAsLower.OutputString
     Type: AWS::Logs::LogGroup
 
-
 # -- Cloud, subnets, routing --------------------------------------------------
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-vpc.html
@@ -140,6 +139,7 @@ Resources:
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-ec2-security-group.html
 # AWS Console: https://console.aws.amazon.com/vpc/home?#SecurityGroups > Search for {stack}
+# FIXME: Make an internal group that external Cloudformation stacks can add to.
 
   Ec2SecurityGroupInternal:
     Properties:
