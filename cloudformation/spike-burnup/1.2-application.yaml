@@ -1,7 +1,7 @@
 AWSTemplateFormatVersion: 2010-09-09
 
 Description: >-
-  Senzing aws-cloudformation-burnup-1.2: 0.7.2
+  Senzing aws-cloudformation-burnup-1.2: 0.7.4
 
 # -----------------------------------------------------------------------------
 # Metadata
