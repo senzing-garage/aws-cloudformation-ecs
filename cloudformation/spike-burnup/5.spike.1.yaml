@@ -1,0 +1,445 @@
+AWSTemplateFormatVersion: 2010-09-09
+
+# File format follows https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/template-anatomy.html
+# Tests:
+#     Lint: https://github.com/aws-cloudformation/cfn-python-lint
+#     Nag: https://github.com/stelligent/cfn_nag
+#     aws cloudformation validate-template: https://awscli.amazonaws.com/v2/documentation/api/latest/reference/cloudformation/validate-template.html
+
+Description: >-
+  Senzing aws-cloudformation-burnup-5.2: 0.7.5
+  For more information see https://github.com/Senzing/aws-cloudformation-ecs-poc-simple
+
+# -----------------------------------------------------------------------------
+# Metadata
+# https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/metadata-section-structure.html
+# -----------------------------------------------------------------------------
+
+Metadata:
+
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      -
+        Label:
+          default: Identify existing resources
+        Parameters:
+          - DatabaseStack
+    ParameterLabels:
+      DatabaseStack:
+        default: 'Required: Name of stack having Senzing databases.'
+
+# -----------------------------------------------------------------------------
+# Parameters
+# https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/parameters-section-structure.html
+# -----------------------------------------------------------------------------
+
+Parameters:
+
+# AWS Console: https://console.aws.amazon.com/cloudformation/home?#/stacks > {stack} > Parameters
+
+  DatabaseStack:
+    Type: String
+    Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-full-stack/#databasestack'
+
+# -----------------------------------------------------------------------------
+# Resources
+# https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/resources-section-structure.html
+# -----------------------------------------------------------------------------
+
+Resources:
+
+# -- Iam -----------------------------------------------------------------
+
+# https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-iam-role.html
+# AWS Console: https://console.aws.amazon.com/iam/home?#/roles > Search for {stack}
+
+  IamRoleLambda:
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          -
+            Action:
+              - sts:AssumeRole
+            Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+        Version: '2012-10-17'
+      Description: !Sub "${AWS::StackName}-iam-role-lambda"
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-iam-role-lambda"
+    Type: AWS::IAM::Role
+
+
+# https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-iam-policy.html
+# AWS Console: https://console.aws.amazon.com/iam/home?#/roles > Search for {stack} > {role} > inline policy
+
+  IamPolicyEc2:
+    Properties:
+      PolicyName: !Sub "${AWS::StackName}-iam-policy-ec2"
+      PolicyDocument:
+        Statement:
+          -
+            Action:
+              - ec2:DescribeSubnets
+            Effect: Allow
+            Resource:
+              - '*'
+        Version: '2012-10-17'
+      Roles:
+       - !Ref IamRoleLambda
+    Type: AWS::IAM::Policy
+
+
+  IamPolicyLoggingCreateStream:
+    Properties:
+      PolicyName: !Sub "${AWS::StackName}-iam-policy-logging-create-stream"
+      PolicyDocument:
+        Statement:
+          -
+            Action:
+              - logs:CreateLogStream
+              - logs:PutLogEvents
+            Effect: Allow
+            Resource:
+              - '*'
+        Version: '2012-10-17'
+      Roles:
+       - !Ref IamRoleLambda
+    Type: AWS::IAM::Policy
+
+
+  IamPolicyPassRole:
+    Properties:
+      PolicyName: !Sub "${AWS::StackName}-iam-policy-pass-role"
+      PolicyDocument:
+        Statement:
+          -
+            Action:
+              - iam:PassRole
+            Effect: Allow
+            Resource:
+              - '*'
+        Version: '2012-10-17'
+      Roles:
+       - !Ref IamRoleLambda
+    Type: AWS::IAM::Policy
+
+
+# -- Logging ------------------------------------------------------------------
+
+# https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-logs-loggroup.html
+# AWS Console: https://console.aws.amazon.com/cloudwatch/home?#logsV2:log-groups > Search for {stack}
+
+  LogsLogGroupLambdaRandomString:
+    Properties:
+      LogGroupName: !Sub "/aws/lambda/${AWS::StackName}-lambda-subnets"
+    Type: AWS::Logs::LogGroup
+
+  LogsLogGroupMain:
+    Properties:
+      LogGroupName: !Sub
+        - "/senzing/${StackName}/${AWS::StackName}"
+        - StackName: spike
+    Type: AWS::Logs::LogGroup
+
+# -- Cloud, subnets, routing --------------------------------------------------
+
+# https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-subnet.html
+# AWS Console: https://console.aws.amazon.com/vpc/home?#subnets > Search for {stack}
+
+  Ec2SubnetPublic1:
+    Properties:
+      AvailabilityZone: !Select
+          - '0'
+          - !GetAZs
+            Ref: AWS::Region
+      CidrBlock: !Select
+        - '0'
+        - Fn::Split:
+          - ", "
+          - Fn::GetAtt: LambdaRunnerSubnets.Subnets
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-ec2-subnet-public-1"
+      VpcId:
+        Fn::ImportValue:
+          Fn::Sub: '${DatabaseStack}-ec2-VpcId'
+    Type: AWS::EC2::Subnet
+
+
+  Ec2SubnetPublic2:
+    Properties:
+      AvailabilityZone: !Select
+          - '1'
+          - !GetAZs
+            Ref: AWS::Region
+      CidrBlock: !Select
+        - '1'
+        - Fn::Split:
+          - ", "
+          - Fn::GetAtt: LambdaRunnerSubnets.Subnets
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-ec2-subnet-public-2"
+      VpcId:
+        Fn::ImportValue:
+          Fn::Sub: '${DatabaseStack}-ec2-VpcId'
+    Type: AWS::EC2::Subnet
+
+# https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-ec2-eip.html
+# AWS Console: https://console.aws.amazon.com/vpc/home?#Addresses: > Search for {stack}
+
+  Ec2Eip:
+    Properties:
+      Domain: vpc
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-ec2-eip"
+    Type: AWS::EC2::EIP
+
+# https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-natgateway.html
+# AWS Console: https://console.aws.amazon.com/vpc/home?#NatGateways: > Search for {stack}
+
+  Ec2NatGateway:
+    Properties:
+      AllocationId: !GetAtt Ec2Eip.AllocationId
+      SubnetId: !Ref Ec2SubnetPublic1
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-ec2-nat-gateway"
+    Type: AWS::EC2::NatGateway
+
+# https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-route-table.html
+# AWS Console: https://console.aws.amazon.com/vpc/home?#RouteTables > Search for {stack}
+
+  Ec2RouteTablePrivate:
+    Properties:
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-ec2-route-table-private"
+      VpcId:
+        Fn::ImportValue:
+          Fn::Sub: '${DatabaseStack}-ec2-VpcId'
+    Type: AWS::EC2::RouteTable
+
+
+  Ec2RouteTablePublic:
+    Properties:
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-ec2-route-table-public"
+      VpcId:
+        Fn::ImportValue:
+          Fn::Sub: '${DatabaseStack}-ec2-VpcId'
+    Type: AWS::EC2::RouteTable
+
+# https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-route.html
+# AWS Console: https://console.aws.amazon.com/vpc/home?#RouteTables > {name} > "Routes" tab
+
+  Ec2RoutePrivate:
+    Properties:
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref Ec2NatGateway
+      RouteTableId: !Ref Ec2RouteTablePrivate
+    Type: AWS::EC2::Route
+
+
+  Ec2RoutePublic:
+    Properties:
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId:
+        Fn::ImportValue:
+          Fn::Sub: '${DatabaseStack}-ec2-internet-gateway'
+      RouteTableId: !Ref Ec2RouteTablePublic
+    Type: AWS::EC2::Route
+
+# https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-subnet-route-table-assoc.html
+# AWS Console: https://console.aws.amazon.com/vpc/home?#RouteTables > {name} > "Subnet Associations" tab
+
+  Ec2SubnetRouteTableAssociationPrivate1:
+    Properties:
+      RouteTableId: !Ref Ec2RouteTablePrivate
+      SubnetId:
+        Fn::ImportValue:
+          Fn::Sub: '${DatabaseStack}-subnet-private-1'
+    Type: AWS::EC2::SubnetRouteTableAssociation
+
+
+  Ec2SubnetRouteTableAssociationPrivate2:
+    Properties:
+      RouteTableId: !Ref Ec2RouteTablePrivate
+      SubnetId:
+        Fn::ImportValue:
+          Fn::Sub: '${DatabaseStack}-subnet-private-2'
+    Type: AWS::EC2::SubnetRouteTableAssociation
+
+
+  Ec2SubnetRouteTableAssociationPublic1:
+    Properties:
+      RouteTableId: !Ref Ec2RouteTablePublic
+      SubnetId: !Ref Ec2SubnetPublic1
+    Type: AWS::EC2::SubnetRouteTableAssociation
+
+
+  Ec2SubnetRouteTableAssociationPublic2:
+    Properties:
+      RouteTableId: !Ref Ec2RouteTablePublic
+      SubnetId: !Ref Ec2SubnetPublic2
+    Type: AWS::EC2::SubnetRouteTableAssociation
+
+# -- LambdaFunction -----------------------------------------------------------
+
+# https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-lambda-function.html
+# AWS Console: https://console.aws.amazon.com/lambda/home?#/functions > Search for {stack}
+
+  LambdaFunctionSubnets:
+    Properties:
+      Code:
+        ZipFile: |
+          #!/usr/bin/env python3
+
+          import boto3
+          import cfnresponse
+          import json
+          import logging
+          import traceback
+
+          logger = logging.getLogger()
+          logger.setLevel(logging.INFO)
+
+          def find_cidr_decimal(cidr):
+              (ip_part, shift_part) = cidr.split('/')
+              octet = ip_part.split(".")
+              return int(octet[0]) << 24 | int(octet[1]) << 16 | int(octet[2]) << 8 | int(octet[3])
+
+
+          def find_cidr_prefix(cidr):
+              (ip_part, shift_part) = cidr.split('/')
+              return int(shift_part)
+
+
+          def highest_cidr(cidrs):
+              result = "0.0.0.0/0"
+              result_decimal = find_cidr_decimal(result)
+              for cidr in cidrs:
+                  cidr_decimal = find_cidr_decimal(cidr)
+                  if cidr_decimal > result_decimal:
+                      result = cidr
+                      result_decimal = find_cidr_decimal(result)
+              return result
+
+
+          def as_cidr(cidr_decimal, cidr_prefix):
+              octals = '.'.join([str(cidr_decimal >> (i << 3) & 0xFF) for i in range(4)[::-1]])
+              return "{0}/{1}".format(octals, cidr_prefix)
+
+
+          def next_cidr(cidr, new_prefix=None):
+              last_cidr_decimal = find_cidr_decimal(cidr)
+              prefix = new_prefix
+              if not prefix:
+                  prefix = find_cidr_prefix(cidr)
+              stride = 2 << (31 - prefix)
+              mask = 0xffffffff - (stride - 1)
+              next_cidr = (last_cidr_decimal + stride) & mask
+              return as_cidr(next_cidr, prefix)
+
+
+          def handler(event, context):
+              result = cfnresponse.SUCCESS
+              response_data = {}
+              try:
+                  logger.info("Event: {0}".format(json.dumps(event)))
+                  if event['RequestType'] in ['Create', 'Update']:
+                      properties = event.get('ResourceProperties', {})
+                      vpc_id = properties.get('VpcId')
+                      number_of_subnets = int(properties.get('NumberOfSubnets'))
+                      cidr_prefix = int(properties.get('CidrPrefix'))
+
+                      ec2_client = boto3.client('ec2')
+
+                      filters = [
+                          {
+                              "Name": "vpc-id",
+                              "Values": [
+                                  vpc_id
+                              ]
+                          }
+                      ]
+
+                      describe_subnets = ec2_client.describe_subnets(Filters=filters)
+                      subnets = describe_subnets.get("Subnets")
+                      cidr = highest_cidr(p["CidrBlock"] for p in subnets)
+                      cidr = next_cidr(cidr)
+
+                      result_subnets = []
+                      for x in range(number_of_subnets):
+                          cidr = next_cidr(cidr, cidr_prefix)
+                          result_subnets.append(cidr)
+                      response_data["Subnets"] = ", ".join(result_subnets)
+              except Exception as e:
+                  logger.error(e)
+                  traceback.print_exc()
+                  result = cfnresponse.FAILED
+              finally:
+                  cfnresponse.send(event, context, result, response_data)
+
+      Description: Find available Subnets.
+      FunctionName: !Sub "${AWS::StackName}-lambda-subnets"
+      Handler: index.handler
+      Role: !GetAtt IamRoleLambda.Arn
+      Runtime: python3.8
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-lambda-random-password"
+      Timeout: 600
+    Type: AWS::Lambda::Function
+
+# -- Run ECS tasks-------------------------------------------------------------
+
+# https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/template-custom-resources.html
+# https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-cfn-customresource.html
+# AWS Console: FIXME:  none?
+
+  LambdaRunnerSubnets:
+    Properties:
+      CidrPrefix: 28
+      NumberOfSubnets: 2
+      ServiceToken: !GetAtt LambdaFunctionSubnets.Arn
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-lambda-runner-web-password"
+      VpcId:
+        Fn::ImportValue:
+          !Sub "${DatabaseStack}-ec2-VpcId"
+    Type: Custom::LambdaRunnerSubnets
+
+# -----------------------------------------------------------------------------
+# Outputs
+# https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/outputs-section-structure.html
+# -----------------------------------------------------------------------------
+
+Outputs:
+
+# AWS Console: https://console.aws.amazon.com/cloudformation/home?#/stacks > {stack} > Outputs
+
+  SubnetPublic1:
+    Description: 'The ID of public subnet 1. Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#subnetpublic1'
+    Export:
+      Name: !Sub "${AWS::StackName}-subnet-public-1"
+    Value: !Ref Ec2SubnetPublic1
+
+  SubnetPublic2:
+    Description: 'The ID of public subnet 2. Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#subnetpublic2'
+    Export:
+      Name: !Sub "${AWS::StackName}-subnet-public-2"
+    Value: !Ref Ec2SubnetPublic2
+
+  Subnets:
+    Description: 'The ID of public subnet 2. Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#subnetpublic2'
+    Export:
+      Name: !Sub "${AWS::StackName}-subnets"
+    Value: !GetAtt LambdaRunnerSubnets.Subnets
+

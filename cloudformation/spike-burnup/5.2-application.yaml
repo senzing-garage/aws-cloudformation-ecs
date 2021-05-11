@@ -7,7 +7,7 @@ AWSTemplateFormatVersion: 2010-09-09
 #     aws cloudformation validate-template: https://awscli.amazonaws.com/v2/documentation/api/latest/reference/cloudformation/validate-template.html
 
 Description: >-
-  Senzing aws-cloudformation-burnup-5.2: 0.7.4
+  Senzing aws-cloudformation-burnup-5.2: 0.7.5
   For more information see https://github.com/Senzing/aws-cloudformation-ecs-poc-simple
 
 # -----------------------------------------------------------------------------
@@ -102,8 +102,11 @@ Parameters:
 
 
   CognitoAdminEmail:
-    Type: String
+    AllowedPattern: '.+|^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$'
+    ConstraintDescription: Entering initial user email address is required to proceed
+    Default: '_'
     Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#cognitoadminemail'
+    Type: String
 
 
   RunStreamProducer:
@@ -137,6 +140,15 @@ Parameters:
 
 Rules:
 
+  ConfirmCognitoAdminEmail:
+    Assertions:
+      - Assert: !Not
+          - !Equals
+            - !Ref CognitoAdminEmail
+            - '_'
+        AssertDescription: 'Entering initial user email address is required to proceed'
+
+
   ConfirmEula:
     Assertions:
       - Assert: !Not
@@ -155,7 +167,7 @@ Rules:
       - Assert: !Equals
           - !Ref SecurityResponsibility
           - 'I AGREE'
-        AssertDescription: 'Entering "I AGREE" is required to proceed.'
+        AssertDescription: 'Understanding responsibility and entering "I AGREE" is required to proceed.'
 
 # -----------------------------------------------------------------------------
 # Mappings
@@ -1023,6 +1035,25 @@ Resources:
           Fn::Sub: '${DatabaseStack}-ec2-VpcId'
     Type: AWS::EC2::Subnet
 
+
+# Ec2SubnetPublic3:
+#   Properties:
+#     AvailabilityZone: !Select
+#         - '1'
+#         - !GetAZs
+#           Ref: AWS::Region
+#     CidrBlock: !FindInMap
+#       - VpcCidrs
+#       - pubsubnet2
+#       - cidr
+#     Tags:
+#       - Key: Name
+#         Value: !Sub "${AWS::StackName}-ec2-subnet-public-3"
+#     VpcId:
+#       Fn::ImportValue:
+#         Fn::Sub: '${DatabaseStack}-ec2-VpcId'
+#   Type: AWS::EC2::Subnet
+
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-ec2-eip.html
 # AWS Console: https://console.aws.amazon.com/vpc/home?#Addresses: > Search for {stack}
 
@@ -1134,9 +1165,21 @@ Resources:
     Properties:
       Description: Allow Health Check on Container 8250 from ALB
       FromPort: 8250
-      GroupId: !Ref Ec2SecurityGroupLoadBalancerPublic
       IpProtocol: tcp
       SourceSecurityGroupId: !GetAtt Ec2SecurityGroupLoadBalancerPublic.GroupId
+      ToPort: 8250
+    Type: AWS::EC2::SecurityGroupIngress
+
+
+  Ec2SecurityGroupIngressApiServerPrivate:
+    Properties:
+      CidrIp: !Ref CidrInbound
+      Description: Senzing API server
+      FromPort: 8250
+      IpProtocol: tcp
+      SourceSecurityGroupId:
+        Fn::ImportValue:
+          Fn::Sub: '${DatabaseStack}-ec2-security-group-internal'
       ToPort: 8250
     Type: AWS::EC2::SecurityGroupIngress
 
@@ -1164,6 +1207,19 @@ Resources:
     Type: AWS::EC2::SecurityGroupIngress
 
 
+  Ec2SecurityGroupIngressNFS:
+    Properties:
+      CidrIp: !Ref CidrInbound
+      Description: NFS
+      FromPort: 2049
+      IpProtocol: tcp
+      SourceSecurityGroupId:
+        Fn::ImportValue:
+          Fn::Sub: '${DatabaseStack}-ec2-security-group-internal'
+      ToPort: 2049
+    Type: AWS::EC2::SecurityGroupIngress
+
+
   Ec2SecurityGroupIngressSsh:
     Condition: IfRunSshd
     Properties:
@@ -1183,7 +1239,6 @@ Resources:
       FromPort: 8080
       GroupId: !Ref Ec2SecurityGroupLoadBalancerPublic
       IpProtocol: tcp
-      SourceSecurityGroupId: !GetAtt Ec2SecurityGroupLoadBalancerPublic.GroupId
       ToPort: 8080
     Type: AWS::EC2::SecurityGroupIngress
 
