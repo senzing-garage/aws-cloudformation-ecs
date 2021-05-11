@@ -562,6 +562,12 @@ Outputs:
       Name: !Sub "${AWS::StackName}-ec2-VpcId"
     Value: !Ref Ec2Vpc
 
+  Ec2VpcCidrBlock:
+    Description: 'The CidrBloc of the VPC. Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#ec2vpccidrblock'
+    Export:
+      Name: !Sub "${AWS::StackName}-ec2-VpcId-cidrblock"
+    Value: !GetAtt Ec2Vpc.CidrBlock
+
   SubnetPrivate1:
     Description: 'The ID of private subnet 1. Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#subnetprivate1'
     Export:

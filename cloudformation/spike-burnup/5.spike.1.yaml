@@ -132,7 +132,7 @@ Resources:
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-logs-loggroup.html
 # AWS Console: https://console.aws.amazon.com/cloudwatch/home?#logsV2:log-groups > Search for {stack}
 
-  LogsLogGroupLambdaRandomString:
+  LogsLogGroupLambdaSubnets:
     Properties:
       LogGroupName: !Sub "/aws/lambda/${AWS::StackName}-lambda-subnets"
     Type: AWS::Logs::LogGroup
@@ -309,15 +309,21 @@ Resources:
           logger = logging.getLogger()
           logger.setLevel(logging.INFO)
 
+
+          def as_cidr(cidr_decimal, cidr_prefix):
+              octals = '.'.join([str(cidr_decimal >> (i << 3) & 0xFF) for i in range(4)[::-1]])
+              return "{0}/{1}".format(octals, cidr_prefix)
+
+
           def find_cidr_decimal(cidr):
-              (ip_part, shift_part) = cidr.split('/')
-              octet = ip_part.split(".")
+              (octets, prefix) = cidr.split('/')
+              octet = octets.split(".")
               return int(octet[0]) << 24 | int(octet[1]) << 16 | int(octet[2]) << 8 | int(octet[3])
 
 
           def find_cidr_prefix(cidr):
-              (ip_part, shift_part) = cidr.split('/')
-              return int(shift_part)
+              (octets, prefix) = cidr.split('/')
+              return int(prefix)
 
 
           def highest_cidr(cidrs):
@@ -331,20 +337,23 @@ Resources:
               return result
 
 
-          def as_cidr(cidr_decimal, cidr_prefix):
-              octals = '.'.join([str(cidr_decimal >> (i << 3) & 0xFF) for i in range(4)[::-1]])
-              return "{0}/{1}".format(octals, cidr_prefix)
-
-
-          def next_cidr(cidr, new_prefix=None):
+          def adjust_cidr(cidr, next_cidr_prefix=None):
               last_cidr_decimal = find_cidr_decimal(cidr)
-              prefix = new_prefix
-              if not prefix:
-                  prefix = find_cidr_prefix(cidr)
-              stride = 2 << (31 - prefix)
+              last_cidr_prefix = find_cidr_prefix(cidr)
+              stride = 2 << (31 - last_cidr_prefix)
               mask = 0xffffffff - (stride - 1)
-              next_cidr = (last_cidr_decimal + stride) & mask
-              return as_cidr(next_cidr, prefix)
+              next_cidr_decimal = last_cidr_decimal & mask
+              next_cidr_decimal = next_cidr_decimal + stride - 1
+              return as_cidr(next_cidr_decimal, next_cidr_prefix)
+
+
+          def next_cidr(cidr):
+              last_cidr_decimal = find_cidr_decimal(cidr)
+              last_cidr_prefix = find_cidr_prefix(cidr)
+              stride = 2 << (31 - last_cidr_prefix)
+              mask = 0xffffffff - (stride - 1)
+              next_cidr_decimal = (last_cidr_decimal + stride) & mask
+              return as_cidr(next_cidr_decimal, last_cidr_prefix)
 
 
           def handler(event, context):
@@ -355,8 +364,8 @@ Resources:
                   if event['RequestType'] in ['Create', 'Update']:
                       properties = event.get('ResourceProperties', {})
                       vpc_id = properties.get('VpcId')
-                      number_of_subnets = int(properties.get('NumberOfSubnets'))
-                      cidr_prefix = int(properties.get('CidrPrefix'))
+                      number_of_subnets = int(properties.get('NumberOfSubnets', 1))
+                      cidr_prefix = int(properties.get('CidrPrefix', 24))
 
                       ec2_client = boto3.client('ec2')
 
@@ -372,11 +381,11 @@ Resources:
                       describe_subnets = ec2_client.describe_subnets(Filters=filters)
                       subnets = describe_subnets.get("Subnets")
                       cidr = highest_cidr(p["CidrBlock"] for p in subnets)
-                      cidr = next_cidr(cidr)
+                      cidr = adjust_cidr(cidr, cidr_prefix)
 
                       result_subnets = []
                       for x in range(number_of_subnets):
-                          cidr = next_cidr(cidr, cidr_prefix)
+                          cidr = next_cidr(cidr)
                           result_subnets.append(cidr)
                       response_data["Subnets"] = ", ".join(result_subnets)
               except Exception as e:
@@ -405,7 +414,7 @@ Resources:
 
   LambdaRunnerSubnets:
     Properties:
-      CidrPrefix: 28
+      CidrPrefix: 24
       NumberOfSubnets: 2
       ServiceToken: !GetAtt LambdaFunctionSubnets.Arn
       Tags:

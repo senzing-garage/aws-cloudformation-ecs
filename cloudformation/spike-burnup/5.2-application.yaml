@@ -97,8 +97,9 @@ Parameters:
 
 
   DatabaseStack:
-    Type: String
+    Default: '_'
     Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-full-stack/#databasestack'
+    Type: String
 
 
   CognitoAdminEmail:
@@ -113,7 +114,7 @@ Parameters:
     AllowedValues:
       - 'No'
       - 'Yes'
-    Default: 'Yes'
+    Default: 'No'
     Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#runstreamproducer'
     Type: String
 
@@ -127,7 +128,6 @@ Parameters:
 
 
   SenzingLicenseAsBase64:
-#   AllowedPattern: ' ^$|[^-A-Za-z0-9+\/=\s]|=[^=]|={3,}$'
     ConstraintDescription: 'Must contain only Base64 characters. see http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#senzinglicenseasbase64'
     Default: ' '
     Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#senzinglicenseasbase64'
@@ -147,6 +147,15 @@ Rules:
             - !Ref CognitoAdminEmail
             - '_'
         AssertDescription: 'Entering initial user email address is required to proceed'
+
+
+  ConfirmDatabaseStack:
+    Assertions:
+      - Assert: !Not
+          - !Equals
+            - !Ref DatabaseStack
+            - '_'
+        AssertDescription: 'Entering existing Senzing database stack identifier is required to proceed'
 
 
   ConfirmEula:
@@ -197,15 +206,6 @@ Mappings:
       InputUrl: https://s3.amazonaws.com/public-read-access/TestDataSets/SenzingTruthSet/truth-set.json
       RecordMax: 0
       RecordMin: 0
-
-
-  VpcCidrs:
-    vpc:
-      cidr: 10.0.0.0/16
-    pubsubnet1:
-      cidr: 10.0.3.0/24
-    pubsubnet2:
-      cidr: 10.0.4.0/24
 
 # -----------------------------------------------------------------------------
 # Conditions
@@ -721,6 +721,23 @@ Resources:
     Type: AWS::IAM::Policy
 
 
+  IamPolicyEc2:
+    Properties:
+      PolicyName: !Sub "${AWS::StackName}-iam-policy-ec2"
+      PolicyDocument:
+        Statement:
+          -
+            Action:
+              - ec2:DescribeSubnets
+            Effect: Allow
+            Resource:
+              - '*'
+        Version: '2012-10-17'
+      Roles:
+       - !Ref IamRoleLambda
+    Type: AWS::IAM::Policy
+
+
   IamPolicyEc2FlowLogs:
     Properties:
       PolicyName: !Sub "${AWS::StackName}-iam-policy-logging-create-group"
@@ -962,6 +979,12 @@ Resources:
     Type: AWS::Logs::LogGroup
 
 
+  LogsLogGroupLambdaSubnets:
+    Properties:
+      LogGroupName: !Sub "/aws/lambda/${AWS::StackName}-lambda-subnets"
+    Type: AWS::Logs::LogGroup
+
+
   LogsLogGroupLambdaWaitForEfs:
     Properties:
       LogGroupName: !Sub "/aws/lambda/${AWS::StackName}-lambda-wait-for-efs"
@@ -1004,10 +1027,11 @@ Resources:
           - '0'
           - !GetAZs
             Ref: AWS::Region
-      CidrBlock: !FindInMap
-        - VpcCidrs
-        - pubsubnet1
-        - cidr
+      CidrBlock: !Select
+        - '0'
+        - Fn::Split:
+          - ", "
+          - Fn::GetAtt: LambdaRunnerSubnets.Subnets
       Tags:
         - Key: Name
           Value: !Sub "${AWS::StackName}-ec2-subnet-public-1"
@@ -1023,10 +1047,11 @@ Resources:
           - '1'
           - !GetAZs
             Ref: AWS::Region
-      CidrBlock: !FindInMap
-        - VpcCidrs
-        - pubsubnet2
-        - cidr
+      CidrBlock: !Select
+        - '1'
+        - Fn::Split:
+          - ", "
+          - Fn::GetAtt: LambdaRunnerSubnets.Subnets
       Tags:
         - Key: Name
           Value: !Sub "${AWS::StackName}-ec2-subnet-public-2"
@@ -1034,25 +1059,6 @@ Resources:
         Fn::ImportValue:
           Fn::Sub: '${DatabaseStack}-ec2-VpcId'
     Type: AWS::EC2::Subnet
-
-
-# Ec2SubnetPublic3:
-#   Properties:
-#     AvailabilityZone: !Select
-#         - '1'
-#         - !GetAZs
-#           Ref: AWS::Region
-#     CidrBlock: !FindInMap
-#       - VpcCidrs
-#       - pubsubnet2
-#       - cidr
-#     Tags:
-#       - Key: Name
-#         Value: !Sub "${AWS::StackName}-ec2-subnet-public-3"
-#     VpcId:
-#       Fn::ImportValue:
-#         Fn::Sub: '${DatabaseStack}-ec2-VpcId'
-#   Type: AWS::EC2::Subnet
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-ec2-eip.html
 # AWS Console: https://console.aws.amazon.com/vpc/home?#Addresses: > Search for {stack}
@@ -1107,10 +1113,9 @@ Resources:
           IpProtocol: '-1'
       SecurityGroupIngress:
         -
-          CidrIp: !FindInMap
-            - VpcCidrs
-            - vpc
-            - cidr
+          CidrIp:
+            Fn::ImportValue:
+              Fn::Sub: '${DatabaseStack}-ec2-VpcId-cidrblock'
           Description: Senzing API server
           FromPort: 8250
           IpProtocol: tcp
@@ -1165,6 +1170,7 @@ Resources:
     Properties:
       Description: Allow Health Check on Container 8250 from ALB
       FromPort: 8250
+      GroupId: !GetAtt Ec2SecurityGroupLoadBalancerPublic.GroupId
       IpProtocol: tcp
       SourceSecurityGroupId: !GetAtt Ec2SecurityGroupLoadBalancerPublic.GroupId
       ToPort: 8250
@@ -1176,10 +1182,10 @@ Resources:
       CidrIp: !Ref CidrInbound
       Description: Senzing API server
       FromPort: 8250
-      IpProtocol: tcp
-      SourceSecurityGroupId:
+      GroupId:
         Fn::ImportValue:
           Fn::Sub: '${DatabaseStack}-ec2-security-group-internal'
+      IpProtocol: tcp
       ToPort: 8250
     Type: AWS::EC2::SecurityGroupIngress
 
@@ -1189,7 +1195,7 @@ Resources:
       CidrIp: !Ref CidrInbound
       Description: HTTPS
       FromPort: 443
-      GroupId: !Ref Ec2SecurityGroupLoadBalancerPublic
+      GroupId: !GetAtt Ec2SecurityGroupLoadBalancerPublic.GroupId
       IpProtocol: tcp
       ToPort: 443
     Type: AWS::EC2::SecurityGroupIngress
@@ -1200,7 +1206,7 @@ Resources:
     Properties:
       Description: Allow Health Check on Container 8888 from ALB
       FromPort: 8888
-      GroupId: !Ref Ec2SecurityGroupLoadBalancerPublic
+      GroupId: !GetAtt Ec2SecurityGroupLoadBalancerPublic.GroupId
       IpProtocol: tcp
       SourceSecurityGroupId: !GetAtt Ec2SecurityGroupLoadBalancerPublic.GroupId
       ToPort: 8888
@@ -1213,7 +1219,7 @@ Resources:
       Description: NFS
       FromPort: 2049
       IpProtocol: tcp
-      SourceSecurityGroupId:
+      GroupId:
         Fn::ImportValue:
           Fn::Sub: '${DatabaseStack}-ec2-security-group-internal'
       ToPort: 2049
@@ -1237,8 +1243,9 @@ Resources:
     Properties:
       Description: Allow Health Check on Container 8080 from ALB
       FromPort: 8080
-      GroupId: !Ref Ec2SecurityGroupLoadBalancerPublic
+      GroupId: !GetAtt Ec2SecurityGroupLoadBalancerPublic.GroupId
       IpProtocol: tcp
+      SourceSecurityGroupId: !GetAtt Ec2SecurityGroupLoadBalancerPublic.GroupId
       ToPort: 8080
     Type: AWS::EC2::SecurityGroupIngress
 
@@ -1248,7 +1255,7 @@ Resources:
     Properties:
       Description: Allow Health Check on Container 8251 from ALB
       FromPort: 8251
-      GroupId: !Ref Ec2SecurityGroupLoadBalancerPublic
+      GroupId: !GetAtt Ec2SecurityGroupLoadBalancerPublic.GroupId
       IpProtocol: tcp
       SourceSecurityGroupId: !GetAtt Ec2SecurityGroupLoadBalancerPublic.GroupId
       ToPort: 8251
@@ -1260,13 +1267,11 @@ Resources:
     Properties:
       Description: Allow Health Check on Container 5000 from ALB
       FromPort: 5000
-      GroupId: !Ref Ec2SecurityGroupLoadBalancerPublic
+      GroupId: !GetAtt Ec2SecurityGroupLoadBalancerPublic.GroupId
       IpProtocol: tcp
       SourceSecurityGroupId: !GetAtt Ec2SecurityGroupLoadBalancerPublic.GroupId
       ToPort: 5000
     Type: AWS::EC2::SecurityGroupIngress
-
-
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-route-table.html
 # AWS Console: https://console.aws.amazon.com/vpc/home?#RouteTables > Search for {stack}
@@ -1848,6 +1853,119 @@ Resources:
     Type: AWS::Lambda::Function
 
 
+  LambdaFunctionSubnets:
+    Properties:
+      Code:
+        ZipFile: |
+          #!/usr/bin/env python3
+
+          import boto3
+          import cfnresponse
+          import json
+          import logging
+          import traceback
+
+          logger = logging.getLogger()
+          logger.setLevel(logging.INFO)
+
+
+          def as_cidr(cidr_decimal, cidr_prefix):
+              octals = '.'.join([str(cidr_decimal >> (i << 3) & 0xFF) for i in range(4)[::-1]])
+              return "{0}/{1}".format(octals, cidr_prefix)
+
+
+          def find_cidr_decimal(cidr):
+              (octets, prefix) = cidr.split('/')
+              octet = octets.split(".")
+              return int(octet[0]) << 24 | int(octet[1]) << 16 | int(octet[2]) << 8 | int(octet[3])
+
+
+          def find_cidr_prefix(cidr):
+              (octets, prefix) = cidr.split('/')
+              return int(prefix)
+
+
+          def highest_cidr(cidrs):
+              result = "0.0.0.0/0"
+              result_decimal = find_cidr_decimal(result)
+              for cidr in cidrs:
+                  cidr_decimal = find_cidr_decimal(cidr)
+                  if cidr_decimal > result_decimal:
+                      result = cidr
+                      result_decimal = find_cidr_decimal(result)
+              return result
+
+
+          def adjust_cidr(cidr, next_cidr_prefix=None):
+              last_cidr_decimal = find_cidr_decimal(cidr)
+              last_cidr_prefix = find_cidr_prefix(cidr)
+              stride = 2 << (31 - last_cidr_prefix)
+              mask = 0xffffffff - (stride - 1)
+              next_cidr_decimal = last_cidr_decimal & mask
+              next_cidr_decimal = next_cidr_decimal + stride - 1
+              return as_cidr(next_cidr_decimal, next_cidr_prefix)
+
+
+          def next_cidr(cidr):
+              last_cidr_decimal = find_cidr_decimal(cidr)
+              last_cidr_prefix = find_cidr_prefix(cidr)
+              stride = 2 << (31 - last_cidr_prefix)
+              mask = 0xffffffff - (stride - 1)
+              next_cidr_decimal = (last_cidr_decimal + stride) & mask
+              return as_cidr(next_cidr_decimal, last_cidr_prefix)
+
+
+          def handler(event, context):
+              result = cfnresponse.SUCCESS
+              response_data = {}
+              try:
+                  logger.info("Event: {0}".format(json.dumps(event)))
+                  if event['RequestType'] in ['Create', 'Update']:
+                      properties = event.get('ResourceProperties', {})
+                      vpc_id = properties.get('VpcId')
+                      number_of_subnets = int(properties.get('NumberOfSubnets', 1))
+                      cidr_prefix = int(properties.get('CidrPrefix', 24))
+
+                      ec2_client = boto3.client('ec2')
+
+                      filters = [
+                          {
+                              "Name": "vpc-id",
+                              "Values": [
+                                  vpc_id
+                              ]
+                          }
+                      ]
+
+                      describe_subnets = ec2_client.describe_subnets(Filters=filters)
+                      subnets = describe_subnets.get("Subnets")
+                      cidr = highest_cidr(p["CidrBlock"] for p in subnets)
+                      cidr = adjust_cidr(cidr, cidr_prefix)
+
+                      result_subnets = []
+                      for x in range(number_of_subnets):
+                          cidr = next_cidr(cidr)
+                          result_subnets.append(cidr)
+                      response_data["Subnets"] = ", ".join(result_subnets)
+              except Exception as e:
+                  logger.error(e)
+                  traceback.print_exc()
+                  result = cfnresponse.FAILED
+              finally:
+                  cfnresponse.send(event, context, result, response_data)
+
+      Description: Find available Subnets.
+      FunctionName: !Sub "${AWS::StackName}-lambda-subnets"
+      Handler: index.handler
+      Role: !GetAtt IamRoleLambda.Arn
+      Runtime: python3.8
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-lambda-random-password"
+      Timeout: 600
+    Type: AWS::Lambda::Function
+
+
   LambdaFunctionWaitForEfs:
     DependsOn:
      - Ec2SubnetRouteTableAssociationPrivate1
@@ -1922,7 +2040,6 @@ Resources:
       WebPassword: !GetAtt LambdaRunnerWebPassword.RandomPassword
       WebUsername: !Ref CognitoAdminEmail
     Type: Custom::LambdaRunnerCognitoCreateUser
-
 
 
   LambdaRunnerG2ConfigTool:
@@ -2209,6 +2326,20 @@ Resources:
         - Key: Name
           Value: !Sub "${AWS::StackName}-lambda-runner-stream-producer"
     Type: Custom::LambdaRunnerStreamProducer
+
+
+  LambdaRunnerSubnets:
+    Properties:
+      CidrPrefix: 24
+      NumberOfSubnets: 2
+      ServiceToken: !GetAtt LambdaFunctionSubnets.Arn
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-lambda-runner-web-password"
+      VpcId:
+        Fn::ImportValue:
+          !Sub "${DatabaseStack}-ec2-VpcId"
+    Type: Custom::LambdaRunnerSubnets
 
 
   LambdaRunnerWaitForEfsMountTarget1:
