@@ -13,8 +13,8 @@ other templates require pre-existing AWS Resources.
 |   | VPC | Route53 | RDS | Instructions | Launch |
 |--:|:---:|:-------:|:---:|:------------:|:------:|
 | 1 | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | [instructions](https://github.com/Senzing/aws-cloudformation-ecs-poc-simple) | [:arrow_forward:](https://console.aws.amazon.com/cloudformation/home#/stacks/new?stackName=senzing-poc&templateURL=https://s3.amazonaws.com/public-read-access/aws-cloudformation-ecs-poc-simple/cloudformation.yaml) |
-| 2 | :x: | :heavy_check_mark: | :heavy_check_mark: | [instructions](docs/senzing-demo-full-stack) | [:arrow_forward:](https://console.aws.amazon.com/cloudformation/home#/stacks/new?templateURL=https://s3.amazonaws.com/public-read-access/aws-cloudformation-ecs-full-stack/cloudformation.yaml) |
-| 3 | :heavy_check_mark: | :x: | :heavy_check_mark: | [instructions](docs/senzing-demo-hosted-zone) | [:arrow_forward:](https://console.aws.amazon.com/cloudformation/home#/stacks/new?templateURL=https://s3.amazonaws.com/public-read-access/aws-cloudformation-ecs-hosted-zone/cloudformation.yaml) |
+| 2 | :heavy_check_mark: | :x: | :heavy_check_mark: | [instructions](docs/senzing-demo-hosted-zone) | [:arrow_forward:](https://console.aws.amazon.com/cloudformation/home#/stacks/new?templateURL=https://s3.amazonaws.com/public-read-access/aws-cloudformation-ecs-hosted-zone/cloudformation.yaml) |
+| 3 | :x: | :heavy_check_mark: | :heavy_check_mark: | [instructions](docs/senzing-demo-full-stack) | [:arrow_forward:](https://console.aws.amazon.com/cloudformation/home#/stacks/new?templateURL=https://s3.amazonaws.com/public-read-access/aws-cloudformation-ecs-full-stack/cloudformation.yaml) |
 | 4 | :x: | :x: | :heavy_check_mark: | [instructions](docs/senzing-demo-user-vpc-hosted-zone) | [:arrow_forward:](https://console.aws.amazon.com/cloudformation/home#/stacks/new?templateURL=https://s3.amazonaws.com/public-read-access/aws-cloudformation-ecs-user-vpc-hosted-zone/cloudformation.yaml) |
 
 

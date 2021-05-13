@@ -7,7 +7,7 @@ AWSTemplateFormatVersion: 2010-09-09
 #     aws cloudformation validate-template: https://awscli.amazonaws.com/v2/documentation/api/latest/reference/cloudformation/validate-template.html
 
 Description: >-
-  Senzing aws-cloudformation-ecs-demo-staging Version: 0.7.2
+  Senzing aws-cloudformation-ecs-demo-staging Version: 0.7.6
   This CloudFormation is a test of code on the Senzing Staging server.
   For more information see https://github.com/Senzing/aws-cloudformation-ecs/cloudformation/senzing-demo-staging
 
@@ -154,7 +154,7 @@ Parameters:
     AllowedPattern: '.+|^I_ACCEPT_THE_SENZING_EULA$'
     ConstraintDescription: AcceptEula parameter must be 'I_ACCEPT_THE_SENZING_EULA'
     Default: '_'
-    Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#accepteula'
+    Description: 'Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#accepteula'
     Type: String
 
 
@@ -162,13 +162,16 @@ Parameters:
     AllowedPattern: '(?:\d{1,3}\.){3}\d{1,3}(?:/\d\d?)?'
     ConstraintDescription: Inbound CIDR must be in the format n.n.n.n/n
     Default: 0.0.0.0/0
-    Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#cidrinbound'
+    Description: 'Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#cidrinbound'
     Type: String
 
 
   CognitoAdminEmail:
+    AllowedPattern: '.+|^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$'
+    ConstraintDescription: Entering initial user email address is required to proceed
+    Default: '_'
+    Description: 'Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#cognitoadminemail'
     Type: String
-    Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#cognitoadminemail'
 
 
   RunApiServer:
@@ -176,7 +179,7 @@ Parameters:
       - 'No'
       - 'Yes'
     Default: 'Yes'
-    Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#runapiserver'
+    Description: 'Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#runapiserver'
     Type: String
 
 
@@ -185,7 +188,7 @@ Parameters:
       - 'No'
       - 'Yes'
     Default: 'No'
-    Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#runjupyter'
+    Description: 'Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#runjupyter'
     Type: String
 
 
@@ -194,7 +197,7 @@ Parameters:
       - 'No'
       - 'Yes'
     Default: 'Yes'
-    Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#runredoer'
+    Description: 'Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#runredoer'
     Type: String
 
 
@@ -203,7 +206,7 @@ Parameters:
       - 'No'
       - 'Yes'
     Default: 'Yes'
-    Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#runsshd'
+    Description: 'Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#runsshd'
     Type: String
 
 
@@ -212,7 +215,7 @@ Parameters:
       - 'No'
       - 'Yes'
     Default: 'Yes'
-    Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#runstreamloader'
+    Description: 'Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#runstreamloader'
     Type: String
 
 
@@ -221,7 +224,7 @@ Parameters:
       - 'No'
       - 'Yes'
     Default: 'Yes'
-    Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#runstreamproducer'
+    Description: 'Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#runstreamproducer'
     Type: String
 
 
@@ -230,7 +233,7 @@ Parameters:
       - 'No'
       - 'Yes'
     Default: 'Yes'
-    Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#runswagger'
+    Description: 'Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#runswagger'
     Type: String
 
 
@@ -239,7 +242,7 @@ Parameters:
       - 'No'
       - 'Yes'
     Default: 'No'
-    Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#runvpcflowlogs'
+    Description: 'Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#runvpcflowlogs'
     Type: String
 
 
@@ -248,7 +251,7 @@ Parameters:
       - 'No'
       - 'Yes'
     Default: 'Yes'
-    Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#runwebapp'
+    Description: 'Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#runwebapp'
     Type: String
 
 
@@ -257,7 +260,7 @@ Parameters:
       - 'No'
       - 'Yes'
     Default: 'Yes'
-    Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#xterm'
+    Description: 'Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#xterm'
     Type: String
 
 
@@ -265,56 +268,56 @@ Parameters:
     AllowedPattern: '.+|^I AGREE$'
     ConstraintDescription: SecurityResponsibility parameter must be 'I AGREE'
     Default: '_'
-    Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#securityresponsibility'
+    Description: 'Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#securityresponsibility'
     Type: String
 
 
   SenzingDataSource:
     Default: TEST
-    Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#senzingdatasource'
+    Description: 'Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#senzingdatasource'
     Type: String
 
 
   SenzingEntityType:
     Default: GENERIC
-    Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#senzingentitytype'
+    Description: 'Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#senzingentitytype'
     Type: String
 
 
   SenzingInputUrl:
     Default: https://public-read-access.s3.amazonaws.com/TestDataSets/test-dataset-100m.json.gz
-    Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#senzinginputurl'
+    Description: 'Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#senzinginputurl'
     Type: String
 
 
   SenzingLicenseAsBase64:
 #   AllowedPattern: ' ^$|[^-A-Za-z0-9+\/=\s]|=[^=]|={3,}$'
-    ConstraintDescription: 'Must contain only Base64 characters. see http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#senzinglicenseasbase64'
+    ConstraintDescription: 'Must contain only Base64 characters. see https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#senzinglicenseasbase64'
     Default: ' '
-    Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#senzinglicenseasbase64'
+    Description: 'Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#senzinglicenseasbase64'
     Type: String
 
 
   SenzingRecordMax:
     Default: 100000
-    Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#senzingrecordmax'
+    Description: 'Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#senzingrecordmax'
     Type: Number
 
 
   SenzingRecordMin:
     Default: 0
-    Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#senzingrecordmin'
+    Description: 'Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#senzingrecordmin'
     Type: Number
 
 
   SenzingVersion:
     Default: '2.5.0-21104'
-    Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#senzingversion'
+    Description: 'Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#senzingversion'
     Type: String
 
 
   VpcId:
-    Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-user-vpc-hosted-zone/#vpcid'
+    Description: 'Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-user-vpc-hosted-zone/#vpcid'
     Type: AWS::EC2::VPC::Id
 
 # -----------------------------------------------------------------------------
@@ -323,6 +326,15 @@ Parameters:
 # -----------------------------------------------------------------------------
 
 Rules:
+
+  ConfirmCognitoAdminEmail:
+    Assertions:
+      - Assert: !Not
+          - !Equals
+            - !Ref CognitoAdminEmail
+            - '_'
+        AssertDescription: 'Entering initial user email address is required to proceed'
+
 
   ConfirmEula:
     Assertions:
@@ -342,7 +354,7 @@ Rules:
       - Assert: !Equals
           - !Ref SecurityResponsibility
           - 'I AGREE'
-        AssertDescription: 'Entering "I AGREE" is required to proceed.'
+        AssertDescription: 'Understanding responsibility and entering "I AGREE" is required to proceed.'
 
 # -----------------------------------------------------------------------------
 # Mappings
@@ -358,18 +370,17 @@ Mappings:
     Stack:
       Name: staging
 
-# NOTE: The CIDRs for subnets may collide with existing subnets.  The values may be altered.
 
   VpcCidrs:
     vpc:
       cidr: 10.0.0.0/16
-    pubsubnet1:
-      cidr: 10.0.1.0/24
-    pubsubnet2:
-      cidr: 10.0.2.0/24
     privsubnet1:
-      cidr: 10.0.3.0/24
+      cidr: 10.0.1.0/24
     privsubnet2:
+      cidr: 10.0.2.0/24
+    pubsubnet1:
+      cidr: 10.0.3.0/24
+    pubsubnet2:
       cidr: 10.0.4.0/24
 
 # -----------------------------------------------------------------------------
@@ -1113,6 +1124,12 @@ Resources:
     Type: AWS::Logs::LogGroup
 
 
+  LogsLogGroupLambdaRandomPassword:
+    Properties:
+      LogGroupName: !Sub "/aws/lambda/${AWS::StackName}-lambda-random-password"
+    Type: AWS::Logs::LogGroup
+
+
   LogsLogGroupLambdaRandomString:
     Properties:
       LogGroupName: !Sub "/aws/lambda/${AWS::StackName}-lambda-random-string"
@@ -1503,7 +1520,7 @@ Resources:
     Properties:
       Description: Allow Health Check on Container 8250 from ALB
       FromPort: 8250
-      GroupId: !Ref Ec2SecurityGroupLoadBalancerPublic
+      GroupId: !GetAtt Ec2SecurityGroupLoadBalancerPublic.GroupId
       IpProtocol: tcp
       SourceSecurityGroupId: !GetAtt Ec2SecurityGroupLoadBalancerPublic.GroupId
       ToPort: 8250
@@ -1515,7 +1532,7 @@ Resources:
       CidrIp: !Ref CidrInbound
       Description: HTTPS
       FromPort: 443
-      GroupId: !Ref Ec2SecurityGroupLoadBalancerPublic
+      GroupId: !GetAtt Ec2SecurityGroupLoadBalancerPublic.GroupId
       IpProtocol: tcp
       ToPort: 443
     Type: AWS::EC2::SecurityGroupIngress
@@ -1526,7 +1543,7 @@ Resources:
     Properties:
       Description: Allow Health Check on Container 8888 from ALB
       FromPort: 8888
-      GroupId: !Ref Ec2SecurityGroupLoadBalancerPublic
+      GroupId: !GetAtt Ec2SecurityGroupLoadBalancerPublic.GroupId
       IpProtocol: tcp
       SourceSecurityGroupId: !GetAtt Ec2SecurityGroupLoadBalancerPublic.GroupId
       ToPort: 8888
@@ -1550,7 +1567,7 @@ Resources:
     Properties:
       Description: Allow Health Check on Container 8080 from ALB
       FromPort: 8080
-      GroupId: !Ref Ec2SecurityGroupLoadBalancerPublic
+      GroupId: !GetAtt Ec2SecurityGroupLoadBalancerPublic.GroupId
       IpProtocol: tcp
       SourceSecurityGroupId: !GetAtt Ec2SecurityGroupLoadBalancerPublic.GroupId
       ToPort: 8080
@@ -1562,7 +1579,7 @@ Resources:
     Properties:
       Description: Allow Health Check on Container 8251 from ALB
       FromPort: 8251
-      GroupId: !Ref Ec2SecurityGroupLoadBalancerPublic
+      GroupId: !GetAtt Ec2SecurityGroupLoadBalancerPublic.GroupId
       IpProtocol: tcp
       SourceSecurityGroupId: !GetAtt Ec2SecurityGroupLoadBalancerPublic.GroupId
       ToPort: 8251
@@ -1574,7 +1591,7 @@ Resources:
     Properties:
       Description: Allow Health Check on Container 5000 from ALB
       FromPort: 5000
-      GroupId: !Ref Ec2SecurityGroupLoadBalancerPublic
+      GroupId: !GetAtt Ec2SecurityGroupLoadBalancerPublic.GroupId
       IpProtocol: tcp
       SourceSecurityGroupId: !GetAtt Ec2SecurityGroupLoadBalancerPublic.GroupId
       ToPort: 5000
@@ -2429,7 +2446,7 @@ Resources:
       Timeout: 600
     Type: AWS::Lambda::Function
 
-# -- Run ECS tasks-------------------------------------------------------------
+# -- Run Lambda jobs ----------------------------------------------------------
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/template-custom-resources.html
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-cfn-customresource.html
@@ -2450,7 +2467,6 @@ Resources:
 
   LambdaRunnerDbPassword:
     Properties:
-      ClusterId: !Ref EcsCluster
       Length: 16
       ServiceToken: !GetAtt LambdaFunctionRandomString.Arn
       Tags:
@@ -2553,12 +2569,12 @@ Resources:
         platformVersion: 1.4.0
         tags:
           - key: Name
-            value: !Sub "${AWS::StackName}-lambda-runner-yum-run-task-parameters"
+            value: !Sub "${AWS::StackName}-lambda-runner-install-senzing-run-task-parameters"
         taskDefinition: !Ref EcsTaskDefinitionInstallSenzing
       ServiceToken: !GetAtt LambdaFunctionRunTaskAndWait.Arn
       Tags:
         - Key: Name
-          Value: !Sub "${AWS::StackName}-lambda-runner-yum"
+          Value: !Sub "${AWS::StackName}-lambda-runner-install-senzing"
     Type: Custom::LambdaRunnerInstallSenzing
 
 
@@ -2700,7 +2716,6 @@ Resources:
 
   LambdaRunnerStackNameAsLower:
     Properties:
-      ClusterId: !Ref EcsCluster
       InputString: !Sub "${AWS::StackName}"
       ServiceToken: !GetAtt LambdaFunctionStringToLower.Arn
       Tags:
@@ -3363,10 +3378,10 @@ Resources:
               Protocol: tcp
           Privileged: false
           ReadonlyRootFilesystem: false
-      Cpu: '1024'
+      Cpu: '2048'
       ExecutionRoleArn: !GetAtt IamRoleApiServer.Arn
       Family: !Sub "${AWS::StackName}-task-definition-api-server"
-      Memory: '8192'
+      Memory: '16384'
       NetworkMode: awsvpc
       RequiresCompatibilities:
         - FARGATE
@@ -3958,6 +3973,9 @@ Resources:
             -
               Name: SENZING_SUBCOMMAND
               Value: read-from-sqs-withinfo
+            -
+              Name: SENZING_THREADS_PER_PROCESS
+              Value: '8'
           Essential: true
           Image: public.ecr.aws/senzing/redoer:1.3.5
           LogConfiguration:
@@ -4214,6 +4232,91 @@ Resources:
     Type: AWS::ECS::TaskDefinition
 
 
+  EcsTaskDefinitionSshdMax:
+    Properties:
+      ContainerDefinitions:
+        -
+          Environment:
+            -
+              Name: ROOT_PASSWORD
+              Value: !GetAtt LambdaRunnerSshPassword.RandomString
+            -
+              Name: SENZING_SKIP_DATABASE_PERFORMANCE_TEST
+              Value: 'true'
+          Essential: true
+          Image: public.ecr.aws/senzing/sshd:1.1.0
+          LinuxParameters:
+            Capabilities:
+              Add:
+                - SYS_PTRACE
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: !Ref LogsLogGroupMain
+              awslogs-region: !Ref AWS::Region
+              awslogs-stream-prefix: service
+          MountPoints:
+            -
+              SourceVolume: senzing-data-version-dir
+              ContainerPath: /opt/senzing/data
+              ReadOnly: false
+            -
+              SourceVolume: senzing-etc-dir
+              ContainerPath: /etc/opt/senzing
+              ReadOnly: false
+            -
+              SourceVolume: senzing-g2-dir
+              ContainerPath: /opt/senzing/g2
+              ReadOnly: false
+            -
+              SourceVolume: senzing-var-dir
+              ContainerPath: /var/opt/senzing
+              ReadOnly: false
+          Name: sshd
+          Privileged: false
+          ReadonlyRootFilesystem: false
+      Cpu: '4096'
+      ExecutionRoleArn: !GetAtt IamRoleSshd.Arn
+      Family: !Sub "${AWS::StackName}-task-definition-sshd"
+      Memory: '30720'
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-ecs-task-definition-sshd"
+      Volumes:
+        -
+          Name: senzing-data-version-dir
+          EFSVolumeConfiguration:
+              AuthorizationConfig: {}
+              FilesystemId:
+                Ref: EfsFileSystem
+              RootDirectory: /data/2.0.0
+        -
+          Name: senzing-etc-dir
+          EFSVolumeConfiguration:
+              AuthorizationConfig: {}
+              FilesystemId:
+                Ref: EfsFileSystem
+              RootDirectory: /etc
+        -
+          Name: senzing-g2-dir
+          EFSVolumeConfiguration:
+              AuthorizationConfig: {}
+              FilesystemId:
+                Ref: EfsFileSystem
+              RootDirectory: /g2
+        -
+          Name: senzing-var-dir
+          EFSVolumeConfiguration:
+              AuthorizationConfig: {}
+              FilesystemId:
+                Ref: EfsFileSystem
+              RootDirectory: /var
+    Type: AWS::ECS::TaskDefinition
+
+
   EcsTaskDefinitionStreamLoader:
     Properties:
       ContainerDefinitions:
@@ -4360,7 +4463,7 @@ Resources:
               Value: !Sub "https://sqs.${AWS::Region}.amazonaws.com/${AWS::AccountId}/${SqsInput.QueueName}"
             -
               Name: SENZING_SUBCOMMAND
-              Value: gzipped-json-to-sqs
+              Value: json-to-sqs
             -
               Name: SENZING_THREADS_PER_PRINT
               Value: '30'
@@ -4602,6 +4705,7 @@ Resources:
         AwsvpcConfiguration:
           AssignPublicIp: DISABLED
           SecurityGroups:
+            - !Ref Ec2SecurityGroupLoadBalancerPrivate
             - !Ref Ec2SecurityGroupLoadBalancerPublic
           Subnets:
             - !Ref Ec2SubnetPrivate1
@@ -4721,6 +4825,8 @@ Resources:
           Subnets:
             - !Ref Ec2SubnetPublic1
             - !Ref Ec2SubnetPublic2
+            - !Ref Ec2SubnetPrivate1
+            - !Ref Ec2SubnetPrivate2
       PlatformVersion: 1.4.0
       PropagateTags: TASK_DEFINITION
       ServiceName: sshd
@@ -4948,7 +5054,7 @@ Resources:
           PredefinedMetricType: ECSServiceAverageCPUUtilization
         ScaleInCooldown: 1200
         ScaleOutCooldown: 300
-        TargetValue: 30
+        TargetValue: 5
     Type: AWS::ApplicationAutoScaling::ScalingPolicy
 
 
@@ -4990,79 +5096,91 @@ Outputs:
 
   0penFirst:
     Condition: IfRunWebApp
-    Description: 'URL for Senzing Web App. Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#0penfirst'
+    Description: 'URL for Senzing Web App. Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#0penfirst'
     Export:
       Name: !Sub "${AWS::StackName}-open-first"
     Value: !Sub "https://${LoadBalancerPublic.DNSName}/app/"
 
   AccountID:
-    Description: 'The accountID Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#accountid'
+    Description: 'The accountID Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#accountid'
     Export:
       Name: !Sub "${AWS::StackName}-account-id"
     Value: !Sub "${AWS::AccountId}"
 
   CertificateArn:
-    Description: 'ARN of the SSL certificate. Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#certificatearn'
+    Description: 'ARN of the SSL certificate. Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#certificatearn'
     Export:
       Name: !Sub "${AWS::StackName}-certificate-arn"
     Value: !GetAtt IamServerCertificate.Arn
 
   DatabaseHostCore:
-    Description: 'The connection endpoint for the DB cluster. Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#databasehostcore'
+    Description: 'The connection endpoint for the DB cluster. Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#databasehostcore'
     Export:
       Name: !Sub "${AWS::StackName}-database-host-core"
     Value: !GetAtt RdsDbClusterCore.Endpoint.Address
 
   DatabaseHostLibfeat:
-    Description: 'The connection endpoint for the DB cluster. Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#databasehostlibfeat'
+    Description: 'The connection endpoint for the DB cluster. Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#databasehostlibfeat'
     Export:
       Name: !Sub "${AWS::StackName}-database-host-libfeat"
     Value: !GetAtt RdsDbClusterLibfeat.Endpoint.Address
 
   DatabaseHostRes:
-    Description: 'The connection endpoint for the DB cluster. Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#databasehostres'
+    Description: 'The connection endpoint for the DB cluster. Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#databasehostres'
     Export:
       Name: !Sub "${AWS::StackName}-database-host-res"
     Value: !GetAtt RdsDbClusterRes.Endpoint.Address
 
   DatabaseName:
-    Description: 'The name of the database. Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#databasename'
+    Description: 'The name of the database. Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#databasename'
     Export:
       Name: !Sub "${AWS::StackName}-database-name"
     Value: !FindInMap [Constants, Database, Name]
 
   DatabasePassword:
-    Description: 'The randomly generated password for the database. Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#databasepassword'
+    Description: 'The randomly generated password for the database. Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#databasepassword'
     Export:
       Name: !Sub "${AWS::StackName}-database-password"
     Value: !GetAtt LambdaRunnerDbPassword.RandomString
 
   DatabasePortCore:
-    Description: 'The port number that will accept connections on this DB cluster. Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#databaseportcore'
+    Description: 'The port number that will accept connections on this DB cluster. Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#databaseportcore'
     Export:
       Name: !Sub "${AWS::StackName}-database-port-core"
     Value: !GetAtt RdsDbClusterCore.Endpoint.Port
 
   DatabasePortLibfeat:
-    Description: 'The port number that will accept connections on this DB cluster. Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#databaseportlibfeat'
+    Description: 'The port number that will accept connections on this DB cluster. Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#databaseportlibfeat'
     Export:
       Name: !Sub "${AWS::StackName}-database-port-libfeat"
     Value: !GetAtt RdsDbClusterLibfeat.Endpoint.Port
 
   DatabasePortRes:
-    Description: 'The port number that will accept connections on this DB cluster. Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#databaseportres'
+    Description: 'The port number that will accept connections on this DB cluster. Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#databaseportres'
     Export:
       Name: !Sub "${AWS::StackName}-database-port-res"
     Value: !GetAtt RdsDbClusterRes.Endpoint.Port
 
   DatabaseUsername:
-    Description: 'The administrative user name. Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#databaseusername'
+    Description: 'The administrative user name. Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#databaseusername'
     Export:
       Name: !Sub "${AWS::StackName}-database-username"
     Value: !FindInMap [Constants, Database, Username]
 
+  Ec2InternetGateway:
+    Description: 'Internet Gateway. Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#ec2internetgateway'
+    Export:
+      Name: !Sub "${AWS::StackName}-ec2-internet-gateway"
+    Value: !Ref Ec2InternetGateway
+
+  Ec2SecurityGroupInternal:
+    Description: 'The ID of the VPC. Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#ec2securitygroupinternal'
+    Export:
+      Name: !Sub "${AWS::StackName}-ec2-security-group-internal"
+    Value: !Ref Ec2SecurityGroupInternal
+
   Ec2Vpc:
-    Description: 'The ID of the VPC. Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#ec2vpc'
+    Description: 'The ID of the VPC. Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#ec2vpc'
     Export:
       Name: !Sub "${AWS::StackName}-ec2-VpcId"
     Value: !If
@@ -5070,138 +5188,144 @@ Outputs:
       - !Ref Ec2Vpc
       - !Ref VpcId
 
+  Ec2VpcCidrBlock:
+    Description: 'The CidrBloc of the VPC. Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#ec2vpccidrblock'
+    Export:
+      Name: !Sub "${AWS::StackName}-ec2-VpcId-cidrblock"
+    Value: !GetAtt Ec2Vpc.CidrBlock
+
   Host:
-    Description: 'Host name of public services. Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#host'
+    Description: 'Host name of public services. Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#host'
     Export:
       Name: !Sub "${AWS::StackName}-host"
     Value: !GetAtt LoadBalancerPublic.DNSName
 
   QueueDeadLetter:
-    Description: 'URL of the dead-letter queue. Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#queuedeadletter'
+    Description: 'URL of the dead-letter queue. Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#queuedeadletter'
     Export:
       Name: !Sub "${AWS::StackName}-sqs-deadletter"
     Value: !Ref SqsDeadLetter
 
   QueueInput:
-    Description: 'URL of the queue of records to be ingested into Senzing. Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#queueinput'
+    Description: 'URL of the queue of records to be ingested into Senzing. Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#queueinput'
     Export:
       Name: !Sub "${AWS::StackName}-sqs-input"
     Value: !Ref SqsInput
 
   QueueOutput:
-    Description: 'URL of the queue with info records. Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#queueoutput'
+    Description: 'URL of the queue with info records. Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#queueoutput'
     Export:
       Name: !Sub "${AWS::StackName}-sqs-output"
     Value: !Ref SqsOutput
 
   QueueRedoerInput:
-    Description: 'URL of the queue holding redo records to be processed. Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#queueredoerinput'
+    Description: 'URL of the queue holding redo records to be processed. Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#queueredoerinput'
     Export:
       Name: !Sub "${AWS::StackName}-sqs-redoer-input"
     Value: !Ref SqsRedoerInput
 
   QueueRedoerOutput:
-    Description: 'URL of the queue with redoer info records. Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#queueredoeroutput'
+    Description: 'URL of the queue with redoer info records. Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#queueredoeroutput'
     Export:
       Name: !Sub "${AWS::StackName}-sqs-redoer-output"
     Value: !Ref SqsRedoerOutput
 
   SenzingVersion:
-    Description: 'The Senzing Engine version installed. Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#senzingversion'
+    Description: 'The Senzing Engine version installed. Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#senzingversion'
     Export:
       Name: !Sub "${AWS::StackName}-senzing-version"
     Value: !Sub "senzingapi-${SenzingVersion}"
 
   SshPassword:
-    Description: 'The randomly generated password for SSH access. Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#sshpassword'
+    Description: 'The randomly generated password for SSH access. Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#sshpassword'
     Export:
       Name: !Sub "${AWS::StackName}-ssh-password"
     Value: !GetAtt LambdaRunnerSshPassword.RandomString
 
   SshUsername:
-    Description: 'The username for SSH access. Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#sshusername'
+    Description: 'The username for SSH access. Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#sshusername'
     Export:
       Name: !Sub "${AWS::StackName}-ssh-username"
     Value: root
 
   SubnetPrivate1:
-    Description: 'The ID of private subnet 1. Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#subnetprivate1'
+    Description: 'The ID of private subnet 1. Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#subnetprivate1'
     Export:
       Name: !Sub "${AWS::StackName}-subnet-private-1"
     Value: !Ref Ec2SubnetPrivate1
 
   SubnetPrivate2:
-    Description: 'The ID of private subnet 2. Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#subnetprivate2'
+    Description: 'The ID of private subnet 2. Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#subnetprivate2'
     Export:
       Name: !Sub "${AWS::StackName}-subnet-private-2"
     Value: !Ref Ec2SubnetPrivate2
 
   SubnetPublic1:
-    Description: 'The ID of public subnet 1. Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#subnetpublic1'
+    Description: 'The ID of public subnet 1. Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#subnetpublic1'
     Export:
       Name: !Sub "${AWS::StackName}-subnet-public-1"
     Value: !Ref Ec2SubnetPublic1
 
   SubnetPublic2:
-    Description: 'The ID of public subnet 2. Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#subnetpublic2'
+    Description: 'The ID of public subnet 2. Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#subnetpublic2'
     Export:
       Name: !Sub "${AWS::StackName}-subnet-public-2"
     Value: !Ref Ec2SubnetPublic2
 
   UrlApiServer:
     Condition: IfRunApiServer
-    Description: "URL for API Server. Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#urlapiserver"
+    Description: "URL for API Server. Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#urlapiserver"
     Export:
       Name: !Sub "${AWS::StackName}-url-api-server"
     Value: !Sub "https://${LoadBalancerPublic.DNSName}/api/"
 
   UrlApiServerHeartbeat:
     Condition: IfRunApiServer
-    Description: "URL for API Server's heartbeat. Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#urlapiserverheartbeat"
+    Description: "URL for API Server's heartbeat. Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#urlapiserverheartbeat"
     Value: !Sub "https://${LoadBalancerPublic.DNSName}/api/heartbeat/"
 
   UrlJupyter:
     Condition: IfRunJupyter
-    Description: 'URL for Jupyter Notebooks. Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#urljupyter'
+    Description: 'URL for Jupyter Notebooks. Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#urljupyter'
     Export:
       Name: !Sub "${AWS::StackName}-url-jupyter"
     Value: !Sub "https://${LoadBalancerPublic.DNSName}/jupyter/"
 
   UrlSwagger:
     Condition: IfRunSwagger
-    Description: 'URL for Swagger. Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#urlswagger'
+    Description: 'URL for Swagger. Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#urlswagger'
     Export:
       Name: !Sub "${AWS::StackName}-url-swagger"
     Value: !Sub "https://${LoadBalancerPublic.DNSName}/swagger/"
 
   UrlWebApp:
     Condition: IfRunWebApp
-    Description: 'URL for Senzing Web App. Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#urlwebapp'
+    Description: 'URL for Senzing Web App. Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#urlwebapp'
     Export:
       Name: !Sub "${AWS::StackName}-url-webapp"
     Value: !Sub "https://${LoadBalancerPublic.DNSName}/app/"
 
   UrlXterm:
     Condition: IfRunXterm
-    Description: 'URL for Senzing XTerm. Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#urlxterm'
+    Description: 'URL for Senzing XTerm. Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#urlxterm'
     Export:
       Name: !Sub "${AWS::StackName}-url-xterm"
     Value: !Sub "https://${LoadBalancerPublic.DNSName}/xterm/"
 
   UserInitPassword:
-    Description: 'One time password for web access. Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#userinitpassword'
+    Description: 'One time password for web access. Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#userinitpassword'
     Export:
       Name: !Sub "${AWS::StackName}-user-init-password"
     Value: !GetAtt LambdaRunnerWebPassword.RandomPassword
 
   UserName:
-    Description: 'Username for web access. Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#username'
+    Description: 'Username for web access. Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#username'
     Export:
       Name: !Sub "${AWS::StackName}-user-name"
     Value: !Ref CognitoAdminEmail
 
   UserPool:
-    Description: 'Username for web access. Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#userpool'
+    Description: 'Username for web access. Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#userpool'
     Export:
       Name: !Sub "${AWS::StackName}-user-pool"
     Value: !Sub "https://console.aws.amazon.com/cognito/users/#/pool/${UserPool}/users"

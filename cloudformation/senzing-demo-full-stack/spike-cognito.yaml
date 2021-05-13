@@ -10,7 +10,7 @@ Parameters:
     Type: String
   Route53HostedZoneId:
     Default: ''
-    Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#route53hostedzoneid'
+    Description: 'Help: https://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#route53hostedzoneid'
     Type: AWS::Route53::HostedZone::Id
   VPC:
     Type: AWS::EC2::VPC::Id

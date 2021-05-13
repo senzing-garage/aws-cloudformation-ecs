@@ -34,7 +34,7 @@ Parameters:
     AllowedPattern: '(?:\d{1,3}\.){3}\d{1,3}(?:/\d\d?)?'
     ConstraintDescription: Inbound CIDR must be in the format n.n.n.n/n
     Default: 0.0.0.0/0
-    Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#cidrinbound'
+    Description: 'Help: https://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#cidrinbound'
     Type: String
 
 # -----------------------------------------------------------------------------
@@ -389,27 +389,27 @@ Outputs:
     Value: !Sub "${AWS::AccountId}"
 
   Ec2Vpc:
-    Description: 'The ID of the VPC. Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#ec2vpc'
+    Description: 'The ID of the VPC. Help: https://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#ec2vpc'
     Export:
       Name: !Sub "${AWS::StackName}-ec2-VpcId"
     Value: !Ref Ec2Vpc
 
   SubnetPublic1:
-    Description: 'The ID of public subnet 1. Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#subnetpublic1'
+    Description: 'The ID of public subnet 1. Help: https://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#subnetpublic1'
     Export:
       Name: !Sub "${AWS::StackName}-subnet-public-1"
     Value: !Ref Ec2SubnetPublic1
 
   SubnetPublic2:
-    Description: 'The ID of public subnet 2. Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#subnetpublic2'
+    Description: 'The ID of public subnet 2. Help: https://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#subnetpublic2'
     Export:
       Name: !Sub "${AWS::StackName}-subnet-public-2"
     Value: !Ref Ec2SubnetPublic2
 
   PublicKey:
-    Description: 'Public key used: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#publickey'
+    Description: 'Public key used: https://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#publickey'
     Value: !GetAtt LambdaRunnerGeneratePublicPrivateKeys.PublicKey
 
   PrivateKey:
-    Description: 'Private key used: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#privatekey'
+    Description: 'Private key used: https://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#privatekey'
     Value: !GetAtt LambdaRunnerGeneratePublicPrivateKeys.PrivateKey

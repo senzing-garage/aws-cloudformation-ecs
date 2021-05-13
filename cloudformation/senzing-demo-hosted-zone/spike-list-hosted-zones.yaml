@@ -6,7 +6,7 @@ Description: >-
 
 Parameters:
   Route53HostedZoneId:
-    Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-hosted-zone/#route53hostedzoneid'
+    Description: 'Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-hosted-zone/#route53hostedzoneid'
     Type: AWS::Route53::HostedZone::Id
 
 
