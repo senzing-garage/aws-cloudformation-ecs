@@ -150,24 +150,24 @@ Resources:
       Description: Example HTTP API Gateway
       ProtocolType: HTTP
       Name: !Sub "${AWS::StackName}-http-api-gateway"
-  
+
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-apigateway-authorizer.html
-  
+
   MyAuthorizer:
     Type: AWS::ApiGatewayV2::Authorizer
     Properties:
       ApiId: !Ref MyHTTPApi
       AuthorizerType: JWT
-      IdentitySource: 
+      IdentitySource:
         - "$request.header.Authorization"
       JwtConfiguration:
-        Audience: 
+        Audience:
           - !Ref UserPoolClient
         Issuer: !Sub "https://cognito-idp.${AWS::Region}.amazonaws.com/${UserPool}"
       Name: !Sub "${AWS::StackName}-http-api-authorizer"
 
 #https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-apigatewayv2-integration.html
-  
+
   MyIntegration:
     Type: AWS::ApiGatewayV2::Integration
     Properties:
@@ -179,19 +179,19 @@ Resources:
       IntegrationUri:
         !Ref ListenerSwaggerHttp
       ConnectionType: VPC_LINK
-      ConnectionId: 
+      ConnectionId:
         !Ref MyVpcLink
       PayloadFormatVersion: 1.0
-  
+
 #https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-apigatewayv2-vpclink.html
 
   MyVpcLink:
     Type: AWS::ApiGatewayV2::VpcLink
-    Properties: 
+    Properties:
       Name: !Sub "${AWS::StackName}-http-api-vpc-link"
-      SecurityGroupIds: 
+      SecurityGroupIds:
         - !Ref Ec2SecurityGroupLoadBalancerPrivate
-      SubnetIds: 
+      SubnetIds:
         - !Ref Ec2SubnetPrivate1
         - !Ref Ec2SubnetPrivate2
 
@@ -234,7 +234,7 @@ Resources:
         - Key: Name
           Value: !Sub "${AWS::StackName}-ec2-vpc"
     Type: AWS::EC2::VPC
-  
+
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-internetgateway.html
 
   Ec2InternetGateway:
@@ -463,7 +463,7 @@ Resources:
 
   UserPoolDomain: # Provides Cognito Login Page
     Properties:
-      Domain: !Sub "${AWS::StackName}"
+      Domain: !GetAtt LambdaRunnerStackNameAsLower.OutputString
       UserPoolId: !Ref UserPool
     Type: AWS::Cognito::UserPoolDomain
 
@@ -590,13 +590,13 @@ Outputs:
       - ""
       - - !GetAtt MyHTTPApi.ApiEndpoint
         - "/swagger"
-  
+
   ClientId:
     Description: "the cognito app client id"
     Export:
       Name: !Sub "${AWS::StackName}-client-id"
     Value: !Ref UserPoolClient
-  
+
   PoolId:
     Description: "the cognito user pool id"
     Export:
