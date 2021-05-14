@@ -286,7 +286,6 @@ Parameters:
 
 
   SenzingLicenseAsBase64:
-#   AllowedPattern: ' ^$|[^-A-Za-z0-9+\/=\s]|=[^=]|={3,}$'
     ConstraintDescription: 'Must contain only Base64 characters. see https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-full-stack#senzinglicenseasbase64'
     Default: ' '
     Description: 'Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-full-stack/#senzinglicenseasbase64'
@@ -344,6 +343,7 @@ Rules:
           - !Ref SecurityResponsibility
           - 'I AGREE'
         AssertDescription: 'Understanding responsibility and entering "I AGREE" is required to proceed.'
+
 
   ConfirmVpcId:
     Assertions:
@@ -5301,7 +5301,7 @@ Outputs:
     Description: 'Host name of public services. Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-full-stack/#host'
     Export:
       Name: !Sub "${AWS::StackName}-host"
-    Value: !Sub "${LoadBalancerPublic.DNSName}"
+    Value: !GetAtt LoadBalancerPublic.DNSName
 
   QueueDeadLetter:
     Description: 'URL of the dead-letter queue. Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-hosted-zone/#queuedeadletter'
