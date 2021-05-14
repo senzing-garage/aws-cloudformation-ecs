@@ -7,9 +7,8 @@ AWSTemplateFormatVersion: 2010-09-09
 #     aws cloudformation validate-template: https://awscli.amazonaws.com/v2/documentation/api/latest/reference/cloudformation/validate-template.html
 
 Description: >-
-  Senzing aws-cloudformation-ecs-demo-staging Version: 0.7.6
-  This CloudFormation is a test of code on the Senzing Staging server.
-  For more information see https://github.com/Senzing/aws-cloudformation-ecs/cloudformation/senzing-demo-staging
+  Senzing aws-cloudformation-ecs-senzing-stack-with-choices: 0.7.6
+  For more information see https://github.com/Senzing/aws-cloudformation-ecs-senzing-stack-basic
 
 # -----------------------------------------------------------------------------
 # Metadata
@@ -29,8 +28,8 @@ Metadata:
         Label:
           default: Senzing installation
         Parameters:
-          - SenzingVersion
           - AcceptEula
+          - SenzingVersion
           - SenzingLicenseAsBase64
       -
         Label:
@@ -40,9 +39,9 @@ Metadata:
           - CidrInbound
       -
         Label:
-          default: 'Identify existing resources'
+          default: Identify existing resources
         Parameters:
-          - VpcId
+          - DatabaseStack
       -
         Label:
           default: 'Optional: Initial data load'
@@ -55,7 +54,7 @@ Metadata:
           - SenzingRecordMax
       -
         Label:
-          default: 'Optional: Additional services'
+          default: 'Optional: Services'
         Parameters:
           - RunApiServer
           - RunJupyter
@@ -66,8 +65,6 @@ Metadata:
           - RunVpcFlowLogs
           - RunWebApp
           - RunXterm
-
-
     ParameterLabels:
       AcceptEula:
         default: >-
@@ -76,6 +73,8 @@ Metadata:
           enter 'I_ACCEPT_THE_SENZING_EULA'.
       CidrInbound:
         default: 'Optional: Allowed inbound connections using CIDR notation.'
+      DatabaseStack:
+        default: 'Required: Name of stack having Senzing databases.'
       CognitoAdminEmail:
         default: 'Required: Email address for initial user.'
       RunApiServer:
@@ -131,15 +130,7 @@ Metadata:
           First record to read from file of JSON records.
           '0' means start from the beginning.
       SenzingVersion:
-        default: >-
-          Version of Senzing to deploy.
-          Format:  M.m.P-YYddd
-      VpcId:
-        default: >-
-          Required: VPC Id of existing VPC.
-          Must have an address range of 10.0.0.0/16 or larger.
-          (i.e. less than or equal to 16)
-          Leave blank to have a new VPC created.
+        default: 'Required: Version of Senzing to install.'
 
 # -----------------------------------------------------------------------------
 # Parameters
@@ -154,7 +145,7 @@ Parameters:
     AllowedPattern: '.+|^I_ACCEPT_THE_SENZING_EULA$'
     ConstraintDescription: AcceptEula parameter must be 'I_ACCEPT_THE_SENZING_EULA'
     Default: '_'
-    Description: 'Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#accepteula'
+    Description: 'Help: https://hub.senzing.com/aws-cloudformation-ecs-senzing-stack-basic/#accepteula'
     Type: String
 
 
@@ -162,7 +153,7 @@ Parameters:
     AllowedPattern: '(?:\d{1,3}\.){3}\d{1,3}(?:/\d\d?)?'
     ConstraintDescription: Inbound CIDR must be in the format n.n.n.n/n
     Default: 0.0.0.0/0
-    Description: 'Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#cidrinbound'
+    Description: 'Help: https://hub.senzing.com/aws-cloudformation-ecs-senzing-stack-basic/#cidrinbound'
     Type: String
 
 
@@ -170,7 +161,13 @@ Parameters:
     AllowedPattern: '.+|^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$'
     ConstraintDescription: Entering initial user email address is required to proceed
     Default: '_'
-    Description: 'Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#cognitoadminemail'
+    Description: 'Help: https://hub.senzing.com/aws-cloudformation-ecs-senzing-stack-basic/#cognitoadminemail'
+    Type: String
+
+
+  DatabaseStack:
+    Default: '_'
+    Description: 'Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-full-stack/#databasestack'
     Type: String
 
 
@@ -178,8 +175,8 @@ Parameters:
     AllowedValues:
       - 'No'
       - 'Yes'
-    Default: 'Yes'
-    Description: 'Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#runapiserver'
+    Default: 'No'
+    Description: 'Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-full-stack/#runapiserver'
     Type: String
 
 
@@ -188,7 +185,7 @@ Parameters:
       - 'No'
       - 'Yes'
     Default: 'No'
-    Description: 'Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#runjupyter'
+    Description: 'Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-full-stack/#runjupyter'
     Type: String
 
 
@@ -196,8 +193,8 @@ Parameters:
     AllowedValues:
       - 'No'
       - 'Yes'
-    Default: 'Yes'
-    Description: 'Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#runredoer'
+    Default: 'No'
+    Description: 'Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-full-stack/#runredoer'
     Type: String
 
 
@@ -205,8 +202,8 @@ Parameters:
     AllowedValues:
       - 'No'
       - 'Yes'
-    Default: 'Yes'
-    Description: 'Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#runsshd'
+    Default: 'No'
+    Description: 'Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-full-stack/#runsshd'
     Type: String
 
 
@@ -214,8 +211,8 @@ Parameters:
     AllowedValues:
       - 'No'
       - 'Yes'
-    Default: 'Yes'
-    Description: 'Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#runstreamloader'
+    Default: 'No'
+    Description: 'Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-full-stack/#runstreamloader'
     Type: String
 
 
@@ -223,8 +220,8 @@ Parameters:
     AllowedValues:
       - 'No'
       - 'Yes'
-    Default: 'Yes'
-    Description: 'Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#runstreamproducer'
+    Default: 'No'
+    Description: 'Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-full-stack/#runstreamproducer'
     Type: String
 
 
@@ -233,7 +230,7 @@ Parameters:
       - 'No'
       - 'Yes'
     Default: 'Yes'
-    Description: 'Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#runswagger'
+    Description: 'Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-full-stack/#runswagger'
     Type: String
 
 
@@ -242,7 +239,7 @@ Parameters:
       - 'No'
       - 'Yes'
     Default: 'No'
-    Description: 'Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#runvpcflowlogs'
+    Description: 'Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-full-stack/#runvpcflowlogs'
     Type: String
 
 
@@ -251,7 +248,7 @@ Parameters:
       - 'No'
       - 'Yes'
     Default: 'Yes'
-    Description: 'Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#runwebapp'
+    Description: 'Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-full-stack/#runwebapp'
     Type: String
 
 
@@ -260,7 +257,7 @@ Parameters:
       - 'No'
       - 'Yes'
     Default: 'Yes'
-    Description: 'Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#xterm'
+    Description: 'Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-full-stack/#xterm'
     Type: String
 
 
@@ -268,57 +265,54 @@ Parameters:
     AllowedPattern: '.+|^I AGREE$'
     ConstraintDescription: SecurityResponsibility parameter must be 'I AGREE'
     Default: '_'
-    Description: 'Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#securityresponsibility'
+    Description: 'Help: https://hub.senzing.com/aws-cloudformation-ecs-senzing-stack-basic/#securityresponsibility'
     Type: String
 
 
   SenzingDataSource:
     Default: TEST
-    Description: 'Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#senzingdatasource'
+    Description: 'Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-full-stack/#senzingdatasource'
     Type: String
 
 
   SenzingEntityType:
     Default: GENERIC
-    Description: 'Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#senzingentitytype'
+    Description: 'Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-full-stack/#senzingentitytype'
     Type: String
 
 
   SenzingInputUrl:
-    Default: https://public-read-access.s3.amazonaws.com/TestDataSets/test-dataset-100m.json.gz
-    Description: 'Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#senzinginputurl'
+    Default: https://s3.amazonaws.com/public-read-access/TestDataSets/SenzingTruthSet/truth-set.json
+    Description: 'Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-full-stack/#senzinginputurl'
     Type: String
 
 
   SenzingLicenseAsBase64:
-#   AllowedPattern: ' ^$|[^-A-Za-z0-9+\/=\s]|=[^=]|={3,}$'
-    ConstraintDescription: 'Must contain only Base64 characters. see https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#senzinglicenseasbase64'
+    ConstraintDescription: 'Must contain only Base64 characters. see https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-full-stack#senzinglicenseasbase64'
     Default: ' '
-    Description: 'Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#senzinglicenseasbase64'
+    Description: 'Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-full-stack/#senzinglicenseasbase64'
     Type: String
 
 
   SenzingRecordMax:
-    Default: 100000
-    Description: 'Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#senzingrecordmax'
+    Default: 0
+    Description: 'Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-full-stack/#senzingrecordmax'
     Type: Number
 
 
   SenzingRecordMin:
     Default: 0
-    Description: 'Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#senzingrecordmin'
+    Description: 'Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-full-stack/#senzingrecordmin'
     Type: Number
 
 
   SenzingVersion:
-    Default: '2.5.0-21104'
-    Description: 'Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#senzingversion'
+    AllowedValues:
+      - '2.5.1'
+      - '2.5.0'
+    Default: '2.5.1'
+    Description: 'Help: https://hub.senzing.com/aws-cloudformation-ecs-senzing-stack-basic/#senzingversion'
     Type: String
-
-
-  VpcId:
-    Description: 'Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-user-vpc-hosted-zone/#vpcid'
-    Type: AWS::EC2::VPC::Id
 
 # -----------------------------------------------------------------------------
 # Rules
@@ -334,6 +328,15 @@ Rules:
             - !Ref CognitoAdminEmail
             - '_'
         AssertDescription: 'Entering initial user email address is required to proceed'
+
+
+  ConfirmDatabaseStack:
+    Assertions:
+      - Assert: !Not
+          - !Equals
+            - !Ref DatabaseStack
+            - '_'
+        AssertDescription: 'Entering existing Senzing database stack identifier is required to proceed'
 
 
   ConfirmEula:
@@ -363,25 +366,22 @@ Rules:
 
 Mappings:
 
+  SenzingVersionMap:
+    "2.5.1":
+      value: "senzingapi-2.5.1-21124"
+    "2.5.0":
+      value: "senzingapi-2.5.0-21104"
+
   Constants:
-    Database:
-      Name: G2
-      Username: senzing
+
     Stack:
-      Name: staging
-
-
-  VpcCidrs:
-    vpc:
-      cidr: 10.0.0.0/16
-    privsubnet1:
-      cidr: 10.0.1.0/24
-    privsubnet2:
-      cidr: 10.0.2.0/24
-    pubsubnet1:
-      cidr: 10.0.3.0/24
-    pubsubnet2:
-      cidr: 10.0.4.0/24
+      Name: choices
+    StreamProducer:
+      DataSource: TEST
+      EntityType: GENERIC
+      InputUrl: https://s3.amazonaws.com/public-read-access/TestDataSets/SenzingTruthSet/truth-set.json
+      RecordMax: 0
+      RecordMin: 0
 
 # -----------------------------------------------------------------------------
 # Conditions
@@ -389,10 +389,6 @@ Mappings:
 # -----------------------------------------------------------------------------
 
 Conditions:
-
-  IfCreateVpcResources: !Equals
-    - !Ref VpcId
-    - ''
 
   IfRunApiServer: !Equals
     - !Ref RunApiServer
@@ -479,15 +475,33 @@ Resources:
                   "RES_FEAT_STAT": "C1"
               }
           }
-        - DatabaseHostLibfeat: !GetAtt RdsDbClusterLibfeat.Endpoint.Address
-          DatabaseHostCore: !GetAtt RdsDbClusterCore.Endpoint.Address
-          DatabaseHostRes: !GetAtt RdsDbClusterRes.Endpoint.Address
-          DatabaseName: !FindInMap [Constants, Database, Name]
-          DatabasePassword: !GetAtt LambdaRunnerDbPassword.RandomString
-          DatabasePortLibfeat: !GetAtt RdsDbClusterLibfeat.Endpoint.Port
-          DatabasePortCore: !GetAtt RdsDbClusterCore.Endpoint.Port
-          DatabasePortRes: !GetAtt RdsDbClusterRes.Endpoint.Port
-          DatabaseUsername: !FindInMap [Constants, Database, Username]
+        - DatabaseHostCore:
+            Fn::ImportValue:
+              Fn::Sub: '${DatabaseStack}-database-host-core'
+          DatabaseHostLibfeat:
+            Fn::ImportValue:
+              Fn::Sub: '${DatabaseStack}-database-host-libfeat'
+          DatabaseHostRes:
+            Fn::ImportValue:
+              Fn::Sub: '${DatabaseStack}-database-host-res'
+          DatabaseName:
+            Fn::ImportValue:
+              Fn::Sub: '${DatabaseStack}-database-name'
+          DatabasePassword:
+            Fn::ImportValue:
+              Fn::Sub: '${DatabaseStack}-database-password'
+          DatabasePortCore:
+            Fn::ImportValue:
+              Fn::Sub: '${DatabaseStack}-database-port-core'
+          DatabasePortLibfeat:
+            Fn::ImportValue:
+              Fn::Sub: '${DatabaseStack}-database-port-libfeat'
+          DatabasePortRes:
+            Fn::ImportValue:
+              Fn::Sub: '${DatabaseStack}-database-port-res'
+          DatabaseUsername:
+            Fn::ImportValue:
+              Fn::Sub: '${DatabaseStack}-database-username'
     Type: AWS::SSM::Parameter
 
 # -- Iam -----------------------------------------------------------------
@@ -883,6 +897,23 @@ Resources:
     Type: AWS::IAM::Policy
 
 
+  IamPolicyEc2:
+    Properties:
+      PolicyName: !Sub "${AWS::StackName}-iam-policy-ec2"
+      PolicyDocument:
+        Statement:
+          -
+            Action:
+              - ec2:DescribeSubnets
+            Effect: Allow
+            Resource:
+              - '*'
+        Version: '2012-10-17'
+      Roles:
+       - !Ref IamRoleLambda
+    Type: AWS::IAM::Policy
+
+
   IamPolicyEc2FlowLogs:
     Properties:
       PolicyName: !Sub "${AWS::StackName}-iam-policy-logging-create-group"
@@ -1088,30 +1119,6 @@ Resources:
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-logs-loggroup.html
 # AWS Console: https://console.aws.amazon.com/cloudwatch/home?#logsV2:log-groups > Search for {stack}
 
-  LogsLogGroupDbClusterCore:
-    Properties:
-      LogGroupName: !Sub
-        - "/aws/rds/cluster/${StackNameAsLower}-aurora-senzing-core-cluster/postgresql"
-        - StackNameAsLower: !GetAtt LambdaRunnerStackNameAsLower.OutputString
-    Type: AWS::Logs::LogGroup
-
-
-  LogsLogGroupDbClusterLibfeat:
-    Properties:
-      LogGroupName: !Sub
-        - "/aws/rds/cluster/${StackNameAsLower}-aurora-senzing-libfeat-cluster/postgresql"
-        - StackNameAsLower: !GetAtt LambdaRunnerStackNameAsLower.OutputString
-    Type: AWS::Logs::LogGroup
-
-
-  LogsLogGroupDbClusterRes:
-    Properties:
-      LogGroupName: !Sub
-        - "/aws/rds/cluster/${StackNameAsLower}-aurora-senzing-res-cluster/postgresql"
-        - StackNameAsLower: !GetAtt LambdaRunnerStackNameAsLower.OutputString
-    Type: AWS::Logs::LogGroup
-
-
   LogsLogGroupLambdaCognitoCreateUser:
     Properties:
       LogGroupName: !Sub "/aws/lambda/${AWS::StackName}-lambda-cognito-create-user"
@@ -1154,6 +1161,12 @@ Resources:
     Type: AWS::Logs::LogGroup
 
 
+  LogsLogGroupLambdaSubnets:
+    Properties:
+      LogGroupName: !Sub "/aws/lambda/${AWS::StackName}-lambda-subnets"
+    Type: AWS::Logs::LogGroup
+
+
   LogsLogGroupLambdaWaitForEfs:
     Properties:
       LogGroupName: !Sub "/aws/lambda/${AWS::StackName}-lambda-wait-for-efs"
@@ -1175,10 +1188,9 @@ Resources:
     Properties:
       DeliverLogsPermissionArn: !GetAtt IamRoleFlowLog.Arn
       LogGroupName: !Ref LogsLogGroupMain
-      ResourceId: !If
-        - IfCreateVpcResources
-        - !Ref Ec2Vpc
-        - !Ref VpcId
+      ResourceId:
+        Fn::ImportValue:
+          Fn::Sub: '${DatabaseStack}-ec2-VpcId'
       ResourceType: VPC
       Tags:
         - Key: Name
@@ -1188,65 +1200,8 @@ Resources:
 
 # -- Cloud, subnets, routing --------------------------------------------------
 
-# https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-vpc.html
-# AWS Console: https://console.aws.amazon.com/vpc/home?#vpcs > Search for {stack}
-
-  Ec2Vpc:
-    Condition: IfCreateVpcResources
-    Properties:
-      CidrBlock: !FindInMap
-        - VpcCidrs
-        - vpc
-        - cidr
-      EnableDnsHostnames: true
-      EnableDnsSupport: true
-      Tags:
-        - Key: Name
-          Value: !Sub "${AWS::StackName}-ec2-vpc"
-    Type: AWS::EC2::VPC
-
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-subnet.html
 # AWS Console: https://console.aws.amazon.com/vpc/home?#subnets > Search for {stack}
-
-  Ec2SubnetPrivate1:
-    Properties:
-      AvailabilityZone: !Select
-          - '0'
-          - !GetAZs
-            Ref: AWS::Region
-      CidrBlock: !FindInMap
-        - VpcCidrs
-        - privsubnet1
-        - cidr
-      Tags:
-        - Key: Name
-          Value: !Sub "${AWS::StackName}-ec2-subnet-private-1"
-      VpcId: !If
-        - IfCreateVpcResources
-        - !Ref Ec2Vpc
-        - !Ref VpcId
-    Type: AWS::EC2::Subnet
-
-
-  Ec2SubnetPrivate2:
-    Properties:
-      AvailabilityZone: !Select
-          - '1'
-          - !GetAZs
-            Ref: AWS::Region
-      CidrBlock: !FindInMap
-        - VpcCidrs
-        - privsubnet2
-        - cidr
-      Tags:
-        - Key: Name
-          Value: !Sub "${AWS::StackName}-ec2-subnet-private-2"
-      VpcId: !If
-        - IfCreateVpcResources
-        - !Ref Ec2Vpc
-        - !Ref VpcId
-    Type: AWS::EC2::Subnet
-
 
   Ec2SubnetPublic1:
     Properties:
@@ -1254,17 +1209,17 @@ Resources:
           - '0'
           - !GetAZs
             Ref: AWS::Region
-      CidrBlock: !FindInMap
-        - VpcCidrs
-        - pubsubnet1
-        - cidr
+      CidrBlock: !Select
+        - '0'
+        - Fn::Split:
+          - ", "
+          - Fn::GetAtt: LambdaRunnerSubnets.Subnets
       Tags:
         - Key: Name
           Value: !Sub "${AWS::StackName}-ec2-subnet-public-1"
-      VpcId: !If
-        - IfCreateVpcResources
-        - !Ref Ec2Vpc
-        - !Ref VpcId
+      VpcId:
+        Fn::ImportValue:
+          Fn::Sub: '${DatabaseStack}-ec2-VpcId'
     Type: AWS::EC2::Subnet
 
 
@@ -1274,17 +1229,17 @@ Resources:
           - '1'
           - !GetAZs
             Ref: AWS::Region
-      CidrBlock: !FindInMap
-        - VpcCidrs
-        - pubsubnet2
-        - cidr
+      CidrBlock: !Select
+        - '1'
+        - Fn::Split:
+          - ", "
+          - Fn::GetAtt: LambdaRunnerSubnets.Subnets
       Tags:
         - Key: Name
           Value: !Sub "${AWS::StackName}-ec2-subnet-public-2"
-      VpcId: !If
-        - IfCreateVpcResources
-        - !Ref Ec2Vpc
-        - !Ref VpcId
+      VpcId:
+        Fn::ImportValue:
+          Fn::Sub: '${DatabaseStack}-ec2-VpcId'
     Type: AWS::EC2::Subnet
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-ec2-eip.html
@@ -1313,124 +1268,6 @@ Resources:
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-ec2-security-group.html
 # AWS Console: https://console.aws.amazon.com/vpc/home?#SecurityGroups > Search for {stack}
 
-  Ec2SecurityGroupInternal:
-    Properties:
-      GroupDescription: !Sub "${AWS::StackName} - ECS internal open ports."
-      SecurityGroupEgress:
-        -
-          CidrIp: 0.0.0.0/0
-          Description: All
-          IpProtocol: '-1'
-      SecurityGroupIngress:
-        -
-          CidrIp: !FindInMap
-            - VpcCidrs
-            - vpc
-            - cidr
-          Description: SSH
-          FromPort: 22
-          IpProtocol: tcp
-          ToPort: 22
-        -
-          CidrIp: !FindInMap
-            - VpcCidrs
-            - vpc
-            - cidr
-          Description: HTTP
-          FromPort: 80
-          IpProtocol: tcp
-          ToPort: 80
-        -
-          CidrIp: !FindInMap
-            - VpcCidrs
-            - vpc
-            - cidr
-          Description: HTTPS
-          FromPort: 443
-          IpProtocol: tcp
-          ToPort: 443
-        -
-          CidrIp: !FindInMap
-            - VpcCidrs
-            - vpc
-            - cidr
-          Description: NFS
-          FromPort: 2049
-          IpProtocol: tcp
-          ToPort: 2049
-        -
-          CidrIp: !FindInMap
-            - VpcCidrs
-            - vpc
-            - cidr
-          Description: Senzing X-Term
-          FromPort: 5000
-          IpProtocol: tcp
-          ToPort: 5000
-        -
-          CidrIp: !FindInMap
-            - VpcCidrs
-            - vpc
-            - cidr
-          Description: PostgreSQL
-          FromPort: 5432
-          IpProtocol: tcp
-          ToPort: 5432
-        -
-          CidrIp: !FindInMap
-            - VpcCidrs
-            - vpc
-            - cidr
-          Description: Senzing API server
-          FromPort: 8250
-          IpProtocol: tcp
-          ToPort: 8250
-        -
-          CidrIp: !FindInMap
-            - VpcCidrs
-            - vpc
-            - cidr
-          Description: Senzing Web App
-          FromPort: 8251
-          IpProtocol: tcp
-          ToPort: 8251
-        -
-          CidrIp: !FindInMap
-            - VpcCidrs
-            - vpc
-            - cidr
-          Description: Swagger UI
-          FromPort: 8080
-          IpProtocol: tcp
-          ToPort: 8080
-        -
-          CidrIp: !FindInMap
-            - VpcCidrs
-            - vpc
-            - cidr
-          Description: Senzing Jupyter notebooks
-          FromPort: 8888
-          IpProtocol: tcp
-          ToPort: 8888
-        -
-          CidrIp: !FindInMap
-            - VpcCidrs
-            - vpc
-            - cidr
-          Description: phpPgAdmin
-          FromPort: 9171
-          IpProtocol: tcp
-          ToPort: 9171
-      Tags:
-        - Key: Name
-          Value: !Sub "${AWS::StackName}-ec2-security-group-internal"
-      VpcId: !If
-        - IfCreateVpcResources
-        - !Ref Ec2Vpc
-        - !Ref VpcId
-    Type: AWS::EC2::SecurityGroup
-
-
   Ec2SecurityGroupLambdaRunner:
     Properties:
       GroupDescription: !Sub "${AWS::StackName} - Lambda open ports."
@@ -1442,10 +1279,9 @@ Resources:
       Tags:
         - Key: Name
           Value: !Sub "${AWS::StackName}-ec2-security-group-lambda-runner"
-      VpcId: !If
-        - IfCreateVpcResources
-        - !Ref Ec2Vpc
-        - !Ref VpcId
+      VpcId:
+        Fn::ImportValue:
+          Fn::Sub: '${DatabaseStack}-ec2-VpcId'
     Type: AWS::EC2::SecurityGroup
 
 
@@ -1459,10 +1295,9 @@ Resources:
           IpProtocol: '-1'
       SecurityGroupIngress:
         -
-          CidrIp: !FindInMap
-            - VpcCidrs
-            - vpc
-            - cidr
+          CidrIp:
+            Fn::ImportValue:
+              Fn::Sub: '${DatabaseStack}-ec2-VpcId-cidrblock'
           Description: Senzing API server
           FromPort: 8250
           IpProtocol: tcp
@@ -1470,10 +1305,9 @@ Resources:
       Tags:
         - Key: Name
           Value: !Sub "${AWS::StackName}-ec2-security-group-alb-private"
-      VpcId: !If
-        - IfCreateVpcResources
-        - !Ref Ec2Vpc
-        - !Ref VpcId
+      VpcId:
+        Fn::ImportValue:
+          Fn::Sub: '${DatabaseStack}-ec2-VpcId'
     Type: AWS::EC2::SecurityGroup
 
 
@@ -1488,10 +1322,9 @@ Resources:
       Tags:
         - Key: Name
           Value: !Sub "${AWS::StackName}-ec2-security-group-alb-public"
-      VpcId: !If
-        - IfCreateVpcResources
-        - !Ref Ec2Vpc
-        - !Ref VpcId
+      VpcId:
+        Fn::ImportValue:
+          Fn::Sub: '${DatabaseStack}-ec2-VpcId'
     Type: AWS::EC2::SecurityGroup
 
 
@@ -1506,10 +1339,9 @@ Resources:
       Tags:
         - Key: Name
           Value: !Sub "${AWS::StackName}-ec2-security-group-sshd"
-      VpcId: !If
-        - IfCreateVpcResources
-        - !Ref Ec2Vpc
-        - !Ref VpcId
+      VpcId:
+        Fn::ImportValue:
+          Fn::Sub: '${DatabaseStack}-ec2-VpcId'
     Type: AWS::EC2::SecurityGroup
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-ec2-security-group-ingress.html
@@ -1523,6 +1355,19 @@ Resources:
       GroupId: !GetAtt Ec2SecurityGroupLoadBalancerPublic.GroupId
       IpProtocol: tcp
       SourceSecurityGroupId: !GetAtt Ec2SecurityGroupLoadBalancerPublic.GroupId
+      ToPort: 8250
+    Type: AWS::EC2::SecurityGroupIngress
+
+
+  Ec2SecurityGroupIngressApiServerPrivate:
+    Properties:
+      CidrIp: !Ref CidrInbound
+      Description: Senzing API server
+      FromPort: 8250
+      GroupId:
+        Fn::ImportValue:
+          Fn::Sub: '${DatabaseStack}-ec2-security-group-internal'
+      IpProtocol: tcp
       ToPort: 8250
     Type: AWS::EC2::SecurityGroupIngress
 
@@ -1547,6 +1392,19 @@ Resources:
       IpProtocol: tcp
       SourceSecurityGroupId: !GetAtt Ec2SecurityGroupLoadBalancerPublic.GroupId
       ToPort: 8888
+    Type: AWS::EC2::SecurityGroupIngress
+
+
+  Ec2SecurityGroupIngressNFS:
+    Properties:
+      CidrIp: !Ref CidrInbound
+      Description: NFS
+      FromPort: 2049
+      IpProtocol: tcp
+      GroupId:
+        Fn::ImportValue:
+          Fn::Sub: '${DatabaseStack}-ec2-security-group-internal'
+      ToPort: 2049
     Type: AWS::EC2::SecurityGroupIngress
 
 
@@ -1597,28 +1455,6 @@ Resources:
       ToPort: 5000
     Type: AWS::EC2::SecurityGroupIngress
 
-# https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-internetgateway.html
-# AWS Console: https://console.aws.amazon.com/vpc/home?#igws > Search for {stack}
-
-  Ec2InternetGateway:
-    Properties:
-      Tags:
-        - Key: Name
-          Value: !Sub "${AWS::StackName}-ec2-internet-gateway"
-    Type: AWS::EC2::InternetGateway
-
-# https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-vpc-gateway-attachment.html
-# AWS Console: https://console.aws.amazon.com/vpc/home?#igws > Search for {stack} > State & VPI ID
-
-  Ec2VpcGatewayAttachment:
-    Properties:
-      InternetGatewayId: !Ref Ec2InternetGateway
-      VpcId: !If
-        - IfCreateVpcResources
-        - !Ref Ec2Vpc
-        - !Ref VpcId
-    Type: AWS::EC2::VPCGatewayAttachment
-
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-route-table.html
 # AWS Console: https://console.aws.amazon.com/vpc/home?#RouteTables > Search for {stack}
 
@@ -1627,10 +1463,9 @@ Resources:
       Tags:
         - Key: Name
           Value: !Sub "${AWS::StackName}-ec2-route-table-private"
-      VpcId: !If
-        - IfCreateVpcResources
-        - !Ref Ec2Vpc
-        - !Ref VpcId
+      VpcId:
+        Fn::ImportValue:
+          Fn::Sub: '${DatabaseStack}-ec2-VpcId'
     Type: AWS::EC2::RouteTable
 
 
@@ -1639,10 +1474,9 @@ Resources:
       Tags:
         - Key: Name
           Value: !Sub "${AWS::StackName}-ec2-route-table-public"
-      VpcId: !If
-        - IfCreateVpcResources
-        - !Ref Ec2Vpc
-        - !Ref VpcId
+      VpcId:
+        Fn::ImportValue:
+          Fn::Sub: '${DatabaseStack}-ec2-VpcId'
     Type: AWS::EC2::RouteTable
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-route.html
@@ -1657,11 +1491,11 @@ Resources:
 
 
   Ec2RoutePublic:
-    DependsOn:
-     - Ec2VpcGatewayAttachment
     Properties:
       DestinationCidrBlock: 0.0.0.0/0
-      GatewayId: !Ref Ec2InternetGateway
+      GatewayId:
+        Fn::ImportValue:
+          Fn::Sub: '${DatabaseStack}-ec2-internet-gateway'
       RouteTableId: !Ref Ec2RouteTablePublic
     Type: AWS::EC2::Route
 
@@ -1671,14 +1505,18 @@ Resources:
   Ec2SubnetRouteTableAssociationPrivate1:
     Properties:
       RouteTableId: !Ref Ec2RouteTablePrivate
-      SubnetId: !Ref Ec2SubnetPrivate1
+      SubnetId:
+        Fn::ImportValue:
+          Fn::Sub: '${DatabaseStack}-subnet-private-1'
     Type: AWS::EC2::SubnetRouteTableAssociation
 
 
   Ec2SubnetRouteTableAssociationPrivate2:
     Properties:
       RouteTableId: !Ref Ec2RouteTablePrivate
-      SubnetId: !Ref Ec2SubnetPrivate2
+      SubnetId:
+        Fn::ImportValue:
+          Fn::Sub: '${DatabaseStack}-subnet-private-2'
     Type: AWS::EC2::SubnetRouteTableAssociation
 
 
@@ -1718,9 +1556,11 @@ Resources:
       FileSystemId:
         Ref: EfsFileSystem
       SecurityGroups:
-        - Ref: Ec2SecurityGroupInternal
+        - Fn::ImportValue:
+            Fn::Sub: '${DatabaseStack}-ec2-security-group-internal'
       SubnetId:
-        Ref: Ec2SubnetPrivate1
+        Fn::ImportValue:
+          Fn::Sub: '${DatabaseStack}-subnet-private-1'
     Type: AWS::EFS::MountTarget
 
 
@@ -1729,166 +1569,12 @@ Resources:
       FileSystemId:
         Ref: EfsFileSystem
       SecurityGroups:
-        - Ref: Ec2SecurityGroupInternal
+        - Fn::ImportValue:
+           Fn::Sub: '${DatabaseStack}-ec2-security-group-internal'
       SubnetId:
-        Ref: Ec2SubnetPrivate2
+        Fn::ImportValue:
+          Fn::Sub: '${DatabaseStack}-subnet-private-2'
     Type: AWS::EFS::MountTarget
-
-# -- Database -----------------------------------------------------------------
-
-# https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-rds-dbsubnet-group.html
-# AWS Console: https://console.aws.amazon.com/rds/home#db-subnet-groups-list: > Search for {stack}
-
-  RdsDbSubnetGroup:
-    Properties:
-      DBSubnetGroupDescription: !Sub "${AWS::StackName}-db-subnet-description"
-      DBSubnetGroupName: !Sub "${AWS::StackName}-db-subnet"
-      SubnetIds:
-        - !Ref Ec2SubnetPrivate1
-        - !Ref Ec2SubnetPrivate2
-      Tags:
-        - Key: Name
-          Value: !Sub "${AWS::StackName}-rds-db-subnet-group"
-    Type: AWS::RDS::DBSubnetGroup
-
-# https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-rds-dbclusterparametergroup.html
-# AWS Console: https://console.aws.amazon.com/rds/home?#parameter-groups: > Search for {stack}
-
-  RdsDbClusterParameterGroup:
-    Properties:
-      Description: !Sub "${AWS::StackName}-rds-db-cluster-parameter-group-description"
-      Family: aurora-postgresql10
-      Parameters:
-        'synchronous_commit': 'off'
-      Tags:
-        - Key: Name
-          Value: !Sub "${AWS::StackName}-rds-db-cluster-parameter-group"
-    Type: AWS::RDS::DBClusterParameterGroup
-
-# https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-rds-dbcluster.html
-# AWS Console: https://console.aws.amazon.com/rds/home?#databases: > Search for {stack}
-
-  RdsDbClusterCore:
-    DependsOn:
-     - LogsLogGroupDbClusterCore
-     - RdsDbSubnetGroup
-    Properties:
-      AvailabilityZones:
-        - !GetAtt Ec2SubnetPrivate1.AvailabilityZone
-        - !GetAtt Ec2SubnetPrivate2.AvailabilityZone
-      DatabaseName: G2
-      DBClusterIdentifier: !Sub "${AWS::StackName}-aurora-senzing-core-cluster"
-      DBClusterParameterGroupName:
-        Ref: RdsDbClusterParameterGroup
-      # FIXME: Tricky code.  See https://console.aws.amazon.com/support/home#/case/?displayId=7725760511
-      DBSubnetGroupName: !Sub
-        - "${StackNameAsLower}-db-subnet"
-        - StackNameAsLower: !GetAtt LambdaRunnerStackNameAsLower.OutputString
-      DeletionProtection: false
-      EnableHttpEndpoint: true
-      Engine: aurora-postgresql
-      EngineMode: serverless
-      EngineVersion: '10.12'
-      MasterUsername: !FindInMap [Constants, Database, Username]
-      MasterUserPassword: !GetAtt LambdaRunnerDbPassword.RandomString
-      ScalingConfiguration:
-        AutoPause: true
-        MaxCapacity: 192
-        MinCapacity: 2
-        SecondsUntilAutoPause: 3600
-#       FIXME:  Uncomment once 'TimeoutAction' is supported.
-#       https://github.com/aws-cloudformation/aws-cloudformation-coverage-roadmap/issues/298
-#       https://console.aws.amazon.com/support/home#/case/?displayId=7705681311&language=en
-#       TimeoutAction: ForceApplyCapacityChange
-      StorageEncrypted: true
-      Tags:
-        - Key: Name
-          Value: !Sub "${AWS::StackName}-rds-db-core-cluster"
-      VpcSecurityGroupIds:
-        - !Ref Ec2SecurityGroupInternal
-    Type: AWS::RDS::DBCluster
-
-
-  RdsDbClusterLibfeat:
-    DependsOn:
-     - LogsLogGroupDbClusterLibfeat
-     - RdsDbSubnetGroup
-    Properties:
-      AvailabilityZones:
-        - !GetAtt Ec2SubnetPrivate1.AvailabilityZone
-        - !GetAtt Ec2SubnetPrivate2.AvailabilityZone
-      DatabaseName: G2
-      DBClusterIdentifier: !Sub "${AWS::StackName}-aurora-senzing-libfeat-cluster"
-      DBClusterParameterGroupName:
-        Ref: RdsDbClusterParameterGroup
-      # FIXME: Tricky code.  See https://console.aws.amazon.com/support/home#/case/?displayId=7725760511
-      DBSubnetGroupName: !Sub
-        - "${StackNameAsLower}-db-subnet"
-        - StackNameAsLower: !GetAtt LambdaRunnerStackNameAsLower.OutputString
-      DeletionProtection: false
-      EnableHttpEndpoint: true
-      Engine: aurora-postgresql
-      EngineMode: serverless
-      EngineVersion: '10.12'
-      MasterUsername: !FindInMap [Constants, Database, Username]
-      MasterUserPassword: !GetAtt LambdaRunnerDbPassword.RandomString
-      ScalingConfiguration:
-        AutoPause: true
-        MaxCapacity: 192
-        MinCapacity: 2
-        SecondsUntilAutoPause: 3600
-#       FIXME:  Uncomment once 'TimeoutAction' is supported.
-#       https://github.com/aws-cloudformation/aws-cloudformation-coverage-roadmap/issues/298
-#       https://console.aws.amazon.com/support/home#/case/?displayId=7705681311&language=en
-#       TimeoutAction: ForceApplyCapacityChange
-      StorageEncrypted: true
-      Tags:
-        - Key: Name
-          Value: !Sub "${AWS::StackName}-rds-db-libfeat-cluster"
-      VpcSecurityGroupIds:
-        - !Ref Ec2SecurityGroupInternal
-    Type: AWS::RDS::DBCluster
-
-
-  RdsDbClusterRes:
-    DependsOn:
-     - LogsLogGroupDbClusterRes
-     - RdsDbSubnetGroup
-    Properties:
-      AvailabilityZones:
-        - !GetAtt Ec2SubnetPrivate1.AvailabilityZone
-        - !GetAtt Ec2SubnetPrivate2.AvailabilityZone
-      DatabaseName: G2
-      DBClusterIdentifier: !Sub "${AWS::StackName}-aurora-senzing-res-cluster"
-      DBClusterParameterGroupName:
-        Ref: RdsDbClusterParameterGroup
-      # FIXME: Tricky code.  See https://console.aws.amazon.com/support/home#/case/?displayId=7725760511
-      DBSubnetGroupName: !Sub
-        - "${StackNameAsLower}-db-subnet"
-        - StackNameAsLower: !GetAtt LambdaRunnerStackNameAsLower.OutputString
-      DeletionProtection: false
-      EnableHttpEndpoint: true
-      Engine: aurora-postgresql
-      EngineMode: serverless
-      EngineVersion: '10.12'
-      MasterUsername: !FindInMap [Constants, Database, Username]
-      MasterUserPassword: !GetAtt LambdaRunnerDbPassword.RandomString
-      ScalingConfiguration:
-        AutoPause: true
-        MaxCapacity: 192
-        MinCapacity: 2
-        SecondsUntilAutoPause: 3600
-#       FIXME:  Uncomment once 'TimeoutAction' is supported.
-#       https://github.com/aws-cloudformation/aws-cloudformation-coverage-roadmap/issues/298
-#       https://console.aws.amazon.com/support/home#/case/?displayId=7705681311&language=en
-#       TimeoutAction: ForceApplyCapacityChange
-      StorageEncrypted: true
-      Tags:
-        - Key: Name
-          Value: !Sub "${AWS::StackName}-rds-db-res-cluster"
-      VpcSecurityGroupIds:
-        - !Ref Ec2SecurityGroupInternal
-    Type: AWS::RDS::DBCluster
 
 # -- Queue --------------------------------------------------------------------
 
@@ -2389,6 +2075,119 @@ Resources:
     Type: AWS::Lambda::Function
 
 
+  LambdaFunctionSubnets:
+    Properties:
+      Code:
+        ZipFile: |
+          #!/usr/bin/env python3
+
+          import boto3
+          import cfnresponse
+          import json
+          import logging
+          import traceback
+
+          logger = logging.getLogger()
+          logger.setLevel(logging.INFO)
+
+
+          def as_cidr(cidr_decimal, cidr_prefix):
+              octals = '.'.join([str(cidr_decimal >> (i << 3) & 0xFF) for i in range(4)[::-1]])
+              return "{0}/{1}".format(octals, cidr_prefix)
+
+
+          def find_cidr_decimal(cidr):
+              (octets, prefix) = cidr.split('/')
+              octet = octets.split(".")
+              return int(octet[0]) << 24 | int(octet[1]) << 16 | int(octet[2]) << 8 | int(octet[3])
+
+
+          def find_cidr_prefix(cidr):
+              (octets, prefix) = cidr.split('/')
+              return int(prefix)
+
+
+          def highest_cidr(cidrs):
+              result = "0.0.0.0/0"
+              result_decimal = find_cidr_decimal(result)
+              for cidr in cidrs:
+                  cidr_decimal = find_cidr_decimal(cidr)
+                  if cidr_decimal > result_decimal:
+                      result = cidr
+                      result_decimal = find_cidr_decimal(result)
+              return result
+
+
+          def adjust_cidr(cidr, next_cidr_prefix=None):
+              last_cidr_decimal = find_cidr_decimal(cidr)
+              last_cidr_prefix = find_cidr_prefix(cidr)
+              stride = 2 << (31 - last_cidr_prefix)
+              mask = 0xffffffff - (stride - 1)
+              next_cidr_decimal = last_cidr_decimal & mask
+              next_cidr_decimal = next_cidr_decimal + stride - 1
+              return as_cidr(next_cidr_decimal, next_cidr_prefix)
+
+
+          def next_cidr(cidr):
+              last_cidr_decimal = find_cidr_decimal(cidr)
+              last_cidr_prefix = find_cidr_prefix(cidr)
+              stride = 2 << (31 - last_cidr_prefix)
+              mask = 0xffffffff - (stride - 1)
+              next_cidr_decimal = (last_cidr_decimal + stride) & mask
+              return as_cidr(next_cidr_decimal, last_cidr_prefix)
+
+
+          def handler(event, context):
+              result = cfnresponse.SUCCESS
+              response_data = {}
+              try:
+                  logger.info("Event: {0}".format(json.dumps(event)))
+                  if event['RequestType'] in ['Create', 'Update']:
+                      properties = event.get('ResourceProperties', {})
+                      vpc_id = properties.get('VpcId')
+                      number_of_subnets = int(properties.get('NumberOfSubnets', 1))
+                      cidr_prefix = int(properties.get('CidrPrefix', 24))
+
+                      ec2_client = boto3.client('ec2')
+
+                      filters = [
+                          {
+                              "Name": "vpc-id",
+                              "Values": [
+                                  vpc_id
+                              ]
+                          }
+                      ]
+
+                      describe_subnets = ec2_client.describe_subnets(Filters=filters)
+                      subnets = describe_subnets.get("Subnets")
+                      cidr = highest_cidr(p["CidrBlock"] for p in subnets)
+                      cidr = adjust_cidr(cidr, cidr_prefix)
+
+                      result_subnets = []
+                      for x in range(number_of_subnets):
+                          cidr = next_cidr(cidr)
+                          result_subnets.append(cidr)
+                      response_data["Subnets"] = ", ".join(result_subnets)
+              except Exception as e:
+                  logger.error(e)
+                  traceback.print_exc()
+                  result = cfnresponse.FAILED
+              finally:
+                  cfnresponse.send(event, context, result, response_data)
+
+      Description: Find available Subnets.
+      FunctionName: !Sub "${AWS::StackName}-lambda-subnets"
+      Handler: index.handler
+      Role: !GetAtt IamRoleLambda.Arn
+      Runtime: python3.8
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-lambda-subnets"
+      Timeout: 600
+    Type: AWS::Lambda::Function
+
+
   LambdaFunctionWaitForEfs:
     DependsOn:
      - Ec2SubnetRouteTableAssociationPrivate1
@@ -2465,16 +2264,6 @@ Resources:
     Type: Custom::LambdaRunnerCognitoCreateUser
 
 
-  LambdaRunnerDbPassword:
-    Properties:
-      Length: 16
-      ServiceToken: !GetAtt LambdaFunctionRandomString.Arn
-      Tags:
-        - Key: Name
-          Value: !Sub "${AWS::StackName}-lambda-runner-db-password"
-    Type: Custom::LambdaRunnerDbPassword
-
-
   LambdaRunnerG2ConfigTool:
     DependsOn:
      - LambdaRunnerInitSenzing
@@ -2491,8 +2280,10 @@ Resources:
             securityGroups:
               - !Ref Ec2SecurityGroupLambdaRunner
             subnets:
-              - !Ref Ec2SubnetPrivate1
-              - !Ref Ec2SubnetPrivate2
+              - Fn::ImportValue:
+                  Fn::Sub: '${DatabaseStack}-subnet-private-1'
+              - Fn::ImportValue:
+                  Fn::Sub: '${DatabaseStack}-subnet-private-2'
         platformVersion: 1.4.0
         tags:
           - key: Name
@@ -2534,8 +2325,10 @@ Resources:
             securityGroups:
               - !Ref Ec2SecurityGroupLambdaRunner
             subnets:
-              - !Ref Ec2SubnetPrivate1
-              - !Ref Ec2SubnetPrivate2
+              - Fn::ImportValue:
+                  Fn::Sub: '${DatabaseStack}-subnet-private-1'
+              - Fn::ImportValue:
+                  Fn::Sub: '${DatabaseStack}-subnet-private-2'
         platformVersion: 1.4.0
         tags:
           - key: Name
@@ -2564,8 +2357,10 @@ Resources:
             securityGroups:
               - !Ref Ec2SecurityGroupLambdaRunner
             subnets:
-              - !Ref Ec2SubnetPrivate1
-              - !Ref Ec2SubnetPrivate2
+              - Fn::ImportValue:
+                  Fn::Sub: '${DatabaseStack}-subnet-private-1'
+              - Fn::ImportValue:
+                  Fn::Sub: '${DatabaseStack}-subnet-private-2'
         platformVersion: 1.4.0
         tags:
           - key: Name
@@ -2581,7 +2376,6 @@ Resources:
   LambdaRunnerInitPostgresCore:
     DependsOn:
      - LambdaRunnerInstallSenzing
-     - RdsDbClusterCore
     Properties:
       ClusterId: !Ref EcsCluster
       RunTaskParameters:
@@ -2595,8 +2389,10 @@ Resources:
             securityGroups:
               - !Ref Ec2SecurityGroupLambdaRunner
             subnets:
-              - !Ref Ec2SubnetPrivate1
-              - !Ref Ec2SubnetPrivate2
+              - Fn::ImportValue:
+                  Fn::Sub: '${DatabaseStack}-subnet-private-1'
+              - Fn::ImportValue:
+                  Fn::Sub: '${DatabaseStack}-subnet-private-2'
         platformVersion: 1.4.0
         tags:
           - key: Name
@@ -2612,7 +2408,6 @@ Resources:
   LambdaRunnerInitPostgresLibfeat:
     DependsOn:
      - LambdaRunnerInstallSenzing
-     - RdsDbClusterLibfeat
     Properties:
       ClusterId: !Ref EcsCluster
       RunTaskParameters:
@@ -2626,8 +2421,10 @@ Resources:
             securityGroups:
               - !Ref Ec2SecurityGroupLambdaRunner
             subnets:
-              - !Ref Ec2SubnetPrivate1
-              - !Ref Ec2SubnetPrivate2
+              - Fn::ImportValue:
+                  Fn::Sub: '${DatabaseStack}-subnet-private-1'
+              - Fn::ImportValue:
+                  Fn::Sub: '${DatabaseStack}-subnet-private-2'
         platformVersion: 1.4.0
         tags:
           - key: Name
@@ -2643,7 +2440,6 @@ Resources:
   LambdaRunnerInitPostgresRes:
     DependsOn:
      - LambdaRunnerInstallSenzing
-     - RdsDbClusterRes
     Properties:
       ClusterId: !Ref EcsCluster
       RunTaskParameters:
@@ -2657,8 +2453,10 @@ Resources:
             securityGroups:
               - !Ref Ec2SecurityGroupLambdaRunner
             subnets:
-              - !Ref Ec2SubnetPrivate1
-              - !Ref Ec2SubnetPrivate2
+              - Fn::ImportValue:
+                  Fn::Sub: '${DatabaseStack}-subnet-private-1'
+              - Fn::ImportValue:
+                  Fn::Sub: '${DatabaseStack}-subnet-private-2'
         platformVersion: 1.4.0
         tags:
           - key: Name
@@ -2689,8 +2487,10 @@ Resources:
             securityGroups:
               - !Ref Ec2SecurityGroupLambdaRunner
             subnets:
-              - !Ref Ec2SubnetPrivate1
-              - !Ref Ec2SubnetPrivate2
+              - Fn::ImportValue:
+                  Fn::Sub: '${DatabaseStack}-subnet-private-1'
+              - Fn::ImportValue:
+                  Fn::Sub: '${DatabaseStack}-subnet-private-2'
         platformVersion: 1.4.0
         tags:
           - key: Name
@@ -2744,8 +2544,10 @@ Resources:
             securityGroups:
               - !Ref Ec2SecurityGroupLambdaRunner
             subnets:
-              - !Ref Ec2SubnetPrivate1
-              - !Ref Ec2SubnetPrivate2
+              - Fn::ImportValue:
+                  Fn::Sub: '${DatabaseStack}-subnet-private-1'
+              - Fn::ImportValue:
+                  Fn::Sub: '${DatabaseStack}-subnet-private-2'
         platformVersion: 1.4.0
         tags:
           - key: Name
@@ -2756,6 +2558,20 @@ Resources:
         - Key: Name
           Value: !Sub "${AWS::StackName}-lambda-runner-stream-producer"
     Type: Custom::LambdaRunnerStreamProducer
+
+
+  LambdaRunnerSubnets:
+    Properties:
+      CidrPrefix: 24
+      NumberOfSubnets: 2
+      ServiceToken: !GetAtt LambdaFunctionSubnets.Arn
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-lambda-runner-subnets"
+      VpcId:
+        Fn::ImportValue:
+          !Sub "${DatabaseStack}-ec2-VpcId"
+    Type: Custom::LambdaRunnerSubnets
 
 
   LambdaRunnerWaitForEfsMountTarget1:
@@ -2804,8 +2620,10 @@ Resources:
       SecurityGroups:
         - !Ref Ec2SecurityGroupLoadBalancerPrivate
       Subnets:
-        - !Ref Ec2SubnetPrivate1
-        - !Ref Ec2SubnetPrivate2
+        - Fn::ImportValue:
+            Fn::Sub: '${DatabaseStack}-subnet-private-1'
+        - Fn::ImportValue:
+            Fn::Sub: '${DatabaseStack}-subnet-private-2'
       Tags:
         - Key: Name
           Value: !Sub "${AWS::StackName}-alb-private"
@@ -2858,10 +2676,9 @@ Resources:
           Value: '120'
       TargetType: ip
       UnhealthyThresholdCount: 5
-      VpcId: !If
-        - IfCreateVpcResources
-        - !Ref Ec2Vpc
-        - !Ref VpcId
+      VpcId:
+        Fn::ImportValue:
+          Fn::Sub: '${DatabaseStack}-ec2-VpcId'
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
 
 
@@ -2890,10 +2707,9 @@ Resources:
           Value: '120'
       TargetType: ip
       UnhealthyThresholdCount: 5
-      VpcId: !If
-        - IfCreateVpcResources
-        - !Ref Ec2Vpc
-        - !Ref VpcId
+      VpcId:
+        Fn::ImportValue:
+          Fn::Sub: '${DatabaseStack}-ec2-VpcId'
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
 
 
@@ -2930,10 +2746,9 @@ Resources:
         Value: '86400'
       TargetType: ip
       UnhealthyThresholdCount: 5
-      VpcId: !If
-        - IfCreateVpcResources
-        - !Ref Ec2Vpc
-        - !Ref VpcId
+      VpcId:
+        Fn::ImportValue:
+          Fn::Sub: '${DatabaseStack}-ec2-VpcId'
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
 
 
@@ -2960,10 +2775,9 @@ Resources:
         Value: '60'
       TargetType: ip
       UnhealthyThresholdCount: 5
-      VpcId: !If
-        - IfCreateVpcResources
-        - !Ref Ec2Vpc
-        - !Ref VpcId
+      VpcId:
+        Fn::ImportValue:
+          Fn::Sub: '${DatabaseStack}-ec2-VpcId'
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
 
 
@@ -2990,10 +2804,9 @@ Resources:
         Value: '60'
       TargetType: ip
       UnhealthyThresholdCount: 5
-      VpcId: !If
-        - IfCreateVpcResources
-        - !Ref Ec2Vpc
-        - !Ref VpcId
+      VpcId:
+        Fn::ImportValue:
+          Fn::Sub: '${DatabaseStack}-ec2-VpcId'
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
 
 
@@ -3030,10 +2843,9 @@ Resources:
         Value: '86400'
       TargetType: ip
       UnhealthyThresholdCount: 5
-      VpcId: !If
-        - IfCreateVpcResources
-        - !Ref Ec2Vpc
-        - !Ref VpcId
+      VpcId:
+        Fn::ImportValue:
+          Fn::Sub: '${DatabaseStack}-ec2-VpcId'
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-elasticloadbalancingv2-listener.html
@@ -3059,7 +2871,7 @@ Resources:
         - Order: 1
           RedirectConfig:
             Host: hub.senzing.com
-            Path: /aws-cloudformation-ecs-poc-simple/
+            Path: /aws-cloudformation-ecs-senzing-stack-basic/
             Port: '443'
             Protocol: HTTPS
             StatusCode: HTTP_301
@@ -3557,11 +3369,24 @@ Resources:
           Environment:
             -
               Name: SENZING_DATABASE_URL
-              Value: !Sub
-                - "postgresql://${DatabaseUsername}:${DatabasePassword}@${RdsDbClusterCore.Endpoint.Address}:${RdsDbClusterCore.Endpoint.Port}/${DatabaseName}"
-                - DatabaseUsername: !FindInMap [Constants, Database, Username]
-                  DatabasePassword: !GetAtt LambdaRunnerDbPassword.RandomString
-                  DatabaseName: !FindInMap [Constants, Database, Name]
+              Value:
+                Fn::Sub:
+                  - "postgresql://${DatabaseUsername}:${DatabasePassword}@${DatabaseHost}:${DatabasePort}/${DatabaseName}"
+                  - DatabaseHost:
+                      Fn::ImportValue:
+                        Fn::Sub: '${DatabaseStack}-database-host-core'
+                    DatabaseName:
+                      Fn::ImportValue:
+                        Fn::Sub: '${DatabaseStack}-database-name'
+                    DatabasePassword:
+                      Fn::ImportValue:
+                        Fn::Sub: '${DatabaseStack}-database-password'
+                    DatabasePort:
+                      Fn::ImportValue:
+                        Fn::Sub: '${DatabaseStack}-database-port-core'
+                    DatabaseUsername:
+                      Fn::ImportValue:
+                        Fn::Sub: '${DatabaseStack}-database-username'
             -
               Name: SENZING_SQL_FILE
               Value: /opt/senzing/g2/resources/schema/g2core-schema-postgresql-create.sql
@@ -3609,11 +3434,24 @@ Resources:
           Environment:
             -
               Name: SENZING_DATABASE_URL
-              Value: !Sub
-                - "postgresql://${DatabaseUsername}:${DatabasePassword}@${RdsDbClusterLibfeat.Endpoint.Address}:${RdsDbClusterLibfeat.Endpoint.Port}/${DatabaseName}"
-                - DatabaseUsername: !FindInMap [Constants, Database, Username]
-                  DatabasePassword: !GetAtt LambdaRunnerDbPassword.RandomString
-                  DatabaseName: !FindInMap [Constants, Database, Name]
+              Value:
+                Fn::Sub:
+                  - "postgresql://${DatabaseUsername}:${DatabasePassword}@${DatabaseHost}:${DatabasePort}/${DatabaseName}"
+                  - DatabaseHost:
+                      Fn::ImportValue:
+                        Fn::Sub: '${DatabaseStack}-database-host-libfeat'
+                    DatabaseName:
+                      Fn::ImportValue:
+                        Fn::Sub: '${DatabaseStack}-database-name'
+                    DatabasePassword:
+                      Fn::ImportValue:
+                        Fn::Sub: '${DatabaseStack}-database-password'
+                    DatabasePort:
+                      Fn::ImportValue:
+                        Fn::Sub: '${DatabaseStack}-database-port-libfeat'
+                    DatabaseUsername:
+                      Fn::ImportValue:
+                        Fn::Sub: '${DatabaseStack}-database-username'
             -
               Name: SENZING_SQL_FILE
               Value: /opt/senzing/g2/resources/schema/g2core-schema-postgresql-create.sql
@@ -3661,11 +3499,24 @@ Resources:
           Environment:
             -
               Name: SENZING_DATABASE_URL
-              Value: !Sub
-                - "postgresql://${DatabaseUsername}:${DatabasePassword}@${RdsDbClusterRes.Endpoint.Address}:${RdsDbClusterRes.Endpoint.Port}/${DatabaseName}"
-                - DatabaseUsername: !FindInMap [Constants, Database, Username]
-                  DatabasePassword: !GetAtt LambdaRunnerDbPassword.RandomString
-                  DatabaseName: !FindInMap [Constants, Database, Name]
+              Value:
+                Fn::Sub:
+                  - "postgresql://${DatabaseUsername}:${DatabasePassword}@${DatabaseHost}:${DatabasePort}/${DatabaseName}"
+                  - DatabaseHost:
+                      Fn::ImportValue:
+                        Fn::Sub: '${DatabaseStack}-database-host-res'
+                    DatabaseName:
+                      Fn::ImportValue:
+                        Fn::Sub: '${DatabaseStack}-database-name'
+                    DatabasePassword:
+                      Fn::ImportValue:
+                        Fn::Sub: '${DatabaseStack}-database-password'
+                    DatabasePort:
+                      Fn::ImportValue:
+                        Fn::Sub: '${DatabaseStack}-database-port-res'
+                    DatabaseUsername:
+                      Fn::ImportValue:
+                        Fn::Sub: '${DatabaseStack}-database-username'
             -
               Name: SENZING_SQL_FILE
               Value: /opt/senzing/g2/resources/schema/g2core-schema-postgresql-create.sql
@@ -3795,13 +3646,16 @@ Resources:
           Command:
             - '-y'
             - 'install'
-            - !Sub "senzingapi-${SenzingVersion}"
+            - !FindInMap
+              - SenzingVersionMap
+              - !Ref SenzingVersion
+              - value
           Environment:
             -
               Name: SENZING_ACCEPT_EULA
               Value: !Ref AcceptEula
           Essential: true
-          Image: public.ecr.aws/senzing/yum-staging:1.0.0
+          Image: public.ecr.aws/senzing/yum:1.1.4
           LogConfiguration:
             LogDriver: awslogs
             Options:
@@ -4708,8 +4562,10 @@ Resources:
             - !Ref Ec2SecurityGroupLoadBalancerPrivate
             - !Ref Ec2SecurityGroupLoadBalancerPublic
           Subnets:
-            - !Ref Ec2SubnetPrivate1
-            - !Ref Ec2SubnetPrivate2
+            - Fn::ImportValue:
+                Fn::Sub: '${DatabaseStack}-subnet-private-1'
+            - Fn::ImportValue:
+                Fn::Sub: '${DatabaseStack}-subnet-private-2'
       PlatformVersion: 1.4.0
       PropagateTags: TASK_DEFINITION
       ServiceName: api-server
@@ -4742,8 +4598,10 @@ Resources:
           SecurityGroups:
             - !Ref Ec2SecurityGroupLoadBalancerPublic
           Subnets:
-            - !Ref Ec2SubnetPrivate1
-            - !Ref Ec2SubnetPrivate2
+            - Fn::ImportValue:
+                Fn::Sub: '${DatabaseStack}-subnet-private-1'
+            - Fn::ImportValue:
+                Fn::Sub: '${DatabaseStack}-subnet-private-2'
       PlatformVersion: 1.4.0
       PropagateTags: TASK_DEFINITION
       ServiceName: jupyter
@@ -4767,10 +4625,13 @@ Resources:
         AwsvpcConfiguration:
           AssignPublicIp: DISABLED
           SecurityGroups:
-            - !Ref Ec2SecurityGroupInternal
+            - Fn::ImportValue:
+               Fn::Sub: '${DatabaseStack}-ec2-security-group-internal'
           Subnets:
-            - !Ref Ec2SubnetPrivate1
-            - !Ref Ec2SubnetPrivate2
+            - Fn::ImportValue:
+                Fn::Sub: '${DatabaseStack}-subnet-private-1'
+            - Fn::ImportValue:
+                Fn::Sub: '${DatabaseStack}-subnet-private-2'
       PlatformVersion: 1.4.0
       PropagateTags: TASK_DEFINITION
       ServiceName: redoer-loader
@@ -4794,10 +4655,13 @@ Resources:
         AwsvpcConfiguration:
           AssignPublicIp: DISABLED
           SecurityGroups:
-            - !Ref Ec2SecurityGroupInternal
+            - Fn::ImportValue:
+                Fn::Sub: '${DatabaseStack}-ec2-security-group-internal'
           Subnets:
-            - !Ref Ec2SubnetPrivate1
-            - !Ref Ec2SubnetPrivate2
+            - Fn::ImportValue:
+                Fn::Sub: '${DatabaseStack}-subnet-private-1'
+            - Fn::ImportValue:
+                Fn::Sub: '${DatabaseStack}-subnet-private-2'
       PlatformVersion: 1.4.0
       PropagateTags: TASK_DEFINITION
       ServiceName: redoer-producer
@@ -4825,8 +4689,10 @@ Resources:
           Subnets:
             - !Ref Ec2SubnetPublic1
             - !Ref Ec2SubnetPublic2
-            - !Ref Ec2SubnetPrivate1
-            - !Ref Ec2SubnetPrivate2
+            - Fn::ImportValue:
+                Fn::Sub: '${DatabaseStack}-subnet-private-1'
+            - Fn::ImportValue:
+                Fn::Sub: '${DatabaseStack}-subnet-private-2'
       PlatformVersion: 1.4.0
       PropagateTags: TASK_DEFINITION
       ServiceName: sshd
@@ -4850,10 +4716,13 @@ Resources:
         AwsvpcConfiguration:
           AssignPublicIp: DISABLED
           SecurityGroups:
-            - !Ref Ec2SecurityGroupInternal
+            - Fn::ImportValue:
+               Fn::Sub: '${DatabaseStack}-ec2-security-group-internal'
           Subnets:
-            - !Ref Ec2SubnetPrivate1
-            - !Ref Ec2SubnetPrivate2
+            - Fn::ImportValue:
+                Fn::Sub: '${DatabaseStack}-subnet-private-1'
+            - Fn::ImportValue:
+                Fn::Sub: '${DatabaseStack}-subnet-private-2'
       PlatformVersion: 1.4.0
       PropagateTags: TASK_DEFINITION
       ServiceName: stream-loader
@@ -4885,8 +4754,10 @@ Resources:
           SecurityGroups:
             - !Ref Ec2SecurityGroupLoadBalancerPublic
           Subnets:
-            - !Ref Ec2SubnetPrivate1
-            - !Ref Ec2SubnetPrivate2
+            - Fn::ImportValue:
+                Fn::Sub: '${DatabaseStack}-subnet-private-1'
+            - Fn::ImportValue:
+                Fn::Sub: '${DatabaseStack}-subnet-private-2'
       PlatformVersion: 1.4.0
       PropagateTags: TASK_DEFINITION
       ServiceName: swagger
@@ -4918,8 +4789,10 @@ Resources:
           SecurityGroups:
             - !Ref Ec2SecurityGroupLoadBalancerPublic
           Subnets:
-            - !Ref Ec2SubnetPrivate1
-            - !Ref Ec2SubnetPrivate2
+            - Fn::ImportValue:
+                Fn::Sub: '${DatabaseStack}-subnet-private-1'
+            - Fn::ImportValue:
+                Fn::Sub: '${DatabaseStack}-subnet-private-2'
       PlatformVersion: 1.4.0
       PropagateTags: TASK_DEFINITION
       ServiceName: webapp
@@ -4952,8 +4825,10 @@ Resources:
           SecurityGroups:
             - !Ref Ec2SecurityGroupLoadBalancerPublic
           Subnets:
-            - !Ref Ec2SubnetPrivate1
-            - !Ref Ec2SubnetPrivate2
+            - Fn::ImportValue:
+                Fn::Sub: '${DatabaseStack}-subnet-private-1'
+            - Fn::ImportValue:
+                Fn::Sub: '${DatabaseStack}-subnet-private-2'
       PlatformVersion: 1.4.0
       PropagateTags: TASK_DEFINITION
       ServiceName: xterm
@@ -5096,236 +4971,137 @@ Outputs:
 
   0penFirst:
     Condition: IfRunWebApp
-    Description: 'URL for Senzing Web App. Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#0penfirst'
+    Description: 'URL for Senzing Web App. Help: https://hub.senzing.com/aws-cloudformation-ecs-senzing-stack-basic/#0penfirst'
     Export:
       Name: !Sub "${AWS::StackName}-open-first"
     Value: !Sub "https://${LoadBalancerPublic.DNSName}/app/"
 
   AccountID:
-    Description: 'The accountID Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#accountid'
+    Description: 'The accountID Help: https://hub.senzing.com/aws-cloudformation-ecs-senzing-stack-basic/#accountid'
     Export:
       Name: !Sub "${AWS::StackName}-account-id"
     Value: !Sub "${AWS::AccountId}"
 
   CertificateArn:
-    Description: 'ARN of the SSL certificate. Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#certificatearn'
+    Description: 'ARN of the SSL certificate. Help: https://hub.senzing.com/aws-cloudformation-ecs-senzing-stack-basic/#certificatearn'
     Export:
       Name: !Sub "${AWS::StackName}-certificate-arn"
     Value: !GetAtt IamServerCertificate.Arn
 
-  DatabaseHostCore:
-    Description: 'The connection endpoint for the DB cluster. Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#databasehostcore'
-    Export:
-      Name: !Sub "${AWS::StackName}-database-host-core"
-    Value: !GetAtt RdsDbClusterCore.Endpoint.Address
-
-  DatabaseHostLibfeat:
-    Description: 'The connection endpoint for the DB cluster. Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#databasehostlibfeat'
-    Export:
-      Name: !Sub "${AWS::StackName}-database-host-libfeat"
-    Value: !GetAtt RdsDbClusterLibfeat.Endpoint.Address
-
-  DatabaseHostRes:
-    Description: 'The connection endpoint for the DB cluster. Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#databasehostres'
-    Export:
-      Name: !Sub "${AWS::StackName}-database-host-res"
-    Value: !GetAtt RdsDbClusterRes.Endpoint.Address
-
-  DatabaseName:
-    Description: 'The name of the database. Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#databasename'
-    Export:
-      Name: !Sub "${AWS::StackName}-database-name"
-    Value: !FindInMap [Constants, Database, Name]
-
-  DatabasePassword:
-    Description: 'The randomly generated password for the database. Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#databasepassword'
-    Export:
-      Name: !Sub "${AWS::StackName}-database-password"
-    Value: !GetAtt LambdaRunnerDbPassword.RandomString
-
-  DatabasePortCore:
-    Description: 'The port number that will accept connections on this DB cluster. Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#databaseportcore'
-    Export:
-      Name: !Sub "${AWS::StackName}-database-port-core"
-    Value: !GetAtt RdsDbClusterCore.Endpoint.Port
-
-  DatabasePortLibfeat:
-    Description: 'The port number that will accept connections on this DB cluster. Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#databaseportlibfeat'
-    Export:
-      Name: !Sub "${AWS::StackName}-database-port-libfeat"
-    Value: !GetAtt RdsDbClusterLibfeat.Endpoint.Port
-
-  DatabasePortRes:
-    Description: 'The port number that will accept connections on this DB cluster. Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#databaseportres'
-    Export:
-      Name: !Sub "${AWS::StackName}-database-port-res"
-    Value: !GetAtt RdsDbClusterRes.Endpoint.Port
-
-  DatabaseUsername:
-    Description: 'The administrative user name. Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#databaseusername'
-    Export:
-      Name: !Sub "${AWS::StackName}-database-username"
-    Value: !FindInMap [Constants, Database, Username]
-
-  Ec2InternetGateway:
-    Description: 'Internet Gateway. Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#ec2internetgateway'
-    Export:
-      Name: !Sub "${AWS::StackName}-ec2-internet-gateway"
-    Value: !Ref Ec2InternetGateway
-
-  Ec2SecurityGroupInternal:
-    Description: 'The ID of the VPC. Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#ec2securitygroupinternal'
-    Export:
-      Name: !Sub "${AWS::StackName}-ec2-security-group-internal"
-    Value: !Ref Ec2SecurityGroupInternal
-
-  Ec2Vpc:
-    Description: 'The ID of the VPC. Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#ec2vpc'
-    Export:
-      Name: !Sub "${AWS::StackName}-ec2-VpcId"
-    Value: !If
-      - IfCreateVpcResources
-      - !Ref Ec2Vpc
-      - !Ref VpcId
-
-  Ec2VpcCidrBlock:
-    Description: 'The CidrBloc of the VPC. Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#ec2vpccidrblock'
-    Export:
-      Name: !Sub "${AWS::StackName}-ec2-VpcId-cidrblock"
-    Value: !GetAtt Ec2Vpc.CidrBlock
-
   Host:
-    Description: 'Host name of public services. Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#host'
+    Description: 'Host name of public services. Help: https://hub.senzing.com/aws-cloudformation-ecs-senzing-stack-basic/#host'
     Export:
       Name: !Sub "${AWS::StackName}-host"
     Value: !GetAtt LoadBalancerPublic.DNSName
 
   QueueDeadLetter:
-    Description: 'URL of the dead-letter queue. Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#queuedeadletter'
+    Description: 'URL of the dead-letter queue. Help: https://hub.senzing.com/aws-cloudformation-ecs-senzing-stack-basic/#queuedeadletter'
     Export:
       Name: !Sub "${AWS::StackName}-sqs-deadletter"
     Value: !Ref SqsDeadLetter
 
   QueueInput:
-    Description: 'URL of the queue of records to be ingested into Senzing. Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#queueinput'
+    Description: 'URL of the queue of records to be ingested into Senzing. Help: https://hub.senzing.com/aws-cloudformation-ecs-senzing-stack-basic/#queueinput'
     Export:
       Name: !Sub "${AWS::StackName}-sqs-input"
     Value: !Ref SqsInput
 
   QueueOutput:
-    Description: 'URL of the queue with info records. Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#queueoutput'
+    Description: 'URL of the queue with info records. Help: https://hub.senzing.com/aws-cloudformation-ecs-senzing-stack-basic/#queueoutput'
     Export:
       Name: !Sub "${AWS::StackName}-sqs-output"
     Value: !Ref SqsOutput
 
   QueueRedoerInput:
-    Description: 'URL of the queue holding redo records to be processed. Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#queueredoerinput'
+    Description: 'URL of the queue holding redo records to be processed. Help: https://hub.senzing.com/aws-cloudformation-ecs-senzing-stack-basic/#queueredoerinput'
     Export:
       Name: !Sub "${AWS::StackName}-sqs-redoer-input"
     Value: !Ref SqsRedoerInput
 
   QueueRedoerOutput:
-    Description: 'URL of the queue with redoer info records. Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#queueredoeroutput'
+    Description: 'URL of the queue with redoer info records. Help: https://hub.senzing.com/aws-cloudformation-ecs-senzing-stack-basic/#queueredoeroutput'
     Export:
       Name: !Sub "${AWS::StackName}-sqs-redoer-output"
     Value: !Ref SqsRedoerOutput
 
-  SenzingVersion:
-    Description: 'The Senzing Engine version installed. Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#senzingversion'
-    Export:
-      Name: !Sub "${AWS::StackName}-senzing-version"
-    Value: !Sub "senzingapi-${SenzingVersion}"
-
   SshPassword:
-    Description: 'The randomly generated password for SSH access. Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#sshpassword'
+    Description: 'The randomly generated password for SSH access. Help: https://hub.senzing.com/aws-cloudformation-ecs-senzing-stack-basic/#sshpassword'
     Export:
       Name: !Sub "${AWS::StackName}-ssh-password"
     Value: !GetAtt LambdaRunnerSshPassword.RandomString
 
   SshUsername:
-    Description: 'The username for SSH access. Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#sshusername'
+    Description: 'The username for SSH access. Help: https://hub.senzing.com/aws-cloudformation-ecs-senzing-stack-basic/#sshusername'
     Export:
       Name: !Sub "${AWS::StackName}-ssh-username"
     Value: root
 
-  SubnetPrivate1:
-    Description: 'The ID of private subnet 1. Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#subnetprivate1'
-    Export:
-      Name: !Sub "${AWS::StackName}-subnet-private-1"
-    Value: !Ref Ec2SubnetPrivate1
-
-  SubnetPrivate2:
-    Description: 'The ID of private subnet 2. Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#subnetprivate2'
-    Export:
-      Name: !Sub "${AWS::StackName}-subnet-private-2"
-    Value: !Ref Ec2SubnetPrivate2
-
   SubnetPublic1:
-    Description: 'The ID of public subnet 1. Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#subnetpublic1'
+    Description: 'The ID of public subnet 1. Help: https://hub.senzing.com/aws-cloudformation-ecs-senzing-stack-basic/#subnetpublic1'
     Export:
       Name: !Sub "${AWS::StackName}-subnet-public-1"
     Value: !Ref Ec2SubnetPublic1
 
   SubnetPublic2:
-    Description: 'The ID of public subnet 2. Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#subnetpublic2'
+    Description: 'The ID of public subnet 2. Help: https://hub.senzing.com/aws-cloudformation-ecs-senzing-stack-basic/#subnetpublic2'
     Export:
       Name: !Sub "${AWS::StackName}-subnet-public-2"
     Value: !Ref Ec2SubnetPublic2
 
   UrlApiServer:
     Condition: IfRunApiServer
-    Description: "URL for API Server. Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#urlapiserver"
+    Description: "URL for API Server. Help: https://hub.senzing.com/aws-cloudformation-ecs-senzing-stack-basic/#urlapiserver"
     Export:
       Name: !Sub "${AWS::StackName}-url-api-server"
     Value: !Sub "https://${LoadBalancerPublic.DNSName}/api/"
 
   UrlApiServerHeartbeat:
     Condition: IfRunApiServer
-    Description: "URL for API Server's heartbeat. Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#urlapiserverheartbeat"
+    Description: "URL for API Server's heartbeat. Help: https://hub.senzing.com/aws-cloudformation-ecs-senzing-stack-basic/#urlapiserverheartbeat"
     Value: !Sub "https://${LoadBalancerPublic.DNSName}/api/heartbeat/"
 
   UrlJupyter:
     Condition: IfRunJupyter
-    Description: 'URL for Jupyter Notebooks. Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#urljupyter'
+    Description: 'URL for Jupyter Notebooks. Help: https://hub.senzing.com/aws-cloudformation-ecs-senzing-stack-basic/#urljupyter'
     Export:
       Name: !Sub "${AWS::StackName}-url-jupyter"
     Value: !Sub "https://${LoadBalancerPublic.DNSName}/jupyter/"
 
   UrlSwagger:
     Condition: IfRunSwagger
-    Description: 'URL for Swagger. Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#urlswagger'
+    Description: 'URL for Swagger. Help: https://hub.senzing.com/aws-cloudformation-ecs-senzing-stack-basic/#urlswagger'
     Export:
       Name: !Sub "${AWS::StackName}-url-swagger"
     Value: !Sub "https://${LoadBalancerPublic.DNSName}/swagger/"
 
   UrlWebApp:
     Condition: IfRunWebApp
-    Description: 'URL for Senzing Web App. Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#urlwebapp'
+    Description: 'URL for Senzing Web App. Help: https://hub.senzing.com/aws-cloudformation-ecs-senzing-stack-basic/#urlwebapp'
     Export:
       Name: !Sub "${AWS::StackName}-url-webapp"
     Value: !Sub "https://${LoadBalancerPublic.DNSName}/app/"
 
   UrlXterm:
     Condition: IfRunXterm
-    Description: 'URL for Senzing XTerm. Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#urlxterm'
+    Description: 'URL for Senzing XTerm. Help: https://hub.senzing.com/aws-cloudformation-ecs-senzing-stack-basic/#urlxterm'
     Export:
       Name: !Sub "${AWS::StackName}-url-xterm"
     Value: !Sub "https://${LoadBalancerPublic.DNSName}/xterm/"
 
   UserInitPassword:
-    Description: 'One time password for web access. Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#userinitpassword'
+    Description: 'One time password for web access. Help: https://hub.senzing.com/aws-cloudformation-ecs-senzing-stack-basic/#userinitpassword'
     Export:
       Name: !Sub "${AWS::StackName}-user-init-password"
     Value: !GetAtt LambdaRunnerWebPassword.RandomPassword
 
   UserName:
-    Description: 'Username for web access. Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#username'
+    Description: 'Username for web access. Help: https://hub.senzing.com/aws-cloudformation-ecs-senzing-stack-basic/#username'
     Export:
       Name: !Sub "${AWS::StackName}-user-name"
     Value: !Ref CognitoAdminEmail
 
   UserPool:
-    Description: 'Username for web access. Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#userpool'
+    Description: 'Username for web access. Help: https://hub.senzing.com/aws-cloudformation-ecs-senzing-stack-basic/#userpool'
     Export:
       Name: !Sub "${AWS::StackName}-user-pool"
     Value: !Sub "https://console.aws.amazon.com/cognito/users/#/pool/${UserPool}/users"

@@ -5,10 +5,13 @@ AWSTemplateFormatVersion: 2010-09-09
 #     Lint: https://github.com/aws-cloudformation/cfn-python-lint
 #     Nag: https://github.com/stelligent/cfn_nag
 #     aws cloudformation validate-template: https://awscli.amazonaws.com/v2/documentation/api/latest/reference/cloudformation/validate-template.html
+# This cloudformation template should be nearly identical to
+#   https://github.com/Senzing/aws-cloudformation-ecs-poc-simple
+# But tailored to run use Senzing RPMs from the staging server.
 
 Description: >-
-  Senzing aws-cloudformation-demo-hosted-zone Version: 0.7.6
-  For more information see https://github.com/Senzing/aws-cloudformation-ecs/cloudformation/senzing-demo-hosted-zone
+  Senzing aws-cloudformation-ecs-staging-simple Version: 0.7.6
+  For more information see https://github.com/Senzing/aws-cloudformation-ecs/cloudformation/senzing-demo-staging-simple
 
 # -----------------------------------------------------------------------------
 # Metadata
@@ -28,6 +31,7 @@ Metadata:
         Label:
           default: Senzing installation
         Parameters:
+          - SenzingVersion
           - AcceptEula
           - SenzingLicenseAsBase64
       -
@@ -36,11 +40,6 @@ Metadata:
         Parameters:
           - CognitoAdminEmail
           - CidrInbound
-      -
-        Label:
-          default: 'Identify existing resources'
-        Parameters:
-          - Route53HostedZoneId
       -
         Label:
           default: 'Optional: Initial data load'
@@ -56,8 +55,6 @@ Metadata:
         default: 'Optional: Allowed inbound connections using CIDR notation.'
       CognitoAdminEmail:
         default: 'Required: Email address for initial user.'
-      Route53HostedZoneId:
-        default: 'Required: Choose a hosted zone.'
       RunStreamProducer:
         default: 'Optional: Would you like to have an initial set of data imported?'
       SecurityResponsibility:
@@ -70,6 +67,10 @@ Metadata:
         default: >-
           Required if inserting more than 100K records.
           Senzing license as base64 encoded string.
+      SenzingVersion:
+        default: >-
+          Version of Senzing to deploy.
+          Format:  M.m.P-YYddd
 
 # -----------------------------------------------------------------------------
 # Parameters
@@ -84,7 +85,7 @@ Parameters:
     AllowedPattern: '.+|^I_ACCEPT_THE_SENZING_EULA$'
     ConstraintDescription: AcceptEula parameter must be 'I_ACCEPT_THE_SENZING_EULA'
     Default: '_'
-    Description: 'Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-hosted-zone/#accepteula'
+    Description: 'Help: https://hub.senzing.com/aws-cloudformation-ecs/aws-cloudformation-ecs-staging-simple/#accepteula'
     Type: String
 
 
@@ -92,7 +93,7 @@ Parameters:
     AllowedPattern: '(?:\d{1,3}\.){3}\d{1,3}(?:/\d\d?)?'
     ConstraintDescription: Inbound CIDR must be in the format n.n.n.n/n
     Default: 0.0.0.0/0
-    Description: 'Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-hosted-zone/#cidrinbound'
+    Description: 'Help: https://hub.senzing.com/aws-cloudformation-ecs/aws-cloudformation-ecs-staging-simple/#cidrinbound'
     Type: String
 
 
@@ -100,14 +101,8 @@ Parameters:
     AllowedPattern: '.+|^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$'
     ConstraintDescription: Entering initial user email address is required to proceed
     Default: '_'
-    Description: 'Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-hosted-zone/#cognitoadminemail'
+    Description: 'Help: https://hub.senzing.com/aws-cloudformation-ecs/aws-cloudformation-ecs-staging-simple/#cognitoadminemail'
     Type: String
-
-
-  Route53HostedZoneId:
-    Default: ''
-    Description: 'Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-hosted-zone/#route53hostedzoneid'
-    Type: AWS::Route53::HostedZone::Id
 
 
   RunStreamProducer:
@@ -115,7 +110,7 @@ Parameters:
       - 'No'
       - 'Yes'
     Default: 'Yes'
-    Description: 'Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-hosted-zone/#runstreamproducer'
+    Description: 'Help: https://hub.senzing.com/aws-cloudformation-ecs/aws-cloudformation-ecs-staging-simple/#runstreamproducer'
     Type: String
 
 
@@ -123,15 +118,21 @@ Parameters:
     AllowedPattern: '.+|^I AGREE$'
     ConstraintDescription: SecurityResponsibility parameter must be 'I AGREE'
     Default: '_'
-    Description: 'Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-hosted-zone/#securityresponsibility'
+    Description: 'Help: https://hub.senzing.com/aws-cloudformation-ecs/aws-cloudformation-ecs-staging-simple/#securityresponsibility'
     Type: String
 
 
   SenzingLicenseAsBase64:
 #   AllowedPattern: ' ^$|[^-A-Za-z0-9+\/=\s]|=[^=]|={3,}$'
-    ConstraintDescription: 'Must contain only Base64 characters. see https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-full-stack#senzinglicenseasbase64'
+    ConstraintDescription: 'Must contain only Base64 characters. see https://hub.senzing.com/aws-cloudformation-ecs/aws-cloudformation-ecs-staging-simple/#senzinglicenseasbase64'
     Default: ' '
-    Description: 'Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-hosted-zone/#senzinglicenseasbase64'
+    Description: 'Help: https://hub.senzing.com/aws-cloudformation-ecs/aws-cloudformation-ecs-staging-simple/#senzinglicenseasbase64'
+    Type: String
+
+
+  SenzingVersion:
+    Default: '2.6.0-21133'
+    Description: 'Help: https://hub.senzing.com/aws-cloudformation-ecs/aws-cloudformation-ecs-staging-simple/#senzingversion'
     Type: String
 
 # -----------------------------------------------------------------------------
@@ -191,10 +192,8 @@ Mappings:
       VpcFlowLogs: No
       WebApp: Yes
       Xterm: Yes
-    Senzing:
-      Version: senzingapi-2.5.0-21104
     Stack:
-      Name: hosted-zone
+      Name: staging-simple
     StreamProducer:
       DataSource: TEST
       EntityType: GENERIC
@@ -674,6 +673,24 @@ Resources:
     Type: AWS::IAM::Policy
 
 
+  IamPolicyCertificates:
+    Properties:
+      PolicyName: !Sub "${AWS::StackName}-iam-policy-certificates"
+      PolicyDocument:
+        Statement:
+          -
+            Action:
+              - iam:UploadServerCertificate
+            Effect: Allow
+            Resource:
+              - '*'
+        Version: '2012-10-17'
+      Roles:
+       - !Ref IamRoleLambda
+       - !Ref IamRoleSwagger
+    Type: AWS::IAM::Policy
+
+
   IamPolicyCognito:
     Properties:
       PolicyName: !Sub "${AWS::StackName}-iam-policy-cognito"
@@ -928,9 +945,9 @@ Resources:
     Type: AWS::Logs::LogGroup
 
 
-  LogsLogGroupLambdaFindDomainName:
+  LogsLogGroupLambdaGenerateCertificate:
     Properties:
-      LogGroupName: !Sub "/aws/lambda/${AWS::StackName}-lambda-find-domain-name"
+      LogGroupName: !Sub "/aws/lambda/${AWS::StackName}-lambda-generate-certificate"
     Type: AWS::Logs::LogGroup
 
 
@@ -1758,6 +1775,21 @@ Resources:
           Value: !Sub "${AWS::StackName}-ecs-cluster"
     Type: AWS::ECS::Cluster
 
+# -- HTTPS support ------------------------------------------------------------
+
+# https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-iam-servercertificate.html
+# AWS Console: https://console.aws.amazon.com/ec2/v2/home?#LoadBalancers: > {name} > "Listeners" tab > "View/edit certificates"
+
+  IamServerCertificate:
+    Properties:
+      CertificateBody: !GetAtt LambdaRunnerGenerateCertificate.CertificateBody
+      PrivateKey: !GetAtt LambdaRunnerGenerateCertificate.PrivateKey
+      ServerCertificateName: !Sub "${AWS::StackName}-certificate"
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-certificate"
+    Type: AWS::IAM::ServerCertificate
+
 # -- LambdaFunction -----------------------------------------------------------
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-lambda-function.html
@@ -1830,91 +1862,21 @@ Resources:
     Type: AWS::Lambda::Function
 
 
-  LambdaFunctionFindDomainName:
-    DependsOn:
-     - IamPolicyRoute53
+  LambdaFunctionGenerateCertificate:
     Properties:
       Code:
-        ZipFile: |
-          #!/usr/bin/env python3
-
-          import boto3
-          import cfnresponse
-          import datetime
-          import json
-          import logging
-          import traceback
-          from json import JSONEncoder
-
-          logger = logging.getLogger()
-          logger.setLevel(logging.INFO)
-
-          class DateTimeEncoder(JSONEncoder):
-              def default(self, obj):
-                  if isinstance(obj, (datetime.date, datetime.datetime)):
-                      return obj.isoformat()
-
-          def find_certificate_arn(certificate_domain_name, certificate_list):
-              certificate_summary_list = certificate_list.get('CertificateSummaryList', [])
-              for certificate_summary in certificate_summary_list:
-                  if certificate_summary.get('DomainName') == certificate_domain_name:
-                     return certificate_summary.get('CertificateArn')
-              return ""
-
-          def handler(event, context):
-              result = cfnresponse.SUCCESS
-              response = {}
-              try:
-                  logger.info("Event: {0}".format(json.dumps(event)))
-                  if event['RequestType'] in ['Create', 'Update']:
-                      properties = event.get('ResourceProperties', {})
-                      hosted_zone_id = properties.get('HostedZoneId', {})
-
-                      # Find domain in AWS Route53
-                      # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/route53.html
-
-                      route53 = boto3.client('route53')
-                      hosted_zone_dict = route53.get_hosted_zone(Id=hosted_zone_id)
-                      name = hosted_zone_dict.get("HostedZone", {}).get("Name", " ")
-                      response["Name"] = name
-                      response["DomainName"] = name[:-1]
-
-                      # Find Certificate in AWS Certificate Manager
-                      # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/acm.html
-
-                      certificate_domain_name = "*.{0}".format(response["DomainName"])
-                      logger.info("domain_name = {0}".format(certificate_domain_name))
-
-                      acm_client = boto3.client('acm')
-                      certificate_list = acm_client.list_certificates()
-                      logger.info("certificate_list = {0}".format(certificate_list))
-
-                      certificate_arn = find_certificate_arn(certificate_domain_name, certificate_list)
-                      response["CertificateArn"] = certificate_arn
-                      logger.info("certificate_arn = {0}".format(certificate_arn))
-
-                      if not certificate_arn:
-                          logger.warning("Cannot find certificate for '{0}'".format(certificate_domain_name))
-                          result = cfnresponse.FAILED
-
-                  logger.info("Response: {0}".format(json.dumps(response, cls=DateTimeEncoder)))
-
-              except Exception as e:
-                  logger.error(e)
-                  traceback.print_exc()
-                  result = cfnresponse.FAILED
-              finally:
-                  cfnresponse.send(event, context, result, response)
-
-      Description: Gets Route53 hosted zone information.
-      FunctionName: !Sub "${AWS::StackName}-lambda-find-domain-name"
-      Handler: index.handler
+        # This code can be seen at https://github.com/Senzing/aws-lambda-self-signed-certificate
+        S3Bucket: !Sub "senzing-public-${AWS::Region}"
+        S3Key: aws-lambda-self-signed-certificate/self-signed-certificate.zip
+      Description: Generate Public/Private key pair.
+      FunctionName: !Sub "${AWS::StackName}-lambda-generate-certificate"
+      Handler: self_signed_certificate.handler
       Role: !GetAtt IamRoleLambda.Arn
-      Runtime: python3.8
+      Runtime: python3.6
       Tags:
         - Key: Name
-          Value: !Sub "${AWS::StackName}-lambda-find-domain-name"
-      Timeout: 30
+          Value: !Sub "${AWS::StackName}-lambda-generate-certificate"
+      Timeout: 600
     Type: AWS::Lambda::Function
 
 
@@ -2300,17 +2262,6 @@ Resources:
     Type: Custom::LambdaRunnerDbPassword
 
 
-  LambdaRunnerFindDomainName:
-    Properties:
-      ClusterId: !Ref EcsCluster
-      HostedZoneId: !Ref Route53HostedZoneId
-      ServiceToken: !GetAtt LambdaFunctionFindDomainName.Arn
-      Tags:
-        - Key: Name
-          Value: !Sub "${AWS::StackName}-lambda-runner-find-domain-name"
-    Type: Custom::LambdaRunnerFindDomainName
-
-
   LambdaRunnerG2ConfigTool:
     DependsOn:
      - LambdaRunnerInitSenzing
@@ -2339,6 +2290,18 @@ Resources:
         - Key: Name
           Value: !Sub "${AWS::StackName}-lambda-runner-g2configtool"
     Type: Custom::LambdaRunnerG2ConfigTool
+
+
+  LambdaRunnerGenerateCertificate:
+    Properties:
+      CertificateAuthorityKeySize: 2048
+      CertificateKeySize: 2048
+      ClusterId: !Ref EcsCluster
+      ServiceToken: !GetAtt LambdaFunctionGenerateCertificate.Arn
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-lambda-runner-generate-certificate"
+    Type: Custom::LambdaRunnerGenerateCertificate
 
 
   LambdaRunnerInitEfs:
@@ -2638,6 +2601,8 @@ Resources:
 
 
   LoadBalancerPublic:
+    DependsOn:
+      IamServerCertificate
     Properties:
       Name: !Sub "${AWS::StackName}-alb-public"
       Scheme: internet-facing
@@ -2858,7 +2823,7 @@ Resources:
   ListenerPort443:
     Properties:
       Certificates:
-        - CertificateArn: !GetAtt LambdaRunnerFindDomainName.CertificateArn
+        - CertificateArn: !GetAtt IamServerCertificate.Arn
       DefaultActions:
         - Order: 1
           RedirectConfig:
@@ -3010,28 +2975,6 @@ Resources:
       Priority: 3
     Type: "AWS::ElasticLoadBalancingV2::ListenerRule"
 
-# -- Route53RecordSet ---------------------------------------------------------
-
-# https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-route53-recordset.html
-# AWS Console: https://console.aws.amazon.com/route53/v2/hostedzones# > {Domain name} > "Records" tab
-
-  Route53RecordSet:
-    Properties:
-      AliasTarget:
-        DNSName: !Sub
-          - "dualstack.${LoadBalancerPublicDNSName}"
-          - LoadBalancerPublicDNSName: !GetAtt LoadBalancerPublic.DNSName
-        EvaluateTargetHealth: true
-        HostedZoneId: !GetAtt LoadBalancerPublic.CanonicalHostedZoneID
-      Comment: !Sub "${AWS::StackName} RecordSet"
-      HostedZoneId: !Ref Route53HostedZoneId
-      Name: !Sub
-        - "${StackName}.${DomainName}"
-        - StackName: !Ref AWS::StackName
-          DomainName: !GetAtt LambdaRunnerFindDomainName.Name
-      Type: A
-    Type: AWS::Route53::RecordSet
-
 # -- UserPool -----------------------------------------------------------------
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-cognito-userpool.html
@@ -3131,9 +3074,7 @@ Resources:
       AllowedOAuthScopes:
         - openid
       CallbackURLs:
-        - !Sub
-          - "https://${AWS::StackName}.${DomainName}/oauth2/idpresponse"
-          - DomainName: !GetAtt LambdaRunnerFindDomainName.DomainName
+        - !Sub "https://${LoadBalancerPublic.DNSName}/oauth2/idpresponse"
       GenerateSecret: true
       SupportedIdentityProviders: # Optional: add providers for identity federation
         - COGNITO
@@ -3618,13 +3559,13 @@ Resources:
           Command:
             - '-y'
             - 'install'
-            - !FindInMap [Constants, Senzing, Version]
+            - !Sub "senzingapi-${SenzingVersion}"
           Environment:
             -
               Name: SENZING_ACCEPT_EULA
               Value: !Ref AcceptEula
           Essential: true
-          Image: public.ecr.aws/senzing/yum:1.1.4
+          Image: public.ecr.aws/senzing/yum-staging:1.0.0
           LogConfiguration:
             LogDriver: awslogs
             Options:
@@ -4919,249 +4860,233 @@ Outputs:
 
   0penFirst:
     Condition: IfRunWebApp
-    Description: 'URL for Senzing Web App. Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-hosted-zone/#0penfirst'
+    Description: 'URL for Senzing Web App. Help: https://hub.senzing.com/aws-cloudformation-ecs/aws-cloudformation-ecs-staging-simple/#0penfirst'
     Export:
       Name: !Sub "${AWS::StackName}-open-first"
-    Value: !Sub
-      - "https://${AWS::StackName}.${DomainName}/app/"
-      - DomainName: !GetAtt LambdaRunnerFindDomainName.DomainName
+    Value: !Sub "https://${LoadBalancerPublic.DNSName}/app/"
 
   AccountID:
-    Description: 'The accountID. Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-hosted-zone/#accountid'
+    Description: 'The accountID Help: https://hub.senzing.com/aws-cloudformation-ecs/aws-cloudformation-ecs-staging-simple/#accountid'
     Export:
       Name: !Sub "${AWS::StackName}-account-id"
     Value: !Sub "${AWS::AccountId}"
 
   CertificateArn:
-    Description: 'ARN of the SSL certificate. Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-hosted-zone/#certificatearn'
+    Description: 'ARN of the SSL certificate. Help: https://hub.senzing.com/aws-cloudformation-ecs/aws-cloudformation-ecs-staging-simple/#certificatearn'
     Export:
       Name: !Sub "${AWS::StackName}-certificate-arn"
-    Value: !GetAtt LambdaRunnerFindDomainName.CertificateArn
+    Value: !GetAtt IamServerCertificate.Arn
 
   DatabaseHostCore:
-    Description: 'The connection endpoint for the DB cluster. Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-hosted-zone/#databasehostcore'
+    Description: 'The connection endpoint for the DB cluster. Help: https://hub.senzing.com/aws-cloudformation-ecs/aws-cloudformation-ecs-staging-simple/#databasehostcore'
     Export:
       Name: !Sub "${AWS::StackName}-database-host-core"
     Value: !GetAtt RdsDbClusterCore.Endpoint.Address
 
   DatabaseHostLibfeat:
-    Description: 'The connection endpoint for the DB cluster. Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-hosted-zone/#databasehostlibfeat'
+    Description: 'The connection endpoint for the DB cluster. Help: https://hub.senzing.com/aws-cloudformation-ecs/aws-cloudformation-ecs-staging-simple/#databasehostlibfeat'
     Export:
       Name: !Sub "${AWS::StackName}-database-host-libfeat"
     Value: !GetAtt RdsDbClusterLibfeat.Endpoint.Address
 
   DatabaseHostRes:
-    Description: 'The connection endpoint for the DB cluster. Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-hosted-zone/#databasehostres'
+    Description: 'The connection endpoint for the DB cluster. Help: https://hub.senzing.com/aws-cloudformation-ecs/aws-cloudformation-ecs-staging-simple/#databasehostres'
     Export:
       Name: !Sub "${AWS::StackName}-database-host-res"
     Value: !GetAtt RdsDbClusterRes.Endpoint.Address
 
   DatabaseName:
-    Description: 'The name of the database. Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-hosted-zone/#databasename'
+    Description: 'The name of the database. Help: https://hub.senzing.com/aws-cloudformation-ecs/aws-cloudformation-ecs-staging-simple/#databasename'
     Export:
       Name: !Sub "${AWS::StackName}-database-name"
     Value: !FindInMap [Constants, Database, Name]
 
   DatabasePassword:
-    Description: 'The randomly generated password for the database. Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-hosted-zone/#databasepassword'
+    Description: 'The randomly generated password for the database. Help: https://hub.senzing.com/aws-cloudformation-ecs/aws-cloudformation-ecs-staging-simple/#databasepassword'
     Export:
       Name: !Sub "${AWS::StackName}-database-password"
     Value: !GetAtt LambdaRunnerDbPassword.RandomString
 
   DatabasePortCore:
-    Description: 'The port number that will accept connections on this DB cluster. Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-hosted-zone/#databaseportcore'
+    Description: 'The port number that will accept connections on this DB cluster. Help: https://hub.senzing.com/aws-cloudformation-ecs/aws-cloudformation-ecs-staging-simple/#databaseportcore'
     Export:
       Name: !Sub "${AWS::StackName}-database-port-core"
     Value: !GetAtt RdsDbClusterCore.Endpoint.Port
 
   DatabasePortLibfeat:
-    Description: 'The port number that will accept connections on this DB cluster. Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-hosted-zone/#databaseportlibfeat'
+    Description: 'The port number that will accept connections on this DB cluster. Help: https://hub.senzing.com/aws-cloudformation-ecs/aws-cloudformation-ecs-staging-simple/#databaseportlibfeat'
     Export:
       Name: !Sub "${AWS::StackName}-database-port-libfeat"
     Value: !GetAtt RdsDbClusterLibfeat.Endpoint.Port
 
   DatabasePortRes:
-    Description: 'The port number that will accept connections on this DB cluster. Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-hosted-zone/#databaseportres'
+    Description: 'The port number that will accept connections on this DB cluster. Help: https://hub.senzing.com/aws-cloudformation-ecs/aws-cloudformation-ecs-staging-simple/#databaseportres'
     Export:
       Name: !Sub "${AWS::StackName}-database-port-res"
     Value: !GetAtt RdsDbClusterRes.Endpoint.Port
 
   DatabaseUsername:
-    Description: 'The administrative user name. Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-hosted-zone/#databaseusername'
+    Description: 'The administrative user name. Help: https://hub.senzing.com/aws-cloudformation-ecs/aws-cloudformation-ecs-staging-simple/#databaseusername'
     Export:
       Name: !Sub "${AWS::StackName}-database-username"
     Value: !FindInMap [Constants, Database, Username]
 
   Ec2InternetGateway:
-    Description: 'Internet Gateway. Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-hosted-zone/#ec2internetgateway'
+    Description: 'Internet Gateway. Help: https://hub.senzing.com/aws-cloudformation-ecs-demo-staging-simple/#ec2internetgateway'
     Export:
       Name: !Sub "${AWS::StackName}-ec2-internet-gateway"
     Value: !Ref Ec2InternetGateway
 
   Ec2SecurityGroupInternal:
-    Description: 'The ID of the VPC. Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-hosted-zone/#ec2securitygroupinternal'
+    Description: 'The ID of the VPC. Help: https://hub.senzing.com/aws-cloudformation-ecs-demo-staging-simple/#ec2securitygroupinternal'
     Export:
       Name: !Sub "${AWS::StackName}-ec2-security-group-internal"
     Value: !Ref Ec2SecurityGroupInternal
 
   Ec2Vpc:
-    Description: 'The ID of the VPC. Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-hosted-zone/#ec2vpc'
+    Description: 'The ID of the VPC. Help: https://hub.senzing.com/aws-cloudformation-ecs/aws-cloudformation-ecs-staging-simple/#ec2vpc'
     Export:
       Name: !Sub "${AWS::StackName}-ec2-VpcId"
     Value: !Ref Ec2Vpc
 
   Ec2VpcCidrBlock:
-    Description: 'The CidrBloc of the VPC. Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-hosted-zone/#ec2vpccidrblock'
+    Description: 'The CidrBloc of the VPC. Help: https://hub.senzing.com/aws-cloudformation-ecs-demo-staging-simple/#ec2vpccidrblock'
     Export:
       Name: !Sub "${AWS::StackName}-ec2-VpcId-cidrblock"
     Value: !GetAtt Ec2Vpc.CidrBlock
 
   Host:
-    Description: 'Host name of public services. Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-hosted-zone/#host'
+    Description: 'Host name of public services. Help: https://hub.senzing.com/aws-cloudformation-ecs/aws-cloudformation-ecs-staging-simple/#host'
     Export:
       Name: !Sub "${AWS::StackName}-host"
-    Value: !Sub
-      - "${AWS::StackName}.${DomainName}"
-      - DomainName: !GetAtt LambdaRunnerFindDomainName.DomainName
+    Value: !GetAtt LoadBalancerPublic.DNSName
 
   QueueDeadLetter:
-    Description: 'URL of the dead-letter queue. Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-hosted-zone/#queuedeadletter'
+    Description: 'URL of the dead-letter queue. Help: https://hub.senzing.com/aws-cloudformation-ecs/aws-cloudformation-ecs-staging-simple/#queuedeadletter'
     Export:
       Name: !Sub "${AWS::StackName}-sqs-deadletter"
     Value: !Ref SqsDeadLetter
 
   QueueInput:
-    Description: 'URL of the queue of records to be ingested into Senzing. Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-hosted-zone/#queueinput'
+    Description: 'URL of the queue of records to be ingested into Senzing. Help: https://hub.senzing.com/aws-cloudformation-ecs/aws-cloudformation-ecs-staging-simple/#queueinput'
     Export:
       Name: !Sub "${AWS::StackName}-sqs-input"
     Value: !Ref SqsInput
 
   QueueOutput:
-    Description: 'URL of the queue with info records. Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-hosted-zone/#queueoutput'
+    Description: 'URL of the queue with info records. Help: https://hub.senzing.com/aws-cloudformation-ecs/aws-cloudformation-ecs-staging-simple/#queueoutput'
     Export:
       Name: !Sub "${AWS::StackName}-sqs-output"
     Value: !Ref SqsOutput
 
   QueueRedoerInput:
-    Description: 'URL of the queue holding redo records to be processed. Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-hosted-zone/#queueredoerinput'
+    Description: 'URL of the queue holding redo records to be processed. Help: https://hub.senzing.com/aws-cloudformation-ecs/aws-cloudformation-ecs-staging-simple/#queueredoerinput'
     Export:
       Name: !Sub "${AWS::StackName}-sqs-redoer-input"
     Value: !Ref SqsRedoerInput
 
   QueueRedoerOutput:
-    Description: 'URL of the queue with redoer info records. Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-hosted-zone/#queueredoeroutput'
+    Description: 'URL of the queue with redoer info records. Help: https://hub.senzing.com/aws-cloudformation-ecs/aws-cloudformation-ecs-staging-simple/#queueredoeroutput'
     Export:
       Name: !Sub "${AWS::StackName}-sqs-redoer-output"
     Value: !Ref SqsRedoerOutput
 
   SenzingVersion:
-    Description: 'The Senzing Engine version installed. Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-hosted-zone/#senzingversion'
+    Description: 'The Senzing Engine version installed. Help: https://hub.senzing.com/aws-cloudformation-ecs/aws-cloudformation-ecs-staging-simple/#senzingversion'
     Export:
       Name: !Sub "${AWS::StackName}-senzing-version"
-    Value: !FindInMap [Constants, Senzing, Version]
+    Value: !Sub "senzingapi-${SenzingVersion}"
 
   SshPassword:
-    Description: 'The randomly generated password for SSH access. Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-hosted-zone/#sshpassword'
+    Description: 'The randomly generated password for SSH access. Help: https://hub.senzing.com/aws-cloudformation-ecs/aws-cloudformation-ecs-staging-simple/#sshpassword'
     Export:
       Name: !Sub "${AWS::StackName}-ssh-password"
     Value: !GetAtt LambdaRunnerSshPassword.RandomString
 
   SshUsername:
-    Description: 'The username for SSH access. Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-hosted-zone/#sshusername'
+    Description: 'The username for SSH access. Help: https://hub.senzing.com/aws-cloudformation-ecs/aws-cloudformation-ecs-staging-simple/#sshusername'
     Export:
       Name: !Sub "${AWS::StackName}-ssh-username"
     Value: root
 
   SubnetPrivate1:
-    Description: 'The ID of private subnet 1. Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-hosted-zone/#subnetprivate1'
+    Description: 'The ID of private subnet 1. Help: https://hub.senzing.com/aws-cloudformation-ecs/aws-cloudformation-ecs-staging-simple/#subnetprivate1'
     Export:
       Name: !Sub "${AWS::StackName}-subnet-private-1"
     Value: !Ref Ec2SubnetPrivate1
 
   SubnetPrivate2:
-    Description: 'The ID of private subnet 2. Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-hosted-zone/#subnetprivate2'
+    Description: 'The ID of private subnet 2. Help: https://hub.senzing.com/aws-cloudformation-ecs/aws-cloudformation-ecs-staging-simple/#subnetprivate2'
     Export:
       Name: !Sub "${AWS::StackName}-subnet-private-2"
     Value: !Ref Ec2SubnetPrivate2
 
   SubnetPublic1:
-    Description: 'The ID of public subnet 1. Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-hosted-zone/#subnetpublic1'
+    Description: 'The ID of public subnet 1. Help: https://hub.senzing.com/aws-cloudformation-ecs/aws-cloudformation-ecs-staging-simple/#subnetpublic1'
     Export:
       Name: !Sub "${AWS::StackName}-subnet-public-1"
     Value: !Ref Ec2SubnetPublic1
 
   SubnetPublic2:
-    Description: 'The ID of public subnet 2. Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-hosted-zone/#subnetpublic2'
+    Description: 'The ID of public subnet 2. Help: https://hub.senzing.com/aws-cloudformation-ecs/aws-cloudformation-ecs-staging-simple/#subnetpublic2'
     Export:
       Name: !Sub "${AWS::StackName}-subnet-public-2"
     Value: !Ref Ec2SubnetPublic2
 
   UrlApiServer:
     Condition: IfRunApiServer
-    Description: "URL for API Server. Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-hosted-zone/#urlapiserver"
+    Description: "URL for API Server. Help: https://hub.senzing.com/aws-cloudformation-ecs/aws-cloudformation-ecs-staging-simple/#urlapiserver"
     Export:
       Name: !Sub "${AWS::StackName}-url-api-server"
-    Value: !Sub
-      - "https://${AWS::StackName}.${DomainName}/api/"
-      - DomainName: !GetAtt LambdaRunnerFindDomainName.DomainName
+    Value: !Sub "https://${LoadBalancerPublic.DNSName}/api/"
 
   UrlApiServerHeartbeat:
     Condition: IfRunApiServer
-    Description: "URL for API Server's heartbeat. Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-hosted-zone/#urlapiserverheartbeat"
-    Value: !Sub
-      - "https://${AWS::StackName}.${DomainName}/api/heartbeat/"
-      - DomainName: !GetAtt LambdaRunnerFindDomainName.DomainName
+    Description: "URL for API Server's heartbeat. Help: https://hub.senzing.com/aws-cloudformation-ecs/aws-cloudformation-ecs-staging-simple/#urlapiserverheartbeat"
+    Value: !Sub "https://${LoadBalancerPublic.DNSName}/api/heartbeat/"
 
   UrlJupyter:
     Condition: IfRunJupyter
-    Description: 'URL for Jupyter Notebooks. Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-hosted-zone/#urljupyter'
+    Description: 'URL for Jupyter Notebooks. Help: https://hub.senzing.com/aws-cloudformation-ecs/aws-cloudformation-ecs-staging-simple/#urljupyter'
     Export:
       Name: !Sub "${AWS::StackName}-url-jupyter"
-    Value: !Sub
-      - "https://${AWS::StackName}.${DomainName}/jupyter/"
-      - DomainName: !GetAtt LambdaRunnerFindDomainName.DomainName
+    Value: !Sub "https://${LoadBalancerPublic.DNSName}/jupyter/"
 
   UrlSwagger:
     Condition: IfRunSwagger
-    Description: 'URL for Swagger. Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-hosted-zone/#urlswagger'
+    Description: 'URL for Swagger. Help: https://hub.senzing.com/aws-cloudformation-ecs/aws-cloudformation-ecs-staging-simple/#urlswagger'
     Export:
       Name: !Sub "${AWS::StackName}-url-swagger"
-    Value: !Sub
-      - "https://${AWS::StackName}.${DomainName}/swagger/"
-      - DomainName: !GetAtt LambdaRunnerFindDomainName.DomainName
+    Value: !Sub "https://${LoadBalancerPublic.DNSName}/swagger/"
 
   UrlWebApp:
     Condition: IfRunWebApp
-    Description: 'URL for Senzing Web App. Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-hosted-zone/#urlwebapp'
+    Description: 'URL for Senzing Web App. Help: https://hub.senzing.com/aws-cloudformation-ecs/aws-cloudformation-ecs-staging-simple/#urlwebapp'
     Export:
       Name: !Sub "${AWS::StackName}-url-webapp"
-    Value: !Sub
-      - "https://${AWS::StackName}.${DomainName}/app/"
-      - DomainName: !GetAtt LambdaRunnerFindDomainName.DomainName
+    Value: !Sub "https://${LoadBalancerPublic.DNSName}/app/"
 
   UrlXterm:
     Condition: IfRunXterm
-    Description: 'URL for Senzing XTerm. Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-hosted-zone/#urlxterm'
+    Description: 'URL for Senzing XTerm. Help: https://hub.senzing.com/aws-cloudformation-ecs/aws-cloudformation-ecs-staging-simple/#urlxterm'
     Export:
       Name: !Sub "${AWS::StackName}-url-xterm"
-    Value: !Sub
-      - "https://${AWS::StackName}.${DomainName}/xterm/"
-      - DomainName: !GetAtt LambdaRunnerFindDomainName.DomainName
+    Value: !Sub "https://${LoadBalancerPublic.DNSName}/xterm/"
 
   UserInitPassword:
-    Description: 'One time password for web access. Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-hosted-zone/#userinitpassword'
+    Description: 'One time password for web access. Help: https://hub.senzing.com/aws-cloudformation-ecs/aws-cloudformation-ecs-staging-simple/#userinitpassword'
     Export:
       Name: !Sub "${AWS::StackName}-user-init-password"
     Value: !GetAtt LambdaRunnerWebPassword.RandomPassword
 
   UserName:
-    Description: 'Username for web access. Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-hosted-zone/#username'
+    Description: 'Username for web access. Help: https://hub.senzing.com/aws-cloudformation-ecs/aws-cloudformation-ecs-staging-simple/#username'
     Export:
       Name: !Sub "${AWS::StackName}-user-name"
     Value: !Ref CognitoAdminEmail
 
   UserPool:
-    Description: 'Username for web access. Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-hosted-zone/#userpool'
+    Description: 'Username for web access. Help: https://hub.senzing.com/aws-cloudformation-ecs/aws-cloudformation-ecs-staging-simple/#userpool'
     Export:
       Name: !Sub "${AWS::StackName}-user-pool"
     Value: !Sub "https://console.aws.amazon.com/cognito/users/#/pool/${UserPool}/users"
