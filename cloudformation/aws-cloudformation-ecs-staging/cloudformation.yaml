@@ -5192,7 +5192,10 @@ Outputs:
     Description: 'The CidrBloc of the VPC. Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#ec2vpccidrblock'
     Export:
       Name: !Sub "${AWS::StackName}-ec2-VpcId-cidrblock"
-    Value: !GetAtt Ec2Vpc.CidrBlock
+    Value: !If
+      - IfCreateVpcResources
+      - !GetAtt Ec2Vpc.CidrBlock
+      - !GetAtt VpcId.CidrBlock
 
   Host:
     Description: 'Host name of public services. Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#host'
