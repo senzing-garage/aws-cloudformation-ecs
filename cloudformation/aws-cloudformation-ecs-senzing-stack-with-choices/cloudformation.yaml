@@ -450,6 +450,10 @@ Conditions:
 
 # -- Compound "if" conditions --------------------------------------------
 
+  IfUsingApiServer: !Or
+    - !Condition IfRunApiServer
+    - !Condition IfRunWebApp
+
   IfUsingSshd: !Or
     - !Condition IfRunSshd
     - !Condition IfRunSshdMax
@@ -1390,7 +1394,7 @@ Resources:
 # AWS Console: https://console.aws.amazon.com/vpc/home?#SecurityGroups: > Search for {stack}-ec2-security-group-alb-public > Inbound rules
 
   Ec2SecurityGroupIngressApiServerPublic:
-    Condition: IfRunApiServer
+    Condition: IfUsingApiServer
     Properties:
       Description: Allow Health Check on Container 8250 from ALB
       FromPort: 8250
@@ -1402,7 +1406,7 @@ Resources:
 
 
   Ec2SecurityGroupIngressApiServerPrivate:
-    Condition: IfRunApiServer
+    Condition: IfUsingApiServer
     Properties:
       CidrIp: !Ref CidrInbound
       Description: Senzing API server
@@ -2563,7 +2567,7 @@ Resources:
 # AWS Console: https://console.aws.amazon.com/ec2/v2/home?#TargetGroups: > Search for {stack}
 
   TargetGroupApiServerPrivate:
-    Condition: IfRunApiServer
+    Condition: IfUsingApiServer
     DependsOn:
      - LoadBalancerPrivate
     Properties:
@@ -2594,7 +2598,7 @@ Resources:
 
 
   TargetGroupApiServerPublic:
-    Condition: IfRunApiServer
+    Condition: IfUsingApiServer
     DependsOn:
      - LoadBalancerPublic
     Properties:
@@ -2763,7 +2767,7 @@ Resources:
 # AWS Console: https://console.aws.amazon.com/ec2/v2/home?#LoadBalancers: > {name} > "Listeners" tab
 
   ListenerApiServerPrivate:
-    Condition: IfRunApiServer
+    Condition: IfUsingApiServer
     Properties:
       DefaultActions:
         - TargetGroupArn: !Ref TargetGroupApiServerPrivate
@@ -2797,7 +2801,7 @@ Resources:
 # AWS Console: https://console.aws.amazon.com/ec2/v2/home?#LoadBalancers: > {name} > "Listeners" tab > "View/edit rules"
 
   ListenerRuleApiServer:
-    Condition: IfRunApiServer
+    Condition: IfUsingApiServer
     Properties:
       Actions:
         - AuthenticateCognitoConfig:
@@ -3045,7 +3049,7 @@ Resources:
 # AWS Console: https://console.aws.amazon.com/ecs/home?#/taskDefinitions > Search for {stack}
 
   EcsTaskDefinitionApiServer:
-    Condition: IfRunApiServer
+    Condition: IfUsingApiServer
     Properties:
       ContainerDefinitions:
         -
@@ -4268,7 +4272,7 @@ Resources:
 # AWS Console: https://console.aws.amazon.com/ecs/home?#/clusters > {stack}-cluster > "Services" tab
 
   EcsServiceApiServer:
-    Condition: IfRunApiServer
+    Condition: IfUsingApiServer
     DependsOn:
      - LambdaRunnerInitSenzing
      - ListenerPort443
@@ -4607,7 +4611,7 @@ Resources:
 # AWS Console: https://console.aws.amazon.com/ecs/home?#/clusters > {stack}-cluster > {Service Name} > "Auto Scaling" tab
 
   ApplicationAutoScalingScalableTargetApiServer:
-    Condition: IfRunApiServer
+    Condition: IfUsingApiServer
     Properties:
       MaxCapacity: 200
       MinCapacity: 1
@@ -4673,7 +4677,7 @@ Resources:
 # AWS Console: https://console.aws.amazon.com/ecs/home?#/clusters > {stack}-cluster > {Service Name} > "Auto Scaling" tab
 
   ApplicationAutoScalingScalingPolicyApiServer:
-    Condition: IfRunApiServer
+    Condition: IfUsingApiServer
     Properties:
       PolicyName: !Sub "${AWS::StackName}-scaling-policy-api-server"
       PolicyType: TargetTrackingScaling
@@ -4829,14 +4833,14 @@ Outputs:
     Value: !Ref Ec2SubnetPublic2
 
   UrlApiServer:
-    Condition: IfRunApiServer
+    Condition: IfUsingApiServer
     Description: "URL for API Server. Help: https://hub.senzing.com/aws-cloudformation-ecs-senzing-stack-basic/#urlapiserver"
     Export:
       Name: !Sub "${AWS::StackName}-url-api-server"
     Value: !Sub "https://${LoadBalancerPublic.DNSName}/api/"
 
   UrlApiServerHeartbeat:
-    Condition: IfRunApiServer
+    Condition: IfUsingApiServer
     Description: "URL for API Server's heartbeat. Help: https://hub.senzing.com/aws-cloudformation-ecs-senzing-stack-basic/#urlapiserverheartbeat"
     Value: !Sub "https://${LoadBalancerPublic.DNSName}/api/heartbeat/"
 
