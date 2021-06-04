@@ -1,4 +1,4 @@
-# How to create a Websoct Api with Cognito that connects to an ECS Service
+# How to create a Websocket Api with Cognito that connects to an ECS Service
 
 Websocket Api Gateway embedded with Cognito for authentication, connected to an ECS service
 
