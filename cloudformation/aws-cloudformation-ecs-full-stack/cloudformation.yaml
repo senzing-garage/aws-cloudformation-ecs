@@ -3336,13 +3336,28 @@ Resources:
               <p>
                   <b>Links:</b>
                   <ol>
-                      <li><b><a href="https://github.com/Senzing/entity-search-web-app">Senzing Entity Search web app</a>:</b> https://${Host}/app</li>
-                      <br />
-                      <li><b><a href="https://github.com/Senzing/senzing-api-server">Senzing API Server</a>:</b> https://${Host}/api/heartbeat</li>
-                      <br />
-                      <li><b><a href="https://github.com/Senzing/docker-xterm">Senzing XTerm</a>:</b> https://${Host}/xterm</li>
-                      <br />
-                      <li><b><a href="https://github.com/Senzing/senzing-rest-api-specification">Senzing HTTP REST API</a>:</b> https://${Host}/swagger
+                    <li>
+                        <b>Senzing Entity Search web app: </b> <a href="https://${Host}/app">https://${Host}/app</a>
+                        <br />
+                        (For more details see the <a href="https://github.com/Senzing/entity-search-web-app">GitHub repository</a>)
+                    </li>
+                    <br />
+                    <li>
+                        <b>Senzing API Server: </b> <a href="https://${Host}/api/heartbeat">https://${Host}/api/heartbeat</a>
+                        <br />
+                        (For more details see the <a href="https://github.com/Senzing/senzing-api-server">GitHub repository</a>)
+                    </li>
+                    <br />
+                    <li>
+                        <b>Senzing XTerm: </b> <a href="https://${Host}/xterm">https://${Host}/xterm</a>
+                        <br />
+                        (For more details see the <a href="https://github.com/Senzing/docker-xterm">GitHub repository</a>)
+                    </li>
+                    <br />
+                    <li>
+                        <b>Senzing HTTP REST API: </b> <a href="https://${Host}/swagger">https://${Host}/swagger</a>
+                        <br />
+                        (For more details see the <a href="https://github.com/Senzing/senzing-rest-api-specification">GitHub repository</a>)
                           <ul>
                               <li><b>Servers:</b> <code>{protocol}://{host}:{port}{path}</code></li>
                               <li><b>Server variables</b>:
