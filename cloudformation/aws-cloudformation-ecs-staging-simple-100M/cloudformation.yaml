@@ -209,6 +209,7 @@ Mappings:
     "100M":
       value: "100000000"
 
+
   Constants:
     Database:
       Name: G2
@@ -231,6 +232,7 @@ Mappings:
       EntityType: GENERIC
       InputUrl: https://public-read-access.s3.amazonaws.com/TestDataSets/test-dataset-100m.json.gz
       RecordMin: 0
+
 
   VpcCidrs:
     vpc:
@@ -5140,13 +5142,13 @@ Outputs:
     Value: !FindInMap [Constants, Database, Username]
 
   Ec2InternetGateway:
-    Description: 'Internet Gateway. Help: https://hub.senzing.com/aws-cloudformation-ecs-demo-staging-simple/#ec2internetgateway'
+    Description: 'Internet Gateway. Help: https://hub.senzing.com/aws-cloudformation-ecs/aws-cloudformation-ecs-staging-simple-100M/#ec2internetgateway'
     Export:
       Name: !Sub "${AWS::StackName}-ec2-internet-gateway"
     Value: !Ref Ec2InternetGateway
 
   Ec2SecurityGroupInternal:
-    Description: 'The ID of the VPC. Help: https://hub.senzing.com/aws-cloudformation-ecs-demo-staging-simple/#ec2securitygroupinternal'
+    Description: 'The ID of the VPC. Help: https://hub.senzing.com/aws-cloudformation-ecs/aws-cloudformation-ecs-staging-simple-100M/#ec2securitygroupinternal'
     Export:
       Name: !Sub "${AWS::StackName}-ec2-security-group-internal"
     Value: !Ref Ec2SecurityGroupInternal
@@ -5158,7 +5160,7 @@ Outputs:
     Value: !Ref Ec2Vpc
 
   Ec2VpcCidrBlock:
-    Description: 'The CidrBloc of the VPC. Help: https://hub.senzing.com/aws-cloudformation-ecs-demo-staging-simple/#ec2vpccidrblock'
+    Description: 'The CidrBloc of the VPC. Help: https://hub.senzing.com/aws-cloudformation-ecs/aws-cloudformation-ecs-staging-simple-100M/#ec2vpccidrblock'
     Export:
       Name: !Sub "${AWS::StackName}-ec2-VpcId-cidrblock"
     Value: !GetAtt Ec2Vpc.CidrBlock
@@ -5193,7 +5195,7 @@ Outputs:
 
   QueueRedoerDeadLetter:
     Condition: IfUsingRedoQueues
-    Description: 'URL of the redoer dead-letter queue. Help: https://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#queueredoerdeadletter'
+    Description: 'URL of the redoer dead-letter queue. Help: https://hub.senzing.com/aws-cloudformation-ecs/aws-cloudformation-ecs-staging-simple-100M/#queueredoerdeadletter'
     Export:
       Name: !Sub "${AWS::StackName}-sqs-redoer-deadletter"
     Value: !Ref SqsRedoerDeadLetter
