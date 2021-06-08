@@ -62,6 +62,7 @@ Metadata:
           - RunJupyter
           - RunRedoer
           - RunSshd
+          - RunSshdMax
           - RunStreamLoader
           - RunSwagger
           - RunVpcFlowLogs
@@ -87,6 +88,8 @@ Metadata:
         default: 'Optional: Would you like to run Senzing Redoer service?'
       RunSshd:
         default: 'Optional: Would you like to run sshd service?'
+      RunSshdMax:
+        default: 'Optional: Would you like to run sshd-max service?'
       RunStreamLoader:
         default: 'Optional: Would you like to run stream-loader service?'
       RunStreamProducer:
@@ -208,6 +211,15 @@ Parameters:
       - 'Yes'
     Default: 'Yes'
     Description: 'Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#runsshd'
+    Type: String
+
+
+  RunSshdMax:
+    AllowedValues:
+      - 'No'
+      - 'Yes'
+    Default: 'Yes'
+    Description: 'Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#runsshdmax'
     Type: String
 
 
@@ -409,6 +421,10 @@ Conditions:
 
   IfRunSshd: !Equals
     - !Ref RunSshd
+    - 'Yes'
+
+  IfRunSshdMax: !Equals
+    - !Ref RunSshdMax
     - 'Yes'
 
   IfRunStreamLoader: !Equals

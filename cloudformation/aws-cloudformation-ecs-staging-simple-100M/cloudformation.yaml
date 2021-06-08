@@ -34,8 +34,8 @@ Metadata:
         Parameters:
           - SenzingVersion
           - AcceptEula
-          - SenzingLicenseAsBase64
           - RecordMax
+          - SenzingLicenseAsBase64
       -
         Label:
           default: Security
