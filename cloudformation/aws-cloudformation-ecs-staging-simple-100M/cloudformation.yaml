@@ -142,7 +142,7 @@ Parameters:
   SenzingLicenseAsBase64:
 #   AllowedPattern: ' ^$|[^-A-Za-z0-9+\/=\s]|=[^=]|={3,}$'
     ConstraintDescription: 'Must contain only Base64 characters. see https://hub.senzing.com/aws-cloudformation-ecs/aws-cloudformation-ecs-staging-simple-100M/#senzinglicenseasbase64'
-    Default: ' '
+    Default: '_'
     Description: 'Help: https://hub.senzing.com/aws-cloudformation-ecs/aws-cloudformation-ecs-staging-simple-100M/#senzinglicenseasbase64'
     Type: String
 
@@ -187,6 +187,15 @@ Rules:
           - !Ref SecurityResponsibility
           - 'I AGREE'
         AssertDescription: 'Understanding responsibility and entering "I AGREE" is required to proceed.'
+
+
+  ConfirmSenzingLicenseAsBase64:
+    Assertions:
+      - Assert: !Not
+          - !Equals
+            - !Ref SenzingLicenseAsBase64
+            - '_'
+        AssertDescription: 'Senzing license in base64 format is required.'
 
 # -----------------------------------------------------------------------------
 # Mappings
