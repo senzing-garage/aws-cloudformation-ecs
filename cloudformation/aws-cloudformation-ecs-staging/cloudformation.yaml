@@ -5384,13 +5384,11 @@ Outputs:
       - !Ref VpcId
 
   Ec2VpcCidrBlock:
+    Condition: IfCreateVpcResources
     Description: 'The CidrBloc of the VPC. Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#ec2vpccidrblock'
     Export:
       Name: !Sub "${AWS::StackName}-ec2-VpcId-cidrblock"
-    Value: !If
-      - IfCreateVpcResources
-      - !GetAtt Ec2Vpc.CidrBlock
-      - !GetAtt VpcId.CidrBlock
+    Value: !GetAtt Ec2Vpc.CidrBlock
 
   Host:
     Condition: IfUsingWeb
