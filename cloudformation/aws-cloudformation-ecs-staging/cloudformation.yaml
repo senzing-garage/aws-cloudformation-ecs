@@ -324,7 +324,7 @@ Parameters:
 
 
   SenzingVersion:
-    Default: '2.5.0-21104'
+    Default: '2.6.0-21133'
     Description: 'Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#senzingversion'
     Type: String
 
@@ -383,6 +383,7 @@ Mappings:
     Stack:
       Name: staging
 
+# NOTE: The CIDRs for subnets may collide with existing subnets.  The values may be altered.
 
   VpcCidrs:
     vpc:
@@ -3379,18 +3380,18 @@ Resources:
                         <b>Senzing HTTP REST API: </b> <a href="https://${Host}/swagger">https://${Host}/swagger</a>
                         <br />
                         (For more details see the <a href="https://github.com/Senzing/senzing-rest-api-specification">GitHub repository</a>)
-                          <ul>
-                              <li><b>Servers:</b> <code>{protocol}://{host}:{port}{path}</code></li>
-                              <li><b>Server variables</b>:
-                                  <ol>
-                                      <li><b>protocol:</b> https</li>
-                                      <li><b>host:</b> ${Host}</li>
-                                      <li><b>port:</b> 443</li>
-                                      <li><b>path:</b> /api</li>
-                                  </ol>
-                              </li>
-                          </ul>
-                      </li>
+                        <ul>
+                            <li><b>Servers:</b> <code>{protocol}://{host}:{port}{path}</code></li>
+                            <li><b>Server variables</b>:
+                                <ol>
+                                    <li><b>protocol:</b> https</li>
+                                    <li><b>host:</b> ${Host}</li>
+                                    <li><b>port:</b> 443</li>
+                                    <li><b>path:</b> /api</li>
+                                </ol>
+                            </li>
+                        </ul>
+                    </li>
                   </ol>
               </p>
               <p>
@@ -4222,6 +4223,9 @@ Resources:
             -
               Name: SENZING_SUBCOMMAND
               Value: write-to-sqs
+            -
+              Name: SENZING_THREADS_PER_PROCESS
+              Value: '12'
           Essential: true
           Image: public.ecr.aws/senzing/redoer:1.3.5
           LogConfiguration:
@@ -4508,7 +4512,7 @@ Resources:
               Name: SENZING_THREADS_PER_PROCESS
               Value: '8'
           Essential: true
-          Image: public.ecr.aws/senzing/stream-loader:1.7.5
+          Image: public.ecr.aws/senzing/stream-loader:1.7.6
           LogConfiguration:
             LogDriver: awslogs
             Options:

@@ -262,6 +262,7 @@ Mappings:
       RecordMax: 0
       RecordMin: 0
 
+# NOTE: The CIDRs for subnets may collide with existing subnets.  The values may be altered.
 
   VpcCidrs:
     vpc:
@@ -1887,6 +1888,12 @@ Resources:
       MessageRetentionPeriod: 1209600
       QueueName: !Sub "${AWS::StackName}-sqs-redoer-input"
       ReceiveMessageWaitTimeSeconds: 0
+      RedrivePolicy:
+        deadLetterTargetArn:
+          Fn::GetAtt:
+            - SqsRedoerDeadLetter
+            - Arn
+        maxReceiveCount: 100
       Tags:
         - Key: Name
           Value: !Sub "${AWS::StackName}-sqs-redoer-input"
@@ -3987,6 +3994,9 @@ Resources:
             -
               Name: SENZING_SUBCOMMAND
               Value: write-to-sqs
+            -
+              Name: SENZING_THREADS_PER_PROCESS
+              Value: '12'
           Essential: true
           Image: public.ecr.aws/senzing/redoer:1.3.5
           LogConfiguration:
