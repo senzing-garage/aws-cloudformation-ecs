@@ -862,8 +862,9 @@ Resources:
         Statement:
           -
             Action:
-              - sqs:ReceiveMessage
               - sqs:DeleteMessage
+              - sqs:GetQueueAttributes
+              - sqs:ReceiveMessage
             Effect: Allow
             Resource:
               - !GetAtt SqsDeadLetter.Arn
@@ -883,8 +884,9 @@ Resources:
         Statement:
           -
             Action:
-              - sqs:ReceiveMessage
               - sqs:DeleteMessage
+              - sqs:GetQueueAttributes
+              - sqs:ReceiveMessage
             Effect: Allow
             Resource:
               - !GetAtt SqsRedoerDeadLetter.Arn
