@@ -4164,7 +4164,7 @@ Resources:
               Value: '600'
             -
               Name: SENZING_REDO_SLEEP_TIME_IN_SECONDS
-              Value: '600'
+              Value: '10'
             -
               Name: SENZING_SQS_FAILURE_QUEUE_URL
               Value: !Sub "https://sqs.${AWS::Region}.amazonaws.com/${AWS::AccountId}/${SqsRedoerDeadLetter.QueueName}"
@@ -4274,7 +4274,7 @@ Resources:
               Value: '600'
             -
               Name: SENZING_REDO_SLEEP_TIME_IN_SECONDS
-              Value: '600'
+              Value: '10'
             -
               Name: SENZING_SQS_REDO_QUEUE_URL
               Value: !Sub "https://sqs.${AWS::Region}.amazonaws.com/${AWS::AccountId}/${SqsRedoerInput.QueueName}"
@@ -5444,13 +5444,11 @@ Outputs:
       - !Ref VpcId
 
   Ec2VpcCidrBlock:
+    Condition: IfCreateVpcResources
     Description: 'The CidrBloc of the VPC. Help: https://hub.senzing.com/aws-cloudformation-ecs/aws-cloudformtion-ecs-user-vpc-hosted-zone/#ec2vpccidrblock'
     Export:
       Name: !Sub "${AWS::StackName}-ec2-VpcId-cidrblock"
-    Value: !If
-      - IfCreateVpcResources
-      - !GetAtt Ec2Vpc.CidrBlock
-      - !GetAtt VpcId.CidrBlock
+    Value: !GetAtt Ec2Vpc.CidrBlock
 
   Host:
     Condition: IfUsingWeb
