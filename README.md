@@ -9,14 +9,12 @@ other templates require pre-existing AWS Resources.
 1. :heavy_check_mark: - The Cloudformation creates the resource
 1. :x: - A pre-existing AWS Resources is required.
 
-
 |   | VPC | Route53 | RDS | Instructions | Launch |
 |--:|:---:|:-------:|:---:|:------------:|:------:|
 | 1 | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | [instructions](https://github.com/Senzing/aws-cloudformation-ecs-poc-simple) | [:arrow_forward:](https://console.aws.amazon.com/cloudformation/home#/stacks/new?stackName=senzing-poc&templateURL=https://s3.amazonaws.com/public-read-access/aws-cloudformation-ecs-poc-simple/cloudformation.yaml) |
 | 2 | :heavy_check_mark: | :x: | :heavy_check_mark: | [instructions](docs/senzing-demo-hosted-zone) | [:arrow_forward:](https://console.aws.amazon.com/cloudformation/home#/stacks/new?templateURL=https://s3.amazonaws.com/public-read-access/aws-cloudformation-ecs-hosted-zone/cloudformation.yaml) |
 | 3 | :x: | :heavy_check_mark: | :heavy_check_mark: | [instructions](docs/senzing-demo-full-stack) | [:arrow_forward:](https://console.aws.amazon.com/cloudformation/home#/stacks/new?templateURL=https://s3.amazonaws.com/public-read-access/aws-cloudformation-ecs-full-stack/cloudformation.yaml) |
 | 4 | :x: | :x: | :heavy_check_mark: | [instructions](docs/senzing-demo-user-vpc-hosted-zone) | [:arrow_forward:](https://console.aws.amazon.com/cloudformation/home#/stacks/new?templateURL=https://s3.amazonaws.com/public-read-access/aws-cloudformation-ecs-user-vpc-hosted-zone/cloudformation.yaml) |
-
 
 1. How to create AWS Resources:
     1. VPC
@@ -25,6 +23,30 @@ other templates require pre-existing AWS Resources.
         1. [AWS Route53 Hosted Zone console](https://console.aws.amazon.com/route53/v2/hostedzones#)
 
 ## Details
+
+1. [aws-cloudformation-ecs-certificates](cloudformation/aws-cloudformation-ecs-certificates)
+    1. User specifies X.590 certificate and private-key.
+1. [aws-cloudformation-ecs-full-stack](cloudformation/aws-cloudformation-ecs-full-stack)
+    1. User specifies VPC.
+    1. User specifies which services are started.
+1. [aws-cloudformation-ecs-hosted-zone](cloudformation/aws-cloudformation-ecs-hosted-zone)
+    1. User specifies AWS Route53 Hosted Zone.
+1. [aws-cloudformation-ecs-staging](cloudformation/aws-cloudformation-ecs-staging)
+    1. Pulls Senzing API from staging server.
+    1. User specifies VPC.
+    1. User specifies which services are started.
+1. [aws-cloudformation-ecs-staging-simple](cloudformation/aws-cloudformation-ecs-staging-simple)
+    1. Pulls Senzing API from staging server.
+1. [aws-cloudformation-ecs-staging-simple-100M](cloudformation/aws-cloudformation-ecs-staging-simple-100M)
+    1. Pulls Senzing API from staging server.
+    1. Reads gzipped input file.
+    1. User specifies Senzing API version.
+1. [aws-cloudformation-ecs-user-vpc-hosted-zone](cloudformation/aws-cloudformation-ecs-vpc-hosted-zone)
+    1. User specifies AWS Route53 Hosted Zone.
+    1. User specifies VPC.
+    1. User specifies which services are started.
+
+## Analysis
 
 1. Variations among Cloudformation templates
 
