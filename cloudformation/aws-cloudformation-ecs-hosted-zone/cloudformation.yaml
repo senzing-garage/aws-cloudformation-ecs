@@ -755,6 +755,7 @@ Resources:
           -
             Action:
               - elasticfilesystem:DescribeMountTargets
+              - elasticfilesystem:DescribeFileSystems
             Effect: Allow
             Resource:
               - !GetAtt EfsFileSystem.Arn
@@ -2418,20 +2419,38 @@ Resources:
                   logger.info("Event: {0}".format(json.dumps(event)))
                   if event['RequestType'] in ['Create', 'Update']:
                       properties = event.get('ResourceProperties', {})
-                      describe_mount_targets_parameters = properties.get('DescribeMountTargetsParameters', {})
+                      describe_parameters = properties.get('DescribeParameters', {})
                       efs = boto3.client('efs')
                       done = False
                       while not done:
-                          time.sleep(1)
-                          response = efs.describe_mount_targets(**describe_mount_targets_parameters)
-                          life_cycle_state = response.get("MountTargets",[{}])[0].get("LifeCycleState")
-                          logger.info("response = {0}".format(json.dumps(response)))
-                          logger.info("life_cycle_state = {0}".format(life_cycle_state))
-                          if 'available' == life_cycle_state:
+                          time.sleep(10)
+                          response = efs.describe_mount_targets(**describe_parameters)
+                          # test mount targets
+                          logger.info("describe_mount_targets response = {0}".format(json.dumps(response)))
+                          mount_targets = response.get("MountTargets",[{}])
+                          done_count = 0
+                          for mount_target in mount_targets:
+                            life_cycle_state = mount_target.get("LifeCycleState")
+                            logger.info("mount_target life_cycle_state = {0}".format(life_cycle_state))
+                            if 'available' == life_cycle_state:
+                              done_count += 1
+
+                          # test file systems
+                          response = efs.describe_file_systems(**describe_parameters)
+                          logger.info(f"describe_file_systems response = {response}")
+                          file_systems = response.get("FileSystems",[{}])
+                          for file_system in file_systems:
+                            life_cycle_state = file_system.get("LifeCycleState")
+                            logger.info("file_system life_cycle_state = {0}".format(life_cycle_state))
+                            if 'available' == life_cycle_state:
+                              done_count += 1
+
+                          logger.info(f"Done? count: {done_count} of {len(mount_targets) + len(file_systems)}")
+                          if done_count == ( len(mount_targets) + len(file_systems) ):
                               done = True
-                      logger.info("sleeping 2 minutes")
-                      time.sleep(120)
-                      logger.info("Done")
+                      logger.info("Done, mount targets and file systems available")
+                      #hack, wait for a few minutes for EFS to actually be available
+                      time.sleep(360)
               except Exception as e:
                   logger.error(e)
                   traceback.print_exc()
@@ -2524,8 +2543,7 @@ Resources:
 
   LambdaRunnerInitEfs:
     DependsOn:
-     - LambdaRunnerWaitForEfsMountTarget1
-     - LambdaRunnerWaitForEfsMountTarget2
+     - LambdaRunnerWaitForEfs
     Properties:
       ClusterId: !Ref EcsCluster
       RunTaskParameters:
@@ -2767,8 +2785,7 @@ Resources:
     Condition: IfRunStreamProducer
     DependsOn:
      - LambdaRunnerG2ConfigTool
-     - LambdaRunnerWaitForEfsMountTarget1
-     - LambdaRunnerWaitForEfsMountTarget2
+     - LambdaRunnerWaitForEfs
      - SqsInput
     Properties:
       ClusterId: !Ref EcsCluster
@@ -2797,28 +2814,16 @@ Resources:
     Type: Custom::LambdaRunnerStreamProducer
 
 
-  LambdaRunnerWaitForEfsMountTarget1:
+  LambdaRunnerWaitForEfs:
     Properties:
       ClusterId: !Ref EcsCluster
-      DescribeMountTargetsParameters:
-        MountTargetId: !Ref EfsMountTarget1
+      DescribeParameters:
+        FileSystemId: !Ref EfsFileSystem
       ServiceToken: !GetAtt LambdaFunctionWaitForEfs.Arn
       Tags:
         - Key: Name
-          Value: !Sub "${AWS::StackName}-lambda-runner-wait-for-efs-mount-target-1"
-    Type: Custom::LambdaRunnerWaitForEfsMountTarget1
-
-
-  LambdaRunnerWaitForEfsMountTarget2:
-    Properties:
-      ClusterId: !Ref EcsCluster
-      DescribeMountTargetsParameters:
-        MountTargetId: !Ref EfsMountTarget2
-      ServiceToken: !GetAtt LambdaFunctionWaitForEfs.Arn
-      Tags:
-        - Key: Name
-          Value: !Sub "${AWS::StackName}-lambda-runner-wait-for-efs-mount-target-2"
-    Type: Custom::LambdaRunnerWaitForEfsMountTarget2
+          Value: !Sub "${AWS::StackName}-lambda-runner-wait-for-efs"
+    Type: Custom::LambdaRunnerWaitForEfs
 
 
   LambdaRunnerWebPassword:
