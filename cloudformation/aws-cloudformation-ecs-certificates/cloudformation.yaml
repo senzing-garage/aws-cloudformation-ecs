@@ -3319,7 +3319,7 @@ Resources:
   UserPoolDomain: # Provides Cognito Login Page
     Condition: IfUsingWeb
     Properties:
-      Domain: !Sub "${AWS::StackName}"
+      Domain: !GetAtt LambdaRunnerStackNameAsLower.OutputString
       UserPoolId: !Ref UserPool
     Type: AWS::Cognito::UserPoolDomain
 
