@@ -3611,7 +3611,7 @@ Resources:
               </p>
               <p>
                   For more information on the
-                  <a href="https://github.com/Senzing/aws-cloudformation-ecs-poc-simple">Senzing simple proof-of-concept</a>
+                  <a href="https://github.com/Senzing/aws-cloudformation-ecs/tree/main/cloudformation/aws-cloudformation-ecs-full-stack">Senzing full-stack demo</a>
                   "${AWS::StackName}"
                   AWS Cloudformation,
                   contact ${Contact}.

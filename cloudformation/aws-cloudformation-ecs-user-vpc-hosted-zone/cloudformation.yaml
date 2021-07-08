@@ -3562,7 +3562,7 @@ Resources:
               </p>
               <p>
                   For more information on the
-                  <a href="https://github.com/Senzing/aws-cloudformation-ecs-poc-simple">Senzing simple proof-of-concept</a>
+                  <a href="https://github.com/Senzing/aws-cloudformation-ecs/tree/main/cloudformation/aws-cloudformation-ecs-user-vpc-hosted-zone">Senzing sample user hosted vpc install</a>
                   "${AWS::StackName}"
                   AWS Cloudformation,
                   contact ${Contact}.
