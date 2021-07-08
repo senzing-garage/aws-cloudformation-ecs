@@ -3307,7 +3307,7 @@ Resources:
               </p>
               <p>
                   For more information on the
-                  <a href="https://github.com/Senzing/aws-cloudformation-ecs/tree/main/cloudformation/aws-cloudformation-ecs-staging-simple-100M">Senzing simple install for testing</a>
+                  <a href="https://github.com/Senzing/aws-cloudformation-ecs/tree/main/cloudformation/aws-cloudformation-ecs-staging-simple-100M">Senzing simple test install with selectable test data quantity</a>
                   "${AWS::StackName}"
                   AWS Cloudformation,
                   contact ${Contact}.
