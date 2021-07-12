@@ -2853,7 +2853,9 @@ Resources:
 
   LoadBalancerPrivate:
     Properties:
-      Name: !Sub "${AWS::StackName}-alb-private"
+      Name: !Sub
+        - "${StackNameAsLower}-alb-private"
+        - StackNameAsLower: !GetAtt LambdaRunnerStackNameAsLower.OutputString
       Scheme: internal
       SecurityGroups:
         - !Ref Ec2SecurityGroupLoadBalancerPrivate
@@ -2862,7 +2864,9 @@ Resources:
         - !Ref Ec2SubnetPrivate2
       Tags:
         - Key: Name
-          Value: !Sub "${AWS::StackName}-alb-private"
+          Value: !Sub
+            - "${StackNameAsLower}-alb-private"
+            - StackNameAsLower: !GetAtt LambdaRunnerStackNameAsLower.OutputString
       Type: application
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
 
@@ -2872,7 +2876,9 @@ Resources:
     DependsOn:
       IamServerCertificate
     Properties:
-      Name: !Sub "${AWS::StackName}-alb-public"
+      Name: !Sub
+        - "${StackNameAsLower}-alb-public"
+        - StackNameAsLower: !GetAtt LambdaRunnerStackNameAsLower.OutputString
       Scheme: internet-facing
       SecurityGroups:
         - !Ref Ec2SecurityGroupLoadBalancerPublic
@@ -2881,7 +2887,9 @@ Resources:
         - !Ref Ec2SubnetPublic2
       Tags:
         - Key: Name
-          Value: !Sub "${AWS::StackName}-alb-public"
+          Value: !Sub
+            - "${StackNameAsLower}-alb-public"
+            - StackNameAsLower: !GetAtt LambdaRunnerStackNameAsLower.OutputString
       Type: application
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
 
