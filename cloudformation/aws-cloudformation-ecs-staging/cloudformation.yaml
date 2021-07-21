@@ -3721,7 +3721,7 @@ Resources:
       Cpu: '1024'
       ExecutionRoleArn: !GetAtt IamRoleG2ConfigTool.Arn
       Family: !Sub "${AWS::StackName}-task-definition-g2configtool"
-      Memory: '8192'
+      Memory: '12288'
       NetworkMode: awsvpc
       RequiresCompatibilities:
         - FARGATE
@@ -4165,7 +4165,7 @@ Resources:
       Cpu: '1024'
       ExecutionRoleArn: !GetAtt IamRoleJupyter.Arn
       Family: !Sub "${AWS::StackName}-task-definition-jupyter"
-      Memory: '8192'
+      Memory: '12288'
       NetworkMode: awsvpc
       RequiresCompatibilities:
         - FARGATE
@@ -4466,7 +4466,7 @@ Resources:
       Cpu: '1024'
       ExecutionRoleArn: !GetAtt IamRoleSshd.Arn
       Family: !Sub "${AWS::StackName}-task-definition-sshd"
-      Memory: '8192'
+      Memory: '12288'
       NetworkMode: awsvpc
       RequiresCompatibilities:
         - FARGATE
@@ -4664,7 +4664,7 @@ Resources:
       Cpu: '1024'
       ExecutionRoleArn: !GetAtt IamRoleStreamLoader.Arn
       Family: !Sub "${AWS::StackName}-task-definition-stream-loader"
-      Memory: '8192'
+      Memory: '12288'
       NetworkMode: awsvpc
       RequiresCompatibilities:
         - FARGATE
@@ -4917,7 +4917,7 @@ Resources:
       Cpu: '1024'
       ExecutionRoleArn: !GetAtt IamRoleXterm.Arn
       Family: !Sub "${AWS::StackName}-task-definition-xterm"
-      Memory: '8192'
+      Memory: '12288'
       NetworkMode: awsvpc
       RequiresCompatibilities:
         - FARGATE
