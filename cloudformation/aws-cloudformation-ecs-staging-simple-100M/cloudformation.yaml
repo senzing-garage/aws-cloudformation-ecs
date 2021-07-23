@@ -1115,7 +1115,7 @@ Resources:
     Type: AWS::Logs::LogGroup
 
 
-  LogsLogGroupLambdaStreamProducerTasks:
+  LogsLogGroupLambdaRunStreamProducerTasks:
     Properties:
       LogGroupName: !Sub "/aws/lambda/${AWS::StackName}-lambda-run-stream-producer-tasks"
     Type: AWS::Logs::LogGroup
