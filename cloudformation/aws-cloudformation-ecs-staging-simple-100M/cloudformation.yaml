@@ -1115,6 +1115,12 @@ Resources:
     Type: AWS::Logs::LogGroup
 
 
+  LogsLogGroupLambdaStreamProducerTasks:
+    Properties:
+      LogGroupName: !Sub "/aws/lambda/${AWS::StackName}-lambda-run-stream-producer-tasks"
+    Type: AWS::Logs::LogGroup
+
+
   LogsLogGroupLambdaStringToLower:
     Properties:
       LogGroupName: !Sub "/aws/lambda/${AWS::StackName}-lambda-string-to-lower"
@@ -2152,6 +2158,118 @@ Resources:
     Type: AWS::Lambda::Function
 
 
+  LambdaFunctionRunStreamProducerTasks:
+    Condition: IfRunStreamProducer
+    DependsOn:
+     - LambdaRunnerG2ConfigTool
+     - LambdaRunnerWaitForEfs
+     - SqsInput
+    Properties:
+      Code:
+        ZipFile: |
+          #!/usr/bin/env python3
+
+          import boto3
+          import cfnresponse
+          import datetime
+          import json
+          import logging
+          import traceback
+          from json import JSONEncoder
+
+          logger = logging.getLogger()
+          logger.setLevel(logging.INFO)
+
+          class DateTimeEncoder(JSONEncoder):
+              def default(self, obj):
+                  if isinstance(obj, (datetime.date, datetime.datetime)):
+                      return obj.isoformat()
+
+          def handler(event, context):
+              result = cfnresponse.SUCCESS
+              response = {}
+              try:
+                  logger.info("Event: {0}".format(json.dumps(event)))
+                  if event['RequestType'] in ['Create', 'Update']:
+                      properties = event.get('ResourceProperties', {})
+                      run_task_parameters = properties.get('RunTaskParameters', {})
+
+                      # Change strings to integers.
+
+                      numbers = [
+                          "count",
+                          "recordMax",
+                          "recordMin"
+                      ]
+                      for number in numbers:
+                          if number in run_task_parameters:
+                              run_task_parameters[number] = int(run_task_parameters[number])
+
+                      # Make AWS ECS request to start multiple producers.
+                      #  the stride is the number of records each producer
+                      #  should produce
+                      stride = 10_000_000
+                      max = run_task_parameters.pop("recordMax")
+                      start = run_task_parameters.pop("recordMin")
+                      if max - start < stride:
+                          end = max
+                      else:
+                          end = start + stride
+                      logger.info(f"init SENZING_RECORD_MIN: {start} SENZING_RECORD_MAX: {end} total records: {max}")
+                      done = False
+                      while not done:
+                        logger.info(f"SENZING_RECORD_MIN: {start} SENZING_RECORD_MAX: {end}")
+                        run_task_parameters["overrides"] = {
+                            'containerOverrides': [
+                              {
+                                'name' : "producer",
+                                'environment': [
+                                  {
+                                    'name': 'SENZING_RECORD_MAX',
+                                    'value': f'{end}'
+                                  },
+                                  {
+                                    'name': 'SENZING_RECORD_MIN',
+                                    'value': f'{start}'
+                                  },
+                                ],
+                              }
+                            ]
+                          }
+                        logger.info(f"run_task_parameters: {run_task_parameters}")
+                        ecs = boto3.client('ecs')
+                        response = ecs.run_task(**run_task_parameters)
+                        logger.info(f"run_task response: {response}")
+                        # calculate parameters for the next task
+                        start = end + 1
+                        if end == max :
+                            done = True
+                        elif (end + stride) > max :
+                            end = max
+                        else :
+                            end += stride
+
+                  logger.info("Response: {0}".format(json.dumps(response, cls=DateTimeEncoder)))
+
+              except Exception as e:
+                  logger.error(e)
+                  traceback.print_exc()
+                  result = cfnresponse.FAILED
+              finally:
+                  cfnresponse.send(event, context, result, {})
+
+      Description: Runs stream producer tasks.
+      FunctionName: !Sub "${AWS::StackName}-lambda-run-stream-producer-tasks"
+      Handler: index.handler
+      Role: !GetAtt IamRoleLambda.Arn
+      Runtime: python3.8
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-lambda-run-stream-producer-tasks"
+      Timeout: 30
+    Type: AWS::Lambda::Function
+
+
   LambdaFunctionRunTask:
     DependsOn:
      - Ec2SubnetRouteTableAssociationPrivate1
@@ -2802,6 +2920,8 @@ Resources:
         # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/ecs.html#ECS.Client.run_task
         cluster: !Ref EcsCluster
         count: 1
+        recordMax: !FindInMap [RecordMaxMap, !Ref RecordMax, value]
+        recordMin: !FindInMap [Constants, StreamProducer, RecordMin]
         launchType: FARGATE
         networkConfiguration:
           awsvpcConfiguration:
@@ -2816,7 +2936,7 @@ Resources:
           - key: Name
             value: !Sub "${AWS::StackName}-lambda-runner-stream-producer-run-task-parameters"
         taskDefinition: !Ref EcsTaskDefinitionStreamProducer
-      ServiceToken: !GetAtt LambdaFunctionRunTask.Arn
+      ServiceToken: !GetAtt LambdaFunctionRunStreamProducerTasks.Arn
       Tags:
         - Key: Name
           Value: !Sub "${AWS::StackName}-lambda-runner-stream-producer"
