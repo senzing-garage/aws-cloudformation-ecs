@@ -112,6 +112,7 @@ Parameters:
   RecordMax:
     AllowedValues:
       - '1M'
+      - '5M'
       - '10M'
       - '20M'
       - '25M'
@@ -208,6 +209,8 @@ Mappings:
   RecordMaxMap:
     "1M":
       value: "1000000"
+    "5M":
+      value: "5000000"
     "10M":
       value: "10000000"
     "20M":
