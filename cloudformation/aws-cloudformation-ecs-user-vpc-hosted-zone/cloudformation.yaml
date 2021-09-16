@@ -7,7 +7,7 @@ AWSTemplateFormatVersion: 2010-09-09
 #     aws cloudformation validate-template: https://awscli.amazonaws.com/v2/documentation/api/latest/reference/cloudformation/validate-template.html
 
 Description: >-
-  Senzing aws-cloudformation-ecs-user-vpc-hosted-zone Version: 1.0.0
+  Senzing aws-cloudformation-ecs-user-vpc-hosted-zone Version: 1.0.1
   For more information see
   https://github.com/Senzing/aws-cloudformation-ecs/tree/main/cloudformation/aws-cloudformation-ecs-user-vpc-hosted-zone
 
@@ -20,11 +20,6 @@ Metadata:
 
   AWS::CloudFormation::Interface:
     ParameterGroups:
-      -
-        Label:
-          default: Security responsibility
-        Parameters:
-          - SecurityResponsibility
       -
         Label:
           default: Senzing installation
@@ -67,8 +62,11 @@ Metadata:
           - RunVpcFlowLogs
           - RunWebApp
           - RunXterm
-
-
+      -
+        Label:
+          default: Security responsibility
+        Parameters:
+          - SecurityResponsibility
     ParameterLabels:
       AcceptEula:
         default: >-
@@ -162,6 +160,8 @@ Parameters:
   CidrInbound:
     AllowedPattern: '(?:\d{1,3}\.){3}\d{1,3}(?:/\d\d?)?'
     ConstraintDescription: Inbound CIDR must be in the format n.n.n.n/n
+    MinLength: 9
+    MaxLength: 18
     Default: 0.0.0.0/0
     Description: 'Help: https://hub.senzing.com/aws-cloudformation-ecs/aws-cloudformtion-ecs-user-vpc-hosted-zone/#cidrinbound'
     Type: String
@@ -377,8 +377,23 @@ Mappings:
     Database:
       Name: G2
       Username: senzing
+    Images:
+      ApiServer: public.ecr.aws/senzing/senzing-poc-server:1.0.2
+      BusyBox: public.ecr.aws/senzing/busybox
+      G2Config: public.ecr.aws/senzing/g2configtool:1.4.3
+      InitContainer: public.ecr.aws/senzing/init-container:1.6.13
+      Jupyter: public.ecr.aws/senzing/jupyter:1.3.0
+      PostgresClient: public.ecr.aws/senzing/postgresql-client:1.1.1
+      Redoer: public.ecr.aws/senzing/redoer-with-data:1.3.10
+      Sshd: public.ecr.aws/senzing/sshd:1.2.4
+      StreamLoader: public.ecr.aws/senzing/stream-loader-with-data:1.8.4
+      StreamProducer: public.ecr.aws/senzing/stream-producer:1.6.1
+      Swagger: public.ecr.aws/senzing/swagger-ui:v3.51.0
+      WebApp: public.ecr.aws/senzing/entity-search-web-app:2.3.2
+      Xterm: public.ecr.aws/senzing/xterm:1.2.0
+      Yum: public.ecr.aws/senzing/yum:1.1.6
     Senzing:
-      Version: senzingapi-2.7.0-21153
+      Version: senzingapi-2.8.2-21243
     Stack:
       Name: user-vpc-hosted
 
@@ -549,6 +564,7 @@ Resources:
             Principal:
               Service:
                 - ecs-tasks.amazonaws.com
+                - sqs.amazonaws.com
         Version: '2012-10-17'
       Description: !Sub "${AWS::StackName}-iam-role-api-server"
       Tags:
@@ -981,6 +997,7 @@ Resources:
 
 
   IamPolicyPassRole:
+    Condition: IfUsingWeb
     Properties:
       PolicyName: !Sub "${AWS::StackName}-iam-policy-pass-role"
       PolicyDocument:
@@ -990,7 +1007,14 @@ Resources:
               - iam:PassRole
             Effect: Allow
             Resource:
-              - '*'
+              - !GetAtt IamRoleFlowLog.Arn
+              - !GetAtt IamRoleG2ConfigTool.Arn
+              - !GetAtt IamRoleInitEfs.Arn
+              - !GetAtt IamRoleLambda.Arn
+              - !GetAtt IamRoleStreamProducer.Arn
+              - !GetAtt IamRoleInstallSenzing.Arn
+              - !GetAtt IamRoleInitPostgres.Arn
+              - !GetAtt IamRoleInitSenzing.Arn
         Version: '2012-10-17'
       Roles:
        - !Ref IamRoleFlowLog
@@ -998,6 +1022,9 @@ Resources:
        - !Ref IamRoleInitEfs
        - !Ref IamRoleLambda
        - !Ref IamRoleStreamProducer
+       - !Ref IamRoleInstallSenzing
+       - !Ref IamRoleInitPostgres
+       - !Ref IamRoleInitSenzing
     Type: AWS::IAM::Policy
 
 
@@ -1107,6 +1134,7 @@ Resources:
           -
             Action:
               - sqs:SendMessage
+              - sqs:GetQueueAttributes
             Effect: Allow
             Resource:
               - !GetAtt SqsDeadLetter.Arn
@@ -1116,6 +1144,7 @@ Resources:
       Roles:
        - !Ref IamRoleStreamLoader
        - !Ref IamRoleStreamProducer
+       - !Ref IamRoleApiServer
     Type: AWS::IAM::Policy
 
 
@@ -1128,6 +1157,7 @@ Resources:
           -
             Action:
               - sqs:SendMessage
+              - sqs:GetQueueAttributes
             Effect: Allow
             Resource:
               - !GetAtt SqsRedoerDeadLetter.Arn
@@ -1618,6 +1648,21 @@ Resources:
     Type: AWS::EC2::SecurityGroupIngress
 
 
+  Ec2SecurityGroupIngressApiServerPrivate:
+    Condition: IfUsingApiServer
+    Properties:
+      CidrIp: !FindInMap
+        - VpcCidrs
+        - vpc
+        - cidr
+      Description: Senzing API server
+      FromPort: 8250
+      GroupId: !GetAtt Ec2SecurityGroupLoadBalancerPrivate.GroupId
+      IpProtocol: tcp
+      ToPort: 8250
+    Type: AWS::EC2::SecurityGroupIngress
+
+
   Ec2SecurityGroupIngressHttps:
     Condition: IfUsingWeb
     Properties:
@@ -1639,6 +1684,20 @@ Resources:
       IpProtocol: tcp
       SourceSecurityGroupId: !GetAtt Ec2SecurityGroupLoadBalancerPublic.GroupId
       ToPort: 8888
+    Type: AWS::EC2::SecurityGroupIngress
+
+
+  Ec2SecurityGroupIngressNFS:
+    Properties:
+      CidrIp: !FindInMap
+        - VpcCidrs
+        - vpc
+        - cidr
+      Description: NFS
+      FromPort: 2049
+      IpProtocol: tcp
+      GroupId: !GetAtt Ec2SecurityGroupLoadBalancerPrivate.GroupId
+      ToPort: 2049
     Type: AWS::EC2::SecurityGroupIngress
 
 
@@ -1675,6 +1734,18 @@ Resources:
       IpProtocol: tcp
       SourceSecurityGroupId: !GetAtt Ec2SecurityGroupLoadBalancerPublic.GroupId
       ToPort: 8251
+    Type: AWS::EC2::SecurityGroupIngress
+
+
+  Ec2SecurityGroupIngressWebAppWss:
+    Condition: IfRunWebApp
+    Properties:
+      Description: Allow Websocket on Container port 8255 from ALB
+      FromPort: 8255
+      GroupId: !GetAtt Ec2SecurityGroupLoadBalancerPublic.GroupId
+      IpProtocol: tcp
+      SourceSecurityGroupId: !GetAtt Ec2SecurityGroupLoadBalancerPublic.GroupId
+      ToPort: 8255
     Type: AWS::EC2::SecurityGroupIngress
 
 
@@ -2825,7 +2896,6 @@ Resources:
 
   LambdaRunnerInitPostgresCore:
     DependsOn:
-     - LambdaRunnerInstallSenzing
      - RdsDbClusterCore
     Properties:
       ClusterId: !Ref EcsCluster
@@ -2856,7 +2926,6 @@ Resources:
 
   LambdaRunnerInitPostgresLibfeat:
     DependsOn:
-     - LambdaRunnerInstallSenzing
      - RdsDbClusterLibfeat
     Properties:
       ClusterId: !Ref EcsCluster
@@ -2887,7 +2956,6 @@ Resources:
 
   LambdaRunnerInitPostgresRes:
     DependsOn:
-     - LambdaRunnerInstallSenzing
      - RdsDbClusterRes
     Properties:
       ClusterId: !Ref EcsCluster
@@ -2918,6 +2986,7 @@ Resources:
 
   LambdaRunnerInitSenzing:
     DependsOn:
+     - LambdaRunnerInstallSenzing
      - LambdaRunnerInitPostgresCore
      - LambdaRunnerInitPostgresLibfeat
      - LambdaRunnerInitPostgresRes
@@ -3271,6 +3340,30 @@ Resources:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
 
 
+  TargetGroupWebAppWss:
+    Condition: IfRunWebApp
+    DependsOn:
+     - LoadBalancerPublic
+    Properties:
+      Matcher:
+        HttpCode: 200-299
+      Name: !Sub "${AWS::StackName}-tg-web-app-wss"
+      Port: 8255
+      Protocol: HTTP
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-target-group-web-app-wss"
+      TargetGroupAttributes:
+      - Key: deregistration_delay.timeout_seconds
+        Value: '60'
+      TargetType: ip
+      VpcId: !If
+        - IfCreateVpcResources
+        - !Ref Ec2Vpc
+        - !Ref VpcId
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+
+
   TargetGroupXterm:
     Condition: IfRunXterm
     DependsOn:
@@ -3450,6 +3543,33 @@ Resources:
           Values:
             - "/app/*"
             - "/app"
+      ListenerArn: !Ref ListenerPort443
+      Priority: 6
+    Type: "AWS::ElasticLoadBalancingV2::ListenerRule"
+
+
+  ListenerRuleWebAppWss:
+    Condition: IfRunWebApp
+    Properties:
+      Actions:
+        - AuthenticateCognitoConfig:
+            OnUnauthenticatedRequest: authenticate
+            Scope: openid
+            UserPoolArn: !GetAtt 'UserPool.Arn'
+            UserPoolClientId: !Ref UserPoolClient
+            UserPoolDomain: !Ref UserPoolDomain
+          Order: 1
+          Type: authenticate-cognito
+        -
+          Type: "forward"
+          TargetGroupArn: !Ref TargetGroupWebAppWss
+          Order: 2
+      Conditions:
+        -
+          Field: "path-pattern"
+          Values:
+            - "/app/ws/*"
+            - "/app/ws"
       ListenerArn: !Ref ListenerPort443
       Priority: 5
     Type: "AWS::ElasticLoadBalancingV2::ListenerRule"
@@ -3653,8 +3773,8 @@ Resources:
               Name: SENZING_API_SERVER_ENABLE_ADMIN
               Value: 'true'
             -
-              Name: SENZING_API_SERVER_INI_FILE
-              Value: /etc/opt/senzing/G2Module.ini
+              Name: SENZING_API_SERVER_INIT_JSON
+              Value: !GetAtt SsmParameterSenzingEngineConfigurationJson.Value
             -
               Name: SENZING_API_SERVER_PORT
               Value: "8250"
@@ -3667,8 +3787,20 @@ Resources:
             -
               Name: SENZING_API_SERVER_URL_BASE_PATH
               Value: /api
+            -
+              Name: SENZING_API_SERVER_DEBUG
+              Value: 'false'
+            -
+              Name: SENZING_API_SERVER_VERBOSE
+              Value: 'false'
+            -
+              Name: SENZING_SQS_LOAD_QUEUE_URL
+              Value: !If [ IfUsingQueues, !Ref SqsInput, ""]
+            -
+              Name: SENZING_SQS_INFO_QUEUE_URL
+              Value: !If [ IfUsingQueues, !Ref SqsOutput, ""]
           Essential: true
-          Image: public.ecr.aws/senzing/senzing-api-server:2.6.1
+          Image: !FindInMap [Constants, Images, ApiServer]
           LogConfiguration:
             LogDriver: awslogs
             Options:
@@ -3751,7 +3883,7 @@ Resources:
             - -f
             - /etc/opt/senzing/G2Config.gtc
           Essential: true
-          Image: public.ecr.aws/senzing/g2configtool:1.4.2
+          Image: !FindInMap [Constants, Images, G2Config]
           LogConfiguration:
             LogDriver: awslogs
             Options:
@@ -3836,7 +3968,7 @@ Resources:
             - '-p'
             - '/efs/var/shared'
           Essential: true
-          Image: public.ecr.aws/senzing/busybox
+          Image: !FindInMap [Constants, Images, BusyBox]
           LogConfiguration:
             LogDriver: awslogs
             Options:
@@ -3888,18 +4020,13 @@ Resources:
               Name: SENZING_SQL_FILE
               Value: /opt/senzing/g2/resources/schema/g2core-schema-postgresql-create.sql
           Essential: true
-          Image: public.ecr.aws/senzing/postgresql-client:1.0.0
+          Image: !FindInMap [Constants, Images, PostgresClient]
           LogConfiguration:
             LogDriver: awslogs
             Options:
               awslogs-group: !Ref LogsLogGroupMain
               awslogs-region: !Ref AWS::Region
               awslogs-stream-prefix: job
-          MountPoints:
-            -
-              SourceVolume: senzing-g2-dir
-              ContainerPath: /opt/senzing/g2
-              ReadOnly: true
           Name: postgresinit
           Privileged: false
           ReadonlyRootFilesystem: false
@@ -3913,14 +4040,6 @@ Resources:
       Tags:
         - Key: Name
           Value: !Sub "${AWS::StackName}-ecs-task-definition-init-postgres-core"
-      Volumes:
-        -
-          Name: senzing-g2-dir
-          EFSVolumeConfiguration:
-            AuthorizationConfig: {}
-            FilesystemId:
-              Ref: EfsFileSystem
-            RootDirectory: /g2
     Type: AWS::ECS::TaskDefinition
 
 
@@ -3940,18 +4059,13 @@ Resources:
               Name: SENZING_SQL_FILE
               Value: /opt/senzing/g2/resources/schema/g2core-schema-postgresql-create.sql
           Essential: true
-          Image: public.ecr.aws/senzing/postgresql-client:1.0.0
+          Image: !FindInMap [Constants, Images, PostgresClient]
           LogConfiguration:
             LogDriver: awslogs
             Options:
               awslogs-group: !Ref LogsLogGroupMain
               awslogs-region: !Ref AWS::Region
               awslogs-stream-prefix: job
-          MountPoints:
-            -
-              SourceVolume: senzing-g2-dir
-              ContainerPath: /opt/senzing/g2
-              ReadOnly: true
           Name: postgresinit
           Privileged: false
           ReadonlyRootFilesystem: false
@@ -3965,14 +4079,6 @@ Resources:
       Tags:
         - Key: Name
           Value: !Sub "${AWS::StackName}-ecs-task-definition-init-postgres-libfeat"
-      Volumes:
-        -
-          Name: senzing-g2-dir
-          EFSVolumeConfiguration:
-            AuthorizationConfig: {}
-            FilesystemId:
-              Ref: EfsFileSystem
-            RootDirectory: /g2
     Type: AWS::ECS::TaskDefinition
 
 
@@ -3992,18 +4098,13 @@ Resources:
               Name: SENZING_SQL_FILE
               Value: /opt/senzing/g2/resources/schema/g2core-schema-postgresql-create.sql
           Essential: true
-          Image: public.ecr.aws/senzing/postgresql-client:1.0.0
+          Image: !FindInMap [Constants, Images, PostgresClient]
           LogConfiguration:
             LogDriver: awslogs
             Options:
               awslogs-group: !Ref LogsLogGroupMain
               awslogs-region: !Ref AWS::Region
               awslogs-stream-prefix: job
-          MountPoints:
-            -
-              SourceVolume: senzing-g2-dir
-              ContainerPath: /opt/senzing/g2
-              ReadOnly: true
           Name: postgresinit
           Privileged: false
           ReadonlyRootFilesystem: false
@@ -4017,14 +4118,6 @@ Resources:
       Tags:
         - Key: Name
           Value: !Sub "${AWS::StackName}-ecs-task-definition-init-postgres-res"
-      Volumes:
-        -
-          Name: senzing-g2-dir
-          EFSVolumeConfiguration:
-            AuthorizationConfig: {}
-            FilesystemId:
-              Ref: EfsFileSystem
-            RootDirectory: /g2
     Type: AWS::ECS::TaskDefinition
 
 
@@ -4051,7 +4144,7 @@ Resources:
               Name: SENZING_LICENSE_BASE64_ENCODED
               Value: !Sub "${SenzingLicenseAsBase64}"
           Essential: true
-          Image: public.ecr.aws/senzing/init-container:1.6.9
+          Image: !FindInMap [Constants, Images, InitContainer]
           LogConfiguration:
             LogDriver: awslogs
             Options:
@@ -4123,7 +4216,7 @@ Resources:
               Name: SENZING_ACCEPT_EULA
               Value: !Ref AcceptEula
           Essential: true
-          Image: public.ecr.aws/senzing/yum:1.1.4
+          Image: !FindInMap [Constants, Images, Yum]
           LogConfiguration:
             LogDriver: awslogs
             Options:
@@ -4187,7 +4280,7 @@ Resources:
               Name: SENZING_ENGINE_CONFIGURATION_JSON
               Value: !GetAtt SsmParameterSenzingEngineConfigurationJson.Value
           Essential: true
-          Image: public.ecr.aws/senzing/jupyter:1.3.0
+          Image: !FindInMap [Constants, Images, Jupyter]
           LogConfiguration:
             LogDriver: awslogs
             Options:
@@ -4301,7 +4394,7 @@ Resources:
               Name: SENZING_THREADS_PER_PROCESS
               Value: '8'
           Essential: true
-          Image: public.ecr.aws/senzing/redoer:1.3.7
+          Image: !FindInMap [Constants, Images, Redoer]
           LogConfiguration:
             LogDriver: awslogs
             Options:
@@ -4309,10 +4402,6 @@ Resources:
               awslogs-region: !Ref AWS::Region
               awslogs-stream-prefix: service
           MountPoints:
-            -
-              SourceVolume: senzing-data-version-dir
-              ContainerPath: /opt/senzing/data
-              ReadOnly: true
             -
               SourceVolume: senzing-etc-dir
               ContainerPath: /etc/opt/senzing
@@ -4340,13 +4429,6 @@ Resources:
           Value: !Sub "${AWS::StackName}-ecs-task-definition-redoer-loader"
       TaskRoleArn: !GetAtt IamRoleRedoer.Arn
       Volumes:
-        -
-          Name: senzing-data-version-dir
-          EFSVolumeConfiguration:
-              AuthorizationConfig: {}
-              FilesystemId:
-                Ref: EfsFileSystem
-              RootDirectory: /data/2.0.0
         -
           Name: senzing-etc-dir
           EFSVolumeConfiguration:
@@ -4405,7 +4487,7 @@ Resources:
               Name: SENZING_THREADS_PER_PROCESS
               Value: '12'
           Essential: true
-          Image: public.ecr.aws/senzing/redoer:1.3.7
+          Image: !FindInMap [Constants, Images, Redoer]
           LogConfiguration:
             LogDriver: awslogs
             Options:
@@ -4413,10 +4495,6 @@ Resources:
               awslogs-region: !Ref AWS::Region
               awslogs-stream-prefix: service
           MountPoints:
-            -
-              SourceVolume: senzing-data-version-dir
-              ContainerPath: /opt/senzing/data
-              ReadOnly: true
             -
               SourceVolume: senzing-etc-dir
               ContainerPath: /etc/opt/senzing
@@ -4444,13 +4522,6 @@ Resources:
           Value: !Sub "${AWS::StackName}-ecs-task-definition-redoer-producer"
       TaskRoleArn: !GetAtt IamRoleRedoer.Arn
       Volumes:
-        -
-          Name: senzing-data-version-dir
-          EFSVolumeConfiguration:
-              AuthorizationConfig: {}
-              FilesystemId:
-                Ref: EfsFileSystem
-              RootDirectory: /data/2.0.0
         -
           Name: senzing-etc-dir
           EFSVolumeConfiguration:
@@ -4488,7 +4559,7 @@ Resources:
               Name: SENZING_SKIP_DATABASE_PERFORMANCE_TEST
               Value: 'true'
           Essential: true
-          Image: public.ecr.aws/senzing/sshd:1.2.0
+          Image: !FindInMap [Constants, Images, Sshd]
           LinuxParameters:
             Capabilities:
               Add:
@@ -4574,7 +4645,7 @@ Resources:
               Name: SENZING_SKIP_DATABASE_PERFORMANCE_TEST
               Value: 'true'
           Essential: true
-          Image: public.ecr.aws/senzing/sshd:1.2.0
+          Image: !FindInMap [Constants, Images, Sshd]
           LinuxParameters:
             Capabilities:
               Add:
@@ -4690,7 +4761,7 @@ Resources:
               Name: SENZING_THREADS_PER_PROCESS
               Value: '8'
           Essential: true
-          Image: public.ecr.aws/senzing/stream-loader:1.7.6
+          Image: !FindInMap [Constants, Images, StreamLoader]
           LogConfiguration:
             LogDriver: awslogs
             Options:
@@ -4698,10 +4769,6 @@ Resources:
               awslogs-region: !Ref AWS::Region
               awslogs-stream-prefix: service
           MountPoints:
-            -
-              SourceVolume: senzing-data-version-dir
-              ContainerPath: /opt/senzing/data
-              ReadOnly: true
             -
               SourceVolume: senzing-etc-dir
               ContainerPath: /etc/opt/senzing
@@ -4729,13 +4796,6 @@ Resources:
           Value: !Sub "${AWS::StackName}-ecs-task-definition-stream-loader"
       TaskRoleArn: !GetAtt IamRoleStreamLoader.Arn
       Volumes:
-        -
-          Name: senzing-data-version-dir
-          EFSVolumeConfiguration:
-              AuthorizationConfig: {}
-              FilesystemId:
-                Ref: EfsFileSystem
-              RootDirectory: /data/2.0.0
         -
           Name: senzing-etc-dir
           EFSVolumeConfiguration:
@@ -4800,7 +4860,7 @@ Resources:
               Name: SENZING_THREADS_PER_PRINT
               Value: '30'
           Essential: true
-          Image: public.ecr.aws/senzing/stream-producer:1.4.0
+          Image: !FindInMap [Constants, Images, StreamProducer]
           LogConfiguration:
             LogDriver: awslogs
             Options:
@@ -4850,7 +4910,7 @@ Resources:
               Name: URL
               Value: "https://raw.githubusercontent.com/Senzing/senzing-rest-api-specification/master/senzing-rest-api.yaml"
           Essential: true
-          Image: public.ecr.aws/senzing/swagger-ui:v3.50.0
+          Image: !FindInMap [Constants, Images, Swagger]
           LogConfiguration:
             LogDriver: awslogs
             Options:
@@ -4893,8 +4953,23 @@ Resources:
             -
               Name: SENZING_WEB_SERVER_VIRTUAL_PATH
               Value: /app
+            -
+              Name: SENZING_WEB_SERVER_ADMIN_AUTH_MODE
+              Value: NONE
+            -
+              Name: SENZING_WEB_SERVER_URL
+              Value: !Sub "http://${LoadBalancerPublic.DNSName}:8251/app"
+            -
+              Name: SENZING_WEB_SERVER_PROXY_LOGLEVEL
+              Value: debug
+            -
+              Name: SENZING_WEB_SERVER_INTERNAL_URL
+              Value: "http://localhost:8251/app"
+            -
+              Name: SENZING_WEB_SERVER_STREAM_CLIENT_URL
+              Value: !Sub "wss://${LoadBalancerPublic.DNSName}/app/ws"
           Essential: true
-          Image: public.ecr.aws/senzing/entity-search-web-app:2.2.3
+          Image: !FindInMap [Constants, Images, WebApp]
           LogConfiguration:
             LogDriver: awslogs
             Options:
@@ -4905,6 +4980,9 @@ Resources:
           PortMappings:
             - ContainerPort: 8251
               HostPort: 8251
+              Protocol: tcp
+            - ContainerPort: 8255
+              HostPort: 8255
               Protocol: tcp
           Privileged: false
           ReadonlyRootFilesystem: false
@@ -4935,7 +5013,7 @@ Resources:
               Name: SENZING_SKIP_DATABASE_PERFORMANCE_TEST
               Value: 'true'
           Essential: true
-          Image: public.ecr.aws/senzing/xterm:1.1.0
+          Image: !FindInMap [Constants, Images, Xterm]
           LinuxParameters:
             Capabilities:
               Add:
@@ -5262,6 +5340,7 @@ Resources:
     DependsOn:
      - ListenerPort443
      - ListenerRuleWebApp
+     - ListenerRuleWebAppWss
     Properties:
       Cluster: !Ref EcsCluster
       DesiredCount: 1
@@ -5272,6 +5351,10 @@ Resources:
           ContainerName: webapp
           ContainerPort: 8251
           TargetGroupArn: !Ref TargetGroupWebApp
+        -
+          ContainerName: webapp
+          ContainerPort: 8255
+          TargetGroupArn: !Ref TargetGroupWebAppWss
       NetworkConfiguration:
         AwsvpcConfiguration:
           AssignPublicIp: DISABLED

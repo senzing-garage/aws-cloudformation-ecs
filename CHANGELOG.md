@@ -8,18 +8,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-- Thing 5
 - Thing 4
-
-## [1.0.1] - yyyy-mm-dd
-
-### Added to 1.0.1
-
 - Thing 3
 
-### Fixed in 1.0.1
+## [1.0.1] - 2021-09-16
 
-- Thing 2
+### Updated in 1.0.1
+
+- Done to all non-spike CFTs:
+  - Updated security to match what was done for marketplace
+  - moved images to constants
+  - added WSS support for the web app
+  - rearranged parameters to match marketplace
+
 
 ## [1.0.0] - yyyy-mm-dd
 
