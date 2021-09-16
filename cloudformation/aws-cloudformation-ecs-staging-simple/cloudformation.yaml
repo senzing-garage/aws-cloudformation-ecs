@@ -3830,9 +3830,6 @@ Resources:
               Name: SENZING_ENGINE_CONFIGURATION_JSON
               Value: !GetAtt SsmParameterSenzingEngineConfigurationJson.Value
             -
-              Name: SENZING_SUBCOMMAND
-              Value: initialize-files
-            -
               Name: SENZING_G2CONFIG_GTC
               Value: |
                 addDataSource CUSTOMER
