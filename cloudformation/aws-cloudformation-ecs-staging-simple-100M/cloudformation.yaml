@@ -3659,6 +3659,9 @@ Resources:
               Name: SENZING_API_SERVER_VERBOSE
               Value: 'false'
             -
+              Name: SENZING_ENGINE_CONFIGURATION_JSON
+              Value: !GetAtt SsmParameterSenzingEngineConfigurationJson.Value
+            -
               Name: SENZING_SQS_LOAD_QUEUE_URL
               Value: !If [ IfUsingQueues, !Ref SqsInput, ""]
             -
