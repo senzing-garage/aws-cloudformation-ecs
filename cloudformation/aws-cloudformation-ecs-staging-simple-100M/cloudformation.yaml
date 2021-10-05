@@ -257,7 +257,7 @@ Mappings:
       BusyBox: public.ecr.aws/senzing/busybox
       G2Config: public.ecr.aws/senzing/g2configtool:1.4.3
       InitContainer: public.ecr.aws/senzing/init-container:1.6.13
-      InitDataEncryption: docker.io/senzing/data-encryption-aes256cbc-sample:1.0.1
+      InitDataEncryption: public.ecr.aws/senzing/data-encryption-aes256cbc-sample:1.0.1
       Jupyter: public.ecr.aws/senzing/jupyter:1.3.0
       PostgresClient: public.ecr.aws/senzing/postgresql-client:1.1.1
       Redoer: public.ecr.aws/senzing/redoer-with-data:1.3.10
