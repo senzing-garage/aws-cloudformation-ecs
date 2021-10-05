@@ -3943,12 +3943,6 @@ Resources:
             - '777'
             - '-p'
             - '/efs/var/shared'
-            - '&&'
-            - 'mkdir'
-            - '-m'
-            - '777'
-            - '-p'
-            - '/efs/var/shared'
           Essential: true
           Image: !FindInMap [Constants, Images, BusyBox]
           LogConfiguration:
