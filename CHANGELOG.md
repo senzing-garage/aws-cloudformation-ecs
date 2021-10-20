@@ -13,7 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.0.2] - 2021-10-20
 
-### Updated in 1.0.1
+### Updated in 1.0.2
 
 - Updated image versions in all, non-spike, CFTs
 - Added better error handling in LambdaFunctionRunTaskAndWait
