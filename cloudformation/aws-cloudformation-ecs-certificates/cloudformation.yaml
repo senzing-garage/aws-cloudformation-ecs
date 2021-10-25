@@ -4755,6 +4755,9 @@ Resources:
             -
               Name: SENZING_SKIP_DATABASE_PERFORMANCE_TEST
               Value: 'true'
+            -
+              Name: XTERM
+              Value: 'xterm'
           Essential: true
           Image: !FindInMap [Constants, Images, Xterm]
           LinuxParameters:
