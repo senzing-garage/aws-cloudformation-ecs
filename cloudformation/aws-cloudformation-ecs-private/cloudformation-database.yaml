@@ -7,8 +7,8 @@ AWSTemplateFormatVersion: 2010-09-09
 #     aws cloudformation validate-template: https://awscli.amazonaws.com/v2/documentation/api/latest/reference/cloudformation/validate-template.html
 
 Description: >-
-  Senzing aws-cloudformation-database-cluster: 1.2.3
-  For more information see https://github.com/Senzing/aws-cloudformation-database-cluster
+  Senzing aws-cloudformtion-ecs-private: 1.2.3
+  For more information see https://github.com/Senzing/aws-cloudformtion-ecs-private
 
 # -----------------------------------------------------------------------------
 # Metadata
@@ -53,11 +53,11 @@ Metadata:
           (i.e. less than or equal to 16)
           Leave blank to have a new VPC created.
       VpcCidrBlock:
-        default: 'Required....'
+        default: 'Required:  VPC CIDR block'
       PrivateSubnet1Id:
-        default: 'Required....'
+        default: 'Required:  Choose subnet'
       PrivateSubnet2Id:
-        default: 'Required....'
+        default: 'Required:  Choose a backup subnet'
 
 # -----------------------------------------------------------------------------
 # Parameters
@@ -73,7 +73,7 @@ Parameters:
       - 'Single'
       - 'Multiple'
     Default: 'Multiple'
-    Description: 'Help: https://hub.senzing.com/aws-cloudformation-database-cluster/#multipledatabases'
+    Description: 'Help: https://hub.senzing.com/aws-cloudformtion-ecs-private/#multipledatabases'
     Type: String
 
 
@@ -81,7 +81,7 @@ Parameters:
     AllowedPattern: '.+|^I AGREE$'
     ConstraintDescription: SecurityResponsibility parameter must be 'I AGREE'
     Default: '_'
-    Description: 'Help: https://hub.senzing.com/aws-cloudformation-database-cluster/#securityresponsibility'
+    Description: 'Help: https://hub.senzing.com/aws-cloudformtion-ecs-private/#securityresponsibility'
     Type: String
 
 
@@ -441,17 +441,23 @@ Resources:
           Value: !Sub "${AWS::StackName}-ec2-route-table-private"
       VpcId: !Ref VpcId
     Type: AWS::EC2::RouteTable
+#https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-vpcendpoint.html
 
+  ECREndpoint:
+    Type: 'AWS::EC2::VPCEndpoint'
+    Properties:
+      ServiceName: !Sub 'com.amazonaws.${AWS::Region}.ecr.api'
+      VpcId: !Ref VpcId
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-route.html
 # AWS Console: https://console.aws.amazon.com/vpc/home?#RouteTables > {name} > "Routes" tab
 
-  # Ec2RoutePrivate:
-  #   Properties:
-  #     DestinationCidrBlock: 0.0.0.0/0
-  #     NatGatewayId: !Ref Ec2NatGateway
-  #     RouteTableId: !Ref Ec2RouteTablePrivate
-  #   Type: AWS::EC2::Route
+  Ec2RoutePrivate:
+    Properties:
+      DestinationCidrBlock: 0.0.0.0/0
+      VpcEndpointId: !Ref ECREndpoint
+      RouteTableId: !Ref Ec2RouteTablePrivate
+    Type: AWS::EC2::Route
 
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-subnet-route-table-assoc.html
@@ -1351,13 +1357,13 @@ Outputs:
 # AWS Console: https://console.aws.amazon.com/cloudformation/home?#/stacks > {stack} > Outputs
 
   AccountID:
-    Description: 'The AWS AccountID. Help: https://hub.senzing.com/aws-cloudformation-database-cluster/#accountid'
+    Description: 'The AWS AccountID. Help: https://hub.senzing.com/aws-cloudformtion-ecs-private/#accountid'
     Export:
       Name: !Sub "${AWS::StackName}-account-id"
     Value: !Sub "${AWS::AccountId}"
 
   DatabaseHostCore:
-    Description: 'Hostname of the Core database. Help: https://hub.senzing.com/aws-cloudformation-database-cluster/#databasehostcore'
+    Description: 'Hostname of the Core database. Help: https://hub.senzing.com/aws-cloudformtion-ecs-private/#databasehostcore'
     Export:
       Name: !Sub "${AWS::StackName}-database-host-core"
     Value: !If
@@ -1366,7 +1372,7 @@ Outputs:
       - !GetAtt RdsDbClusterCore.Endpoint.Address
 
   DatabaseHostLibfeat:
-    Description: 'Hostname of the Libfeat database. Help: https://hub.senzing.com/aws-cloudformation-database-cluster/#databasehostlibfeat'
+    Description: 'Hostname of the Libfeat database. Help: https://hub.senzing.com/aws-cloudformtion-ecs-private/#databasehostlibfeat'
     Export:
       Name: !Sub "${AWS::StackName}-database-host-libfeat"
     Value: !If
@@ -1375,7 +1381,7 @@ Outputs:
       - !GetAtt RdsDbClusterLibfeat.Endpoint.Address
 
   DatabaseHostRes:
-    Description: 'Hostname of the Res database. Help: https://hub.senzing.com/aws-cloudformation-database-cluster/#databasehostres'
+    Description: 'Hostname of the Res database. Help: https://hub.senzing.com/aws-cloudformtion-ecs-private/#databasehostres'
     Export:
       Name: !Sub "${AWS::StackName}-database-host-res"
     Value: !If
@@ -1384,19 +1390,19 @@ Outputs:
       - !GetAtt RdsDbClusterRes.Endpoint.Address
 
   DatabaseName:
-    Description: 'The name of the database. Help: https://hub.senzing.com/aws-cloudformation-database-cluster/#databasename'
+    Description: 'The name of the database. Help: https://hub.senzing.com/aws-cloudformtion-ecs-private/#databasename'
     Export:
       Name: !Sub "${AWS::StackName}-database-name"
     Value: !FindInMap [Constants, Database, Name]
 
   DatabasePassword:
-    Description: 'The randomly generated password for the administrative user (DatabaseUsername). Help: https://hub.senzing.com/aws-cloudformation-database-cluster/#databasepassword'
+    Description: 'The randomly generated password for the administrative user (DatabaseUsername). Help: https://hub.senzing.com/aws-cloudformtion-ecs-private/#databasepassword'
     Export:
       Name: !Sub "${AWS::StackName}-database-password"
     Value: !GetAtt LambdaRunnerDbPassword.RandomString
 
   DatabasePortCore:
-    Description: 'The port number that will accept connections on the Core database. Help: https://hub.senzing.com/aws-cloudformation-database-cluster/#databaseportcore'
+    Description: 'The port number that will accept connections on the Core database. Help: https://hub.senzing.com/aws-cloudformtion-ecs-private/#databaseportcore'
     Export:
       Name: !Sub "${AWS::StackName}-database-port-core"
     Value: !If
@@ -1405,7 +1411,7 @@ Outputs:
       - !GetAtt RdsDbClusterCore.Endpoint.Port
 
   DatabasePortLibfeat:
-    Description: 'The port number that will accept connections on the Libfeat database. Help: https://hub.senzing.com/aws-cloudformation-database-cluster/#databaseportlibfeat'
+    Description: 'The port number that will accept connections on the Libfeat database. Help: https://hub.senzing.com/aws-cloudformtion-ecs-private/#databaseportlibfeat'
     Export:
       Name: !Sub "${AWS::StackName}-database-port-libfeat"
     Value: !If
@@ -1414,7 +1420,7 @@ Outputs:
       - !GetAtt RdsDbClusterLibfeat.Endpoint.Port
 
   DatabasePortRes:
-    Description: 'The port number that will accept connections on the Res database. Help: https://hub.senzing.com/aws-cloudformation-database-cluster/#databaseportres'
+    Description: 'The port number that will accept connections on the Res database. Help: https://hub.senzing.com/aws-cloudformtion-ecs-private/#databaseportres'
     Export:
       Name: !Sub "${AWS::StackName}-database-port-res"
     Value: !If
@@ -1423,55 +1429,55 @@ Outputs:
       - !GetAtt RdsDbClusterRes.Endpoint.Port
 
   DatabaseUsername:
-    Description: 'The administrative user name. Help: https://hub.senzing.com/aws-cloudformation-database-cluster/#databaseusername'
+    Description: 'The administrative user name. Help: https://hub.senzing.com/aws-cloudformtion-ecs-private/#databaseusername'
     Export:
       Name: !Sub "${AWS::StackName}-database-username"
     Value: !FindInMap [Constants, Database, Username]
 
   Ec2InternetGateway:
-    Description: 'Internet Gateway. Help: https://hub.senzing.com/aws-cloudformation-database-cluster/#ec2internetgateway'
+    Description: 'Internet Gateway. Help: https://hub.senzing.com/aws-cloudformtion-ecs-private/#ec2internetgateway'
     Export:
       Name: !Sub "${AWS::StackName}-ec2-internet-gateway"
     Value: !Ref Ec2InternetGateway
 
   Ec2SecurityGroupInternal:
-    Description: 'The security group used internally. Help: https://hub.senzing.com/aws-cloudformation-database-cluster/#ec2securitygroupinternal'
+    Description: 'The security group used internally. Help: https://hub.senzing.com/aws-cloudformtion-ecs-private/#ec2securitygroupinternal'
     Export:
       Name: !Sub "${AWS::StackName}-ec2-security-group-internal"
     Value: !Ref Ec2SecurityGroupInternal
 
   Ec2Vpc:
-    Description: 'The ID of the VPC. Help: https://hub.senzing.com/aws-cloudformation-database-cluster/#ec2vpc'
+    Description: 'The ID of the VPC. Help: https://hub.senzing.com/aws-cloudformtion-ecs-private/#ec2vpc'
     Export:
       Name: !Sub "${AWS::StackName}-ec2-VpcId"
     Value: !Ref VpcId
 
   Ec2VpcCidrBlock:
-    Description: 'The CidrBloc of the VPC. Help: https://hub.senzing.com/aws-cloudformation-database-cluster/#ec2vpccidrblock'
+    Description: 'The CidrBloc of the VPC. Help: https://hub.senzing.com/aws-cloudformtion-ecs-private/#ec2vpccidrblock'
     Export:
       Name: !Sub "${AWS::StackName}-ec2-VpcId-cidrblock"
     Value: !Ref VpcCidrBlock
 
   SubnetPrivate1:
-    Description: 'The ID of private subnet 1. Help: https://hub.senzing.com/aws-cloudformation-database-cluster/#subnetprivate1'
+    Description: 'The ID of private subnet 1. Help: https://hub.senzing.com/aws-cloudformtion-ecs-private/#subnetprivate1'
     Export:
       Name: !Sub "${AWS::StackName}-subnet-private-1"
     Value: !Ref PrivateSubnet1Id
 
   SubnetPrivate2:
-    Description: 'The ID of private subnet 2. Help: https://hub.senzing.com/aws-cloudformation-database-cluster/#subnetprivate2'
+    Description: 'The ID of private subnet 2. Help: https://hub.senzing.com/aws-cloudformtion-ecs-private/#subnetprivate2'
     Export:
       Name: !Sub "${AWS::StackName}-subnet-private-2"
     Value: !Ref PrivateSubnet2Id
 
   SubnetPublic1:
-    Description: 'The ID of public subnet 1. Help: https://hub.senzing.com/aws-cloudformation-database-cluster/#subnetpublic1'
+    Description: 'The ID of public subnet 1. Help: https://hub.senzing.com/aws-cloudformtion-ecs-private/#subnetpublic1'
     Export:
       Name: !Sub "${AWS::StackName}-subnet-public-1"
     Value: !Ref PrivateSubnet1Id
 
   SubnetPublic2:
-    Description: 'The ID of public subnet 2. Help: https://hub.senzing.com/aws-cloudformation-database-cluster/#subnetpublic2'
+    Description: 'The ID of public subnet 2. Help: https://hub.senzing.com/aws-cloudformtion-ecs-private/#subnetpublic2'
     Export:
       Name: !Sub "${AWS::StackName}-subnet-public-2"
     Value: !Ref PrivateSubnet2Id
