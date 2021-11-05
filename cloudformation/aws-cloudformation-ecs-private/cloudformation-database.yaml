@@ -29,11 +29,9 @@ Metadata:
           default: 'Identify existing resources'
         Parameters:
           - VpcId
-          - VpcIdCidrBlock
+          - VpcCidrBlock
           - PrivateSubnet1Id
-          - PrivateSubnet1CidrBlock
           - PrivateSubnet2Id
-          - PrivateSubnet2CidrBlock
       -
         Label:
           default: Security responsibility
@@ -54,15 +52,11 @@ Metadata:
           Must have an address range of 10.0.0.0/16 or larger.
           (i.e. less than or equal to 16)
           Leave blank to have a new VPC created.
-      VpcIdCidrBlock:
+      VpcCidrBlock:
         default: 'Required....'
       PrivateSubnet1Id:
         default: 'Required....'
-      PrivateSubnet1CidrBlock:
-        default: 'Required....'
       PrivateSubnet2Id:
-        default: 'Required....'
-      PrivateSubnet2CidrBlock:
         default: 'Required....'
 
 # -----------------------------------------------------------------------------
@@ -95,7 +89,7 @@ Parameters:
     Description: 'Help: https://hub.senzing.com/aws-cloudformation-ecs/aws-cloudformtion-ecs-private/#vpcid'
     Type: AWS::EC2::VPC::Id
 
-  VpcIdCidrBlock:
+  VpcCidrBlock:
     Description: 'Help: https://hub.senzing.com/aws-cloudformation-ecs/aws-cloudformtion-ecs-private/#cidrblock'
     Type: String
 
@@ -103,17 +97,10 @@ Parameters:
     Description: 'Help: https://hub.senzing.com/aws-cloudformation-ecs/aws-cloudformtion-ecs-private/#privatesubnet'
     Type: AWS::EC2::Subnet::Id
 
-  PrivateSubnet1CidrBlock:
-    Description: 'Help: https://hub.senzing.com/aws-cloudformation-ecs/aws-cloudformtion-ecs-private/#cidrblock'
-    Type: String
-
   PrivateSubnet2Id:
     Description: 'Help: https://hub.senzing.com/aws-cloudformation-ecs/aws-cloudformtion-ecs-private/#privatesubnet'
     Type: AWS::EC2::Subnet::Id
 
-  PrivateSubnet2CidrBlock:
-    Description: 'Help: https://hub.senzing.com/aws-cloudformation-ecs/aws-cloudformtion-ecs-private/#cidrblock'
-    Type: String
 
 # -----------------------------------------------------------------------------
 # Rules
@@ -373,38 +360,6 @@ Resources:
 
 # -- Cloud, subnets, routing --------------------------------------------------
 
-# https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-subnet.html
-# AWS Console: https://console.aws.amazon.com/vpc/home?#subnets > Search for {stack}
-
-  Ec2SubnetPrivate1:
-    Properties:
-      AvailabilityZone: !Select
-          - '0'
-          - !GetAZs
-            Ref: AWS::Region
-      CidrBlock: !Ref PrivateSubnet1CidrBlock
-      Tags:
-        - Key: Name
-          Value: !Sub "${AWS::StackName}-ec2-subnet-private-1"
-      VpcId: !Ref VpcId
-    Type: AWS::EC2::Subnet
-
-
-  Ec2SubnetPrivate2:
-    Properties:
-      AvailabilityZone: !Select
-          - '1'
-          - !GetAZs
-            Ref: AWS::Region
-      CidrBlock: !Ref PrivateSubnet2CidrBlock
-      Tags:
-        - Key: Name
-          Value: !Sub "${AWS::StackName}-ec2-subnet-private-2"
-      VpcId: !Ref VpcId
-    Type: AWS::EC2::Subnet
-
-
-
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-ec2-eip.html
 # AWS Console: https://console.aws.amazon.com/vpc/home?#Addresses: > Search for {stack}
 
@@ -429,10 +384,7 @@ Resources:
           IpProtocol: '-1'
       SecurityGroupIngress:
         -
-          CidrIp: !FindInMap
-            - VpcCidrs
-            - vpc
-            - cidr
+          CidrIp: !Ref VpcCidrBlock
           Description: PostgreSQL
           FromPort: 5432
           IpProtocol: tcp
@@ -491,33 +443,16 @@ Resources:
     Type: AWS::EC2::RouteTable
 
 
-  Ec2RouteTablePublic:
-    Properties:
-      Tags:
-        - Key: Name
-          Value: !Sub "${AWS::StackName}-ec2-route-table-public"
-      VpcId: !Ref VpcId
-    Type: AWS::EC2::RouteTable
-
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-route.html
 # AWS Console: https://console.aws.amazon.com/vpc/home?#RouteTables > {name} > "Routes" tab
 
-  Ec2RoutePrivate:
-    Properties:
-      DestinationCidrBlock: 0.0.0.0/0
-      NatGatewayId: !Ref Ec2NatGateway
-      RouteTableId: !Ref Ec2RouteTablePrivate
-    Type: AWS::EC2::Route
+  # Ec2RoutePrivate:
+  #   Properties:
+  #     DestinationCidrBlock: 0.0.0.0/0
+  #     NatGatewayId: !Ref Ec2NatGateway
+  #     RouteTableId: !Ref Ec2RouteTablePrivate
+  #   Type: AWS::EC2::Route
 
-
-  Ec2RoutePublic:
-    DependsOn:
-     - Ec2VpcGatewayAttachment
-    Properties:
-      DestinationCidrBlock: 0.0.0.0/0
-      GatewayId: !Ref Ec2InternetGateway
-      RouteTableId: !Ref Ec2RouteTablePublic
-    Type: AWS::EC2::Route
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-subnet-route-table-assoc.html
 # AWS Console: https://console.aws.amazon.com/vpc/home?#RouteTables > {name} > "Subnet Associations" tab
@@ -525,28 +460,14 @@ Resources:
   Ec2SubnetRouteTableAssociationPrivate1:
     Properties:
       RouteTableId: !Ref Ec2RouteTablePrivate
-      SubnetId: !Ref Ec2SubnetPrivate1
+      SubnetId: !Ref PrivateSubnet1Id
     Type: AWS::EC2::SubnetRouteTableAssociation
 
 
   Ec2SubnetRouteTableAssociationPrivate2:
     Properties:
       RouteTableId: !Ref Ec2RouteTablePrivate
-      SubnetId: !Ref Ec2SubnetPrivate2
-    Type: AWS::EC2::SubnetRouteTableAssociation
-
-
-  Ec2SubnetRouteTableAssociationPublic1:
-    Properties:
-      RouteTableId: !Ref Ec2RouteTablePublic
-      SubnetId: !Ref Ec2SubnetPublic1
-    Type: AWS::EC2::SubnetRouteTableAssociation
-
-
-  Ec2SubnetRouteTableAssociationPublic2:
-    Properties:
-      RouteTableId: !Ref Ec2RouteTablePublic
-      SubnetId: !Ref Ec2SubnetPublic2
+      SubnetId: !Ref PrivateSubnet2Id
     Type: AWS::EC2::SubnetRouteTableAssociation
 
 
@@ -560,8 +481,8 @@ Resources:
       DBSubnetGroupDescription: !Sub "${AWS::StackName}-db-subnet-description"
       DBSubnetGroupName: !Sub "${AWS::StackName}-db-subnet"
       SubnetIds:
-        - !Ref Ec2SubnetPrivate1
-        - !Ref Ec2SubnetPrivate2
+        - !Ref PrivateSubnet1Id
+        - !Ref PrivateSubnet2Id
       Tags:
         - Key: Name
           Value: !Sub "${AWS::StackName}-rds-db-subnet-group"
@@ -590,9 +511,6 @@ Resources:
      - LogsLogGroupDbCluster
      - RdsDbSubnetGroup
     Properties:
-      AvailabilityZones:
-        - !GetAtt Ec2SubnetPrivate1.AvailabilityZone
-        - !GetAtt Ec2SubnetPrivate2.AvailabilityZone
       DatabaseName: G2
       DBClusterIdentifier: !Sub "${AWS::StackName}-aurora-senzing-cluster"
       DBClusterParameterGroupName:
@@ -632,9 +550,6 @@ Resources:
      - LogsLogGroupDbClusterCore
      - RdsDbSubnetGroup
     Properties:
-      AvailabilityZones:
-        - !GetAtt Ec2SubnetPrivate1.AvailabilityZone
-        - !GetAtt Ec2SubnetPrivate2.AvailabilityZone
       DatabaseName: G2
       DBClusterIdentifier: !Sub "${AWS::StackName}-aurora-senzing-core-cluster"
       DBClusterParameterGroupName:
@@ -674,9 +589,6 @@ Resources:
      - LogsLogGroupDbClusterLibfeat
      - RdsDbSubnetGroup
     Properties:
-      AvailabilityZones:
-        - !GetAtt Ec2SubnetPrivate1.AvailabilityZone
-        - !GetAtt Ec2SubnetPrivate2.AvailabilityZone
       DatabaseName: G2
       DBClusterIdentifier: !Sub "${AWS::StackName}-aurora-senzing-libfeat-cluster"
       DBClusterParameterGroupName:
@@ -716,9 +628,6 @@ Resources:
      - LogsLogGroupDbClusterRes
      - RdsDbSubnetGroup
     Properties:
-      AvailabilityZones:
-        - !GetAtt Ec2SubnetPrivate1.AvailabilityZone
-        - !GetAtt Ec2SubnetPrivate2.AvailabilityZone
       DatabaseName: G2
       DBClusterIdentifier: !Sub "${AWS::StackName}-aurora-senzing-res-cluster"
       DBClusterParameterGroupName:
@@ -1075,8 +984,8 @@ Resources:
             securityGroups:
               - !Ref Ec2SecurityGroupLambdaRunner
             subnets:
-              - !Ref Ec2SubnetPrivate1
-              - !Ref Ec2SubnetPrivate2
+              - !Ref PrivateSubnet1Id
+              - !Ref PrivateSubnet2Id
         platformVersion: 1.4.0
         tags:
           - key: Name
@@ -1105,8 +1014,8 @@ Resources:
             securityGroups:
               - !Ref Ec2SecurityGroupLambdaRunner
             subnets:
-              - !Ref Ec2SubnetPrivate1
-              - !Ref Ec2SubnetPrivate2
+              - !Ref PrivateSubnet1Id
+              - !Ref PrivateSubnet2Id
         platformVersion: 1.4.0
         tags:
           - key: Name
@@ -1135,8 +1044,8 @@ Resources:
             securityGroups:
               - !Ref Ec2SecurityGroupLambdaRunner
             subnets:
-              - !Ref Ec2SubnetPrivate1
-              - !Ref Ec2SubnetPrivate2
+              - !Ref PrivateSubnet1Id
+              - !Ref PrivateSubnet2Id
         platformVersion: 1.4.0
         tags:
           - key: Name
@@ -1165,8 +1074,8 @@ Resources:
             securityGroups:
               - !Ref Ec2SecurityGroupLambdaRunner
             subnets:
-              - !Ref Ec2SubnetPrivate1
-              - !Ref Ec2SubnetPrivate2
+              - !Ref PrivateSubnet1Id
+              - !Ref PrivateSubnet2Id
         platformVersion: 1.4.0
         tags:
           - key: Name
@@ -1541,29 +1450,29 @@ Outputs:
     Description: 'The CidrBloc of the VPC. Help: https://hub.senzing.com/aws-cloudformation-database-cluster/#ec2vpccidrblock'
     Export:
       Name: !Sub "${AWS::StackName}-ec2-VpcId-cidrblock"
-    Value: !GetAtt VpcIdCidrBlock
+    Value: !Ref VpcCidrBlock
 
   SubnetPrivate1:
     Description: 'The ID of private subnet 1. Help: https://hub.senzing.com/aws-cloudformation-database-cluster/#subnetprivate1'
     Export:
       Name: !Sub "${AWS::StackName}-subnet-private-1"
-    Value: !Ref Ec2SubnetPrivate1
+    Value: !Ref PrivateSubnet1Id
 
   SubnetPrivate2:
     Description: 'The ID of private subnet 2. Help: https://hub.senzing.com/aws-cloudformation-database-cluster/#subnetprivate2'
     Export:
       Name: !Sub "${AWS::StackName}-subnet-private-2"
-    Value: !Ref Ec2SubnetPrivate2
+    Value: !Ref PrivateSubnet2Id
 
   SubnetPublic1:
     Description: 'The ID of public subnet 1. Help: https://hub.senzing.com/aws-cloudformation-database-cluster/#subnetpublic1'
     Export:
       Name: !Sub "${AWS::StackName}-subnet-public-1"
-    Value: !Ref Ec2SubnetPrivate1
+    Value: !Ref PrivateSubnet1Id
 
   SubnetPublic2:
     Description: 'The ID of public subnet 2. Help: https://hub.senzing.com/aws-cloudformation-database-cluster/#subnetpublic2'
     Export:
       Name: !Sub "${AWS::StackName}-subnet-public-2"
-    Value: !Ref Ec2SubnetPrivate2
+    Value: !Ref PrivateSubnet2Id
 
