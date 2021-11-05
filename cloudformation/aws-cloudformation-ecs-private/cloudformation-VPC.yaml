@@ -151,6 +151,11 @@ Resources:
       VpcId: !Ref Ec2Vpc
     Type: AWS::EC2::RouteTable
 
+  Ec2EgressOnlyInternetGateway:
+    Properties:
+      VpcId: !Ref Ec2Vpc
+    Type: AWS::EC2::EgressOnlyInternetGateway
+
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-route.html
 # AWS Console: https://console.aws.amazon.com/vpc/home?#RouteTables > {name} > "Routes" tab
@@ -158,6 +163,7 @@ Resources:
   Ec2RoutePrivate:
     Properties:
       DestinationCidrBlock: 0.0.0.0/0
+      EgressOnlyInternetGatewayId: !Ref Ec2EgressOnlyInternetGateway
       RouteTableId: !Ref Ec2RouteTablePrivate
     Type: AWS::EC2::Route
 
