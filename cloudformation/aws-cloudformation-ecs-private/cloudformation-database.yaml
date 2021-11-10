@@ -90,6 +90,7 @@ Parameters:
     Type: AWS::EC2::VPC::Id
 
   VpcCidrBlock:
+    Default: '10.0.0.0/16'
     Description: 'Help: https://hub.senzing.com/aws-cloudformation-ecs/aws-cloudformtion-ecs-private/#cidrblock'
     Type: String
 
@@ -128,7 +129,8 @@ Mappings:
       Name: G2
       Username: senzing
     Images:
-      PostgresClient: public.ecr.aws/senzing/postgresql-client:1.1.2
+      # PostgresClient: public.ecr.aws/senzing/postgresql-client:1.1.2
+      PostgresClient: 513176624027.dkr.ecr.us-east-1.amazonaws.com/postgresql-client:1.1.1
     Stack:
       Name: database-cluster
 
@@ -204,6 +206,26 @@ Resources:
 # AWS Console: https://console.aws.amazon.com/iam/home?#/roles > Search for {stack} > {role} > inline policy
 
 
+  IamPolicyECSTaskExecution:
+    Properties:
+      PolicyName: !Sub "${AWS::StackName}-iam-policy-ecs-task-execution"
+      PolicyDocument:
+        Statement:
+          -
+            Action:
+              - ecr:GetAuthorizationToken
+              - ecr:BatchCheckLayerAvailability
+              - ecr:GetDownloadUrlForLayer
+              - ecr:BatchGetImage
+            Effect: Allow
+            Resource:
+              - '*'
+        Version: '2012-10-17'
+      Roles:
+       - !Ref IamRoleInitPostgres
+    Type: AWS::IAM::Policy
+
+
   IamPolicyLoggingCreateStream:
     Properties:
       PolicyName: !Sub "${AWS::StackName}-iam-policy-logging-create-stream"
@@ -233,10 +255,12 @@ Resources:
               - iam:PassRole
             Effect: Allow
             Resource:
-              - '*'
+              - !GetAtt IamRoleLambda.Arn
+              - !GetAtt IamRoleInitPostgres.Arn
         Version: '2012-10-17'
       Roles:
        - !Ref IamRoleLambda
+       - !Ref IamRoleInitPostgres
     Type: AWS::IAM::Policy
 
 
@@ -360,17 +384,6 @@ Resources:
 
 # -- Cloud, subnets, routing --------------------------------------------------
 
-# https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-ec2-eip.html
-# AWS Console: https://console.aws.amazon.com/vpc/home?#Addresses: > Search for {stack}
-
-  Ec2Eip:
-    Properties:
-      Domain: vpc
-      Tags:
-        - Key: Name
-          Value: !Sub "${AWS::StackName}-ec2-eip"
-    Type: AWS::EC2::EIP
-
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-ec2-security-group.html
 # AWS Console: https://console.aws.amazon.com/vpc/home?#SecurityGroups > Search for {stack}
 
@@ -409,72 +422,6 @@ Resources:
           Value: !Sub "${AWS::StackName}-ec2-security-group-lambda-runner"
       VpcId: !Ref VpcId
     Type: AWS::EC2::SecurityGroup
-
-
-
-# https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-internetgateway.html
-# AWS Console: https://console.aws.amazon.com/vpc/home?#igws > Search for {stack}
-
-  Ec2InternetGateway:
-    Properties:
-      Tags:
-        - Key: Name
-          Value: !Sub "${AWS::StackName}-ec2-internet-gateway"
-    Type: AWS::EC2::InternetGateway
-
-# https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-vpc-gateway-attachment.html
-# AWS Console: https://console.aws.amazon.com/vpc/home?#igws > Search for {stack} > State & VPI ID
-
-  Ec2VpcGatewayAttachment:
-    Properties:
-      InternetGatewayId: !Ref Ec2InternetGateway
-      VpcId: !Ref VpcId
-    Type: AWS::EC2::VPCGatewayAttachment
-
-# https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-route-table.html
-# AWS Console: https://console.aws.amazon.com/vpc/home?#RouteTables > Search for {stack}
-
-  Ec2RouteTablePrivate:
-    Properties:
-      Tags:
-        - Key: Name
-          Value: !Sub "${AWS::StackName}-ec2-route-table-private"
-      VpcId: !Ref VpcId
-    Type: AWS::EC2::RouteTable
-#https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-vpcendpoint.html
-
-  ECREndpoint:
-    Type: 'AWS::EC2::VPCEndpoint'
-    Properties:
-      ServiceName: !Sub 'com.amazonaws.${AWS::Region}.ecr.api'
-      VpcId: !Ref VpcId
-
-# https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-route.html
-# AWS Console: https://console.aws.amazon.com/vpc/home?#RouteTables > {name} > "Routes" tab
-
-  Ec2RoutePrivate:
-    Properties:
-      DestinationCidrBlock: 0.0.0.0/0
-      VpcEndpointId: !Ref ECREndpoint
-      RouteTableId: !Ref Ec2RouteTablePrivate
-    Type: AWS::EC2::Route
-
-
-# https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-subnet-route-table-assoc.html
-# AWS Console: https://console.aws.amazon.com/vpc/home?#RouteTables > {name} > "Subnet Associations" tab
-
-  Ec2SubnetRouteTableAssociationPrivate1:
-    Properties:
-      RouteTableId: !Ref Ec2RouteTablePrivate
-      SubnetId: !Ref PrivateSubnet1Id
-    Type: AWS::EC2::SubnetRouteTableAssociation
-
-
-  Ec2SubnetRouteTableAssociationPrivate2:
-    Properties:
-      RouteTableId: !Ref Ec2RouteTablePrivate
-      SubnetId: !Ref PrivateSubnet2Id
-    Type: AWS::EC2::SubnetRouteTableAssociation
 
 
 # -- Database -----------------------------------------------------------------
@@ -715,9 +662,9 @@ Resources:
 
 
   LambdaFunctionRandomString:
-    DependsOn:
-     - Ec2SubnetRouteTableAssociationPrivate1
-     - Ec2SubnetRouteTableAssociationPrivate2
+    # DependsOn:
+    #  - Ec2SubnetRouteTableAssociationPrivate1
+    #  - Ec2SubnetRouteTableAssociationPrivate2
     Properties:
       Code:
         ZipFile: |
@@ -762,9 +709,9 @@ Resources:
 
 
   LambdaFunctionRunTaskAndWait:
-    DependsOn:
-     - Ec2SubnetRouteTableAssociationPrivate1
-     - Ec2SubnetRouteTableAssociationPrivate2
+    # DependsOn:
+    #  - Ec2SubnetRouteTableAssociationPrivate1
+    #  - Ec2SubnetRouteTableAssociationPrivate2
     Properties:
       Code:
         ZipFile: |
@@ -1434,11 +1381,11 @@ Outputs:
       Name: !Sub "${AWS::StackName}-database-username"
     Value: !FindInMap [Constants, Database, Username]
 
-  Ec2InternetGateway:
-    Description: 'Internet Gateway. Help: https://hub.senzing.com/aws-cloudformtion-ecs-private/#ec2internetgateway'
-    Export:
-      Name: !Sub "${AWS::StackName}-ec2-internet-gateway"
-    Value: !Ref Ec2InternetGateway
+  # Ec2InternetGateway:
+  #   Description: 'Internet Gateway. Help: https://hub.senzing.com/aws-cloudformtion-ecs-private/#ec2internetgateway'
+  #   Export:
+  #     Name: !Sub "${AWS::StackName}-ec2-internet-gateway"
+  #   Value: !Ref Ec2InternetGateway
 
   Ec2SecurityGroupInternal:
     Description: 'The security group used internally. Help: https://hub.senzing.com/aws-cloudformtion-ecs-private/#ec2securitygroupinternal'
