@@ -93,11 +93,11 @@ Resources:
   Ec2SecurityGroupEcrTasks:
     Properties:
       GroupDescription: !Sub "${AWS::StackName} - ECR tasks open ports."
-      SecurityGroupEgress:
-        -
-          CidrIp: 0.0.0.0/0
-          Description: All
-          IpProtocol: '-1'
+      # SecurityGroupEgress:
+      #   -
+      #     CidrIp: 0.0.0.0/0
+      #     Description: All
+      #     IpProtocol: '-1'
       SecurityGroupIngress:
         -
           CidrIp: !FindInMap
@@ -236,39 +236,6 @@ Resources:
       VpcEndpointType: Interface
       VpcId: !Ref Ec2Vpc
     Type: AWS::EC2::VPCEndpoint
-
-  # Ec2VpcEndpointEcs:
-  #   Properties:
-  #     PrivateDnsEnabled: true
-  #     ServiceName: !Sub com.amazonaws.${AWS::Region}.ecs
-  #     SubnetIds:
-  #       - !Ref Ec2SubnetPrivate1
-  #       - !Ref Ec2SubnetPrivate2
-  #     VpcEndpointType: Interface
-  #     VpcId: !Ref Ec2Vpc
-  #   Type: AWS::EC2::VPCEndpoint
-
-  # Ec2VpcEndpointEcsAgent:
-  #   Properties:
-  #     PrivateDnsEnabled: true
-  #     ServiceName: !Sub com.amazonaws.${AWS::Region}.ecs-agent
-  #     SubnetIds:
-  #       - !Ref Ec2SubnetPrivate1
-  #       - !Ref Ec2SubnetPrivate2
-  #     VpcEndpointType: Interface
-  #     VpcId: !Ref Ec2Vpc
-  #   Type: AWS::EC2::VPCEndpoint
-
-  # Ec2VpcEndpointEcsTelemetry:
-  #   Properties:
-  #     PrivateDnsEnabled: true
-  #     ServiceName: !Sub com.amazonaws.${AWS::Region}.ecs-telemetry
-  #     SubnetIds:
-  #       - !Ref Ec2SubnetPrivate1
-  #       - !Ref Ec2SubnetPrivate2
-  #     VpcEndpointType: Interface
-  #     VpcId: !Ref Ec2Vpc
-  #   Type: AWS::EC2::VPCEndpoint
 
   Ec2VpcEndpointS3:
     Properties:

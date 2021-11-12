@@ -7,7 +7,7 @@ AWSTemplateFormatVersion: 2010-09-09
 #     aws cloudformation validate-template: https://awscli.amazonaws.com/v2/documentation/api/latest/reference/cloudformation/validate-template.html
 
 Description: >-
-  Senzing aws-cloudformtion-ecs-private: 1.2.3
+  Senzing aws-cloudformtion-ecs-private: 1.0.0
   For more information see https://github.com/Senzing/aws-cloudformtion-ecs-private
 
 # -----------------------------------------------------------------------------
@@ -57,7 +57,6 @@ Metadata:
           Required: VPC Id of existing VPC.
           Must have an address range of 10.0.0.0/16 or larger.
           (i.e. less than or equal to 16)
-          Leave blank to have a new VPC created.
 
 # -----------------------------------------------------------------------------
 # Parameters
@@ -642,9 +641,6 @@ Resources:
 
 
   LambdaFunctionRandomString:
-    # DependsOn:
-    #  - Ec2SubnetRouteTableAssociationPrivate1
-    #  - Ec2SubnetRouteTableAssociationPrivate2
     Properties:
       Code:
         ZipFile: |
@@ -689,9 +685,6 @@ Resources:
 
 
   LambdaFunctionRunTaskAndWait:
-    # DependsOn:
-    #  - Ec2SubnetRouteTableAssociationPrivate1
-    #  - Ec2SubnetRouteTableAssociationPrivate2
     Properties:
       Code:
         ZipFile: |
@@ -1076,7 +1069,6 @@ Resources:
 # AWS Console: https://console.aws.amazon.com/ecs/home?#/taskDefinitions > Search for {stack}
 
 
-
   EcsTaskDefinitionInitPostgresConfiguration:
     Properties:
       ContainerDefinitions:
@@ -1353,11 +1345,11 @@ Outputs:
       Name: !Sub "${AWS::StackName}-database-username"
     Value: !FindInMap [Constants, Database, Username]
 
-  # Ec2InternetGateway:
-  #   Description: 'Internet Gateway. Help: https://hub.senzing.com/aws-cloudformtion-ecs-private/#ec2internetgateway'
-  #   Export:
-  #     Name: !Sub "${AWS::StackName}-ec2-internet-gateway"
-  #   Value: !Ref Ec2InternetGateway
+  Ec2SecurityGroupEcrTasks:
+    Description: 'Security group id for tasks access ECR. Help: https://hub.senzing.com/aws-cloudformtion-ecs-private/#subnetprivate'
+    Export:
+      Name: !Sub "${AWS::StackName}-ec2-security-group-ecr-tasks"
+    Value: !Ref TaskSecurityGroupId
 
   Ec2SecurityGroupInternal:
     Description: 'The security group used internally. Help: https://hub.senzing.com/aws-cloudformtion-ecs-private/#ec2securitygroupinternal'
@@ -1377,27 +1369,9 @@ Outputs:
       Name: !Sub "${AWS::StackName}-ec2-VpcId-cidrblock"
     Value: !Ref VpcCidrBlock
 
-  SubnetPrivate1:
-    Description: 'The ID of private subnet 1. Help: https://hub.senzing.com/aws-cloudformtion-ecs-private/#subnetprivate1'
+  PrivateSubnetIdList:
+    Description: 'Comma separated list of private subnets. Help: https://hub.senzing.com/aws-cloudformtion-ecs-private/#subnetprivate'
     Export:
-      Name: !Sub "${AWS::StackName}-subnet-private-1"
-    Value: !Select [0, !Ref PrivateSubnetIdList]
-
-  SubnetPrivate2:
-    Description: 'The ID of private subnet 2. Help: https://hub.senzing.com/aws-cloudformtion-ecs-private/#subnetprivate2'
-    Export:
-      Name: !Sub "${AWS::StackName}-subnet-private-2"
-    Value: !Select [1, !Ref PrivateSubnetIdList]
-
-  SubnetPublic1:
-    Description: 'The ID of public subnet 1. Help: https://hub.senzing.com/aws-cloudformtion-ecs-private/#subnetpublic1'
-    Export:
-      Name: !Sub "${AWS::StackName}-subnet-public-1"
-    Value: !Select [0, !Ref PrivateSubnetIdList]
-
-  SubnetPublic2:
-    Description: 'The ID of public subnet 2. Help: https://hub.senzing.com/aws-cloudformtion-ecs-private/#subnetpublic2'
-    Export:
-      Name: !Sub "${AWS::StackName}-subnet-public-2"
-    Value: !Select [1, !Ref PrivateSubnetIdList]
+      Name: !Sub "${AWS::StackName}-subnet-private-list"
+    Value: !Join [ ",", !Ref PrivateSubnetIdList]
 
