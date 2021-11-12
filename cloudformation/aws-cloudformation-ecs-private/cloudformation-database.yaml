@@ -30,8 +30,8 @@ Metadata:
         Parameters:
           - VpcId
           - VpcCidrBlock
-          - PrivateSubnet1Id
-          - PrivateSubnet2Id
+          - PrivateSubnetIdList
+          - TaskSecurityGroupId
       -
         Label:
           default: Security responsibility
@@ -40,24 +40,24 @@ Metadata:
     ParameterLabels:
       MultipleDatabases:
         default: 'Optional: Would you like to install into a single or multiple databases?'
+      PrivateSubnetIdList:
+        default: 'Required:  Choose subnet(s)'
       SecurityResponsibility:
         default: >-
           Required: A default deployment of this template is for public demonstration only.
           Before using authentic PII, ensure the security of your deployment.
           The security of this deployment is your responsibility.
           To acknowledge your understanding and acceptance of the foregoing, type “I AGREE”.
+      TaskSecurityGroupId:
+        default: 'Required: Choose a security group'
+      VpcCidrBlock:
+        default: 'Required:  VPC CIDR block'
       VpcId:
         default: >-
           Required: VPC Id of existing VPC.
           Must have an address range of 10.0.0.0/16 or larger.
           (i.e. less than or equal to 16)
           Leave blank to have a new VPC created.
-      VpcCidrBlock:
-        default: 'Required:  VPC CIDR block'
-      PrivateSubnet1Id:
-        default: 'Required:  Choose subnet'
-      PrivateSubnet2Id:
-        default: 'Required:  Choose a backup subnet'
 
 # -----------------------------------------------------------------------------
 # Parameters
@@ -76,7 +76,6 @@ Parameters:
     Description: 'Help: https://hub.senzing.com/aws-cloudformtion-ecs-private/#multipledatabases'
     Type: String
 
-
   SecurityResponsibility:
     AllowedPattern: '.+|^I AGREE$'
     ConstraintDescription: SecurityResponsibility parameter must be 'I AGREE'
@@ -84,24 +83,22 @@ Parameters:
     Description: 'Help: https://hub.senzing.com/aws-cloudformtion-ecs-private/#securityresponsibility'
     Type: String
 
+  PrivateSubnetIdList:
+    Description: 'Help: https://hub.senzing.com/aws-cloudformation-ecs/aws-cloudformtion-ecs-private/#privatesubnet'
+    Type: List<AWS::EC2::Subnet::Id>
 
-  VpcId:
-    Description: 'Help: https://hub.senzing.com/aws-cloudformation-ecs/aws-cloudformtion-ecs-private/#vpcid'
-    Type: AWS::EC2::VPC::Id
+  TaskSecurityGroupId:
+    Description: 'Please provide the security group id:'
+    Type: AWS::EC2::SecurityGroup::Id
 
   VpcCidrBlock:
     Default: '10.0.0.0/16'
     Description: 'Help: https://hub.senzing.com/aws-cloudformation-ecs/aws-cloudformtion-ecs-private/#cidrblock'
     Type: String
 
-  PrivateSubnet1Id:
-    Description: 'Help: https://hub.senzing.com/aws-cloudformation-ecs/aws-cloudformtion-ecs-private/#privatesubnet'
-    Type: AWS::EC2::Subnet::Id
-
-  PrivateSubnet2Id:
-    Description: 'Help: https://hub.senzing.com/aws-cloudformation-ecs/aws-cloudformtion-ecs-private/#privatesubnet'
-    Type: AWS::EC2::Subnet::Id
-
+  VpcId:
+    Description: 'Help: https://hub.senzing.com/aws-cloudformation-ecs/aws-cloudformtion-ecs-private/#vpcid'
+    Type: AWS::EC2::VPC::Id
 
 # -----------------------------------------------------------------------------
 # Rules
@@ -409,21 +406,6 @@ Resources:
     Type: AWS::EC2::SecurityGroup
 
 
-  Ec2SecurityGroupLambdaRunner:
-    Properties:
-      GroupDescription: !Sub "${AWS::StackName} - Lambda open ports."
-      SecurityGroupEgress:
-        -
-          CidrIp: 0.0.0.0/0
-          Description: All
-          IpProtocol: '-1'
-      Tags:
-        - Key: Name
-          Value: !Sub "${AWS::StackName}-ec2-security-group-lambda-runner"
-      VpcId: !Ref VpcId
-    Type: AWS::EC2::SecurityGroup
-
-
 # -- Database -----------------------------------------------------------------
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-rds-dbsubnet-group.html
@@ -433,9 +415,7 @@ Resources:
     Properties:
       DBSubnetGroupDescription: !Sub "${AWS::StackName}-db-subnet-description"
       DBSubnetGroupName: !Sub "${AWS::StackName}-db-subnet"
-      SubnetIds:
-        - !Ref PrivateSubnet1Id
-        - !Ref PrivateSubnet2Id
+      SubnetIds: !Ref PrivateSubnetIdList
       Tags:
         - Key: Name
           Value: !Sub "${AWS::StackName}-rds-db-subnet-group"
@@ -935,10 +915,8 @@ Resources:
           awsvpcConfiguration:
             assignPublicIp: DISABLED
             securityGroups:
-              - !Ref Ec2SecurityGroupLambdaRunner
-            subnets:
-              - !Ref PrivateSubnet1Id
-              - !Ref PrivateSubnet2Id
+              - !Ref TaskSecurityGroupId
+            subnets: !Ref PrivateSubnetIdList
         platformVersion: 1.4.0
         tags:
           - key: Name
@@ -965,10 +943,8 @@ Resources:
           awsvpcConfiguration:
             assignPublicIp: DISABLED
             securityGroups:
-              - !Ref Ec2SecurityGroupLambdaRunner
-            subnets:
-              - !Ref PrivateSubnet1Id
-              - !Ref PrivateSubnet2Id
+              - !Ref TaskSecurityGroupId
+            subnets: !Ref PrivateSubnetIdList
         platformVersion: 1.4.0
         tags:
           - key: Name
@@ -995,10 +971,8 @@ Resources:
           awsvpcConfiguration:
             assignPublicIp: DISABLED
             securityGroups:
-              - !Ref Ec2SecurityGroupLambdaRunner
-            subnets:
-              - !Ref PrivateSubnet1Id
-              - !Ref PrivateSubnet2Id
+              - !Ref TaskSecurityGroupId
+            subnets: !Ref PrivateSubnetIdList
         platformVersion: 1.4.0
         tags:
           - key: Name
@@ -1025,10 +999,8 @@ Resources:
           awsvpcConfiguration:
             assignPublicIp: DISABLED
             securityGroups:
-              - !Ref Ec2SecurityGroupLambdaRunner
-            subnets:
-              - !Ref PrivateSubnet1Id
-              - !Ref PrivateSubnet2Id
+              - !Ref TaskSecurityGroupId
+            subnets: !Ref PrivateSubnetIdList
         platformVersion: 1.4.0
         tags:
           - key: Name
@@ -1409,23 +1381,23 @@ Outputs:
     Description: 'The ID of private subnet 1. Help: https://hub.senzing.com/aws-cloudformtion-ecs-private/#subnetprivate1'
     Export:
       Name: !Sub "${AWS::StackName}-subnet-private-1"
-    Value: !Ref PrivateSubnet1Id
+    Value: !Select [0, !Ref PrivateSubnetIdList]
 
   SubnetPrivate2:
     Description: 'The ID of private subnet 2. Help: https://hub.senzing.com/aws-cloudformtion-ecs-private/#subnetprivate2'
     Export:
       Name: !Sub "${AWS::StackName}-subnet-private-2"
-    Value: !Ref PrivateSubnet2Id
+    Value: !Select [1, !Ref PrivateSubnetIdList]
 
   SubnetPublic1:
     Description: 'The ID of public subnet 1. Help: https://hub.senzing.com/aws-cloudformtion-ecs-private/#subnetpublic1'
     Export:
       Name: !Sub "${AWS::StackName}-subnet-public-1"
-    Value: !Ref PrivateSubnet1Id
+    Value: !Select [0, !Ref PrivateSubnetIdList]
 
   SubnetPublic2:
     Description: 'The ID of public subnet 2. Help: https://hub.senzing.com/aws-cloudformtion-ecs-private/#subnetpublic2'
     Export:
       Name: !Sub "${AWS::StackName}-subnet-public-2"
-    Value: !Ref PrivateSubnet2Id
+    Value: !Select [1, !Ref PrivateSubnetIdList]
 

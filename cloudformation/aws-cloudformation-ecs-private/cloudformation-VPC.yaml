@@ -87,6 +87,35 @@ Resources:
 
 # -- Cloud, subnets, routing --------------------------------------------------
 
+# https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-ec2-security-group.html
+# AWS Console: https://console.aws.amazon.com/vpc/home?#SecurityGroups > Search for {stack}
+
+  Ec2SecurityGroupEcrTasks:
+    Properties:
+      GroupDescription: !Sub "${AWS::StackName} - ECR tasks open ports."
+      SecurityGroupEgress:
+        -
+          CidrIp: 0.0.0.0/0
+          Description: All
+          IpProtocol: '-1'
+      SecurityGroupIngress:
+        -
+          CidrIp: !FindInMap
+            - VpcCidrs
+            - vpc
+            - cidr
+          Description: ECR
+          FromPort: 443
+          IpProtocol: tcp
+          ToPort: 443
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-ec2-security-group-ecr-tasks"
+      VpcId: !Ref Ec2Vpc
+    Type: AWS::EC2::SecurityGroup
+
+
+
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-route-table.html
 # AWS Console: https://console.aws.amazon.com/vpc/home?#RouteTables > Search for {stack}
 
@@ -172,6 +201,8 @@ Resources:
   Ec2VpcEndpointEcrApi:
     Properties:
       PrivateDnsEnabled: true
+      SecurityGroupIds:
+        - !Ref Ec2SecurityGroupEcrTasks
       ServiceName: !Sub com.amazonaws.${AWS::Region}.ecr.api
       SubnetIds:
         - !Ref Ec2SubnetPrivate1
@@ -183,6 +214,8 @@ Resources:
   Ec2VpcEndpointEcrDkr:
     Properties:
       PrivateDnsEnabled: true
+      SecurityGroupIds:
+        - !Ref Ec2SecurityGroupEcrTasks
       ServiceName: !Sub com.amazonaws.${AWS::Region}.ecr.dkr
       SubnetIds:
         - !Ref Ec2SubnetPrivate1
@@ -191,10 +224,12 @@ Resources:
       VpcId: !Ref Ec2Vpc
     Type: AWS::EC2::VPCEndpoint
 
-  Ec2VpcEndpointEcs:
+  Ec2VpcEndpointLogs:
     Properties:
       PrivateDnsEnabled: true
-      ServiceName: !Sub com.amazonaws.${AWS::Region}.ecs
+      SecurityGroupIds:
+        - !Ref Ec2SecurityGroupEcrTasks
+      ServiceName: !Sub com.amazonaws.${AWS::Region}.logs
       SubnetIds:
         - !Ref Ec2SubnetPrivate1
         - !Ref Ec2SubnetPrivate2
@@ -202,27 +237,38 @@ Resources:
       VpcId: !Ref Ec2Vpc
     Type: AWS::EC2::VPCEndpoint
 
-  Ec2VpcEndpointEcsAgent:
-    Properties:
-      PrivateDnsEnabled: true
-      ServiceName: !Sub com.amazonaws.${AWS::Region}.ecs-agent
-      SubnetIds:
-        - !Ref Ec2SubnetPrivate1
-        - !Ref Ec2SubnetPrivate2
-      VpcEndpointType: Interface
-      VpcId: !Ref Ec2Vpc
-    Type: AWS::EC2::VPCEndpoint
+  # Ec2VpcEndpointEcs:
+  #   Properties:
+  #     PrivateDnsEnabled: true
+  #     ServiceName: !Sub com.amazonaws.${AWS::Region}.ecs
+  #     SubnetIds:
+  #       - !Ref Ec2SubnetPrivate1
+  #       - !Ref Ec2SubnetPrivate2
+  #     VpcEndpointType: Interface
+  #     VpcId: !Ref Ec2Vpc
+  #   Type: AWS::EC2::VPCEndpoint
 
-  Ec2VpcEndpointEcsTelemetry:
-    Properties:
-      PrivateDnsEnabled: true
-      ServiceName: !Sub com.amazonaws.${AWS::Region}.ecs-telemetry
-      SubnetIds:
-        - !Ref Ec2SubnetPrivate1
-        - !Ref Ec2SubnetPrivate2
-      VpcEndpointType: Interface
-      VpcId: !Ref Ec2Vpc
-    Type: AWS::EC2::VPCEndpoint
+  # Ec2VpcEndpointEcsAgent:
+  #   Properties:
+  #     PrivateDnsEnabled: true
+  #     ServiceName: !Sub com.amazonaws.${AWS::Region}.ecs-agent
+  #     SubnetIds:
+  #       - !Ref Ec2SubnetPrivate1
+  #       - !Ref Ec2SubnetPrivate2
+  #     VpcEndpointType: Interface
+  #     VpcId: !Ref Ec2Vpc
+  #   Type: AWS::EC2::VPCEndpoint
+
+  # Ec2VpcEndpointEcsTelemetry:
+  #   Properties:
+  #     PrivateDnsEnabled: true
+  #     ServiceName: !Sub com.amazonaws.${AWS::Region}.ecs-telemetry
+  #     SubnetIds:
+  #       - !Ref Ec2SubnetPrivate1
+  #       - !Ref Ec2SubnetPrivate2
+  #     VpcEndpointType: Interface
+  #     VpcId: !Ref Ec2Vpc
+  #   Type: AWS::EC2::VPCEndpoint
 
   Ec2VpcEndpointS3:
     Properties:
