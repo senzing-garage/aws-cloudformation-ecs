@@ -10,6 +10,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Thing 4
 - Thing 3
+
+## [1.0.4] - 2021-11-19
+
+### Updated in 1.0.4
+
+- updated senzing version
+- updated stream-loader version
+- fixed pass role condition
+
+
 ## [1.0.3] - 2021-11-02
 
 ### Updated in 1.0.3
