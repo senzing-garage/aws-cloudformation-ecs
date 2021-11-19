@@ -41,7 +41,7 @@ Metadata:
       MultipleDatabases:
         default: 'Optional: Would you like to install into a single or multiple databases?'
       PrivateSubnetIdList:
-        default: 'Required:  Choose subnet(s)'
+        default: 'Required:  Choose TWO private subnets'
       SecurityResponsibility:
         default: >-
           Required: A default deployment of this template is for public demonstration only.
