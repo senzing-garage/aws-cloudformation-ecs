@@ -159,16 +159,16 @@ Resources:
           CidrIp: 0.0.0.0/0
           Description: All
           IpProtocol: '-1'
-      SecurityGroupIngress:
-        -
-          CidrIp: !FindInMap
-            - VpcCidrs
-            - vpc
-            - cidr
-          Description: ECR
-          FromPort: 443
-          IpProtocol: tcp
-          ToPort: 443
+      # SecurityGroupIngress:
+      #   -
+      #     CidrIp: !FindInMap
+      #       - VpcCidrs
+      #       - vpc
+      #       - cidr
+      #     Description: ECR
+      #     FromPort: 443
+      #     IpProtocol: tcp
+      #     ToPort: 443
       Tags:
         - Key: Name
           Value: !Sub "${AWS::StackName}-ec2-security-group-ecr-tasks"
@@ -298,53 +298,53 @@ Resources:
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-vpcendpoint.html
 # https://aws.amazon.com/blogs/compute/setting-up-aws-privatelink-for-amazon-ecs-and-amazon-ecr/
 
-  Ec2VpcEndpointEcrApi:
-    Properties:
-      PrivateDnsEnabled: true
-      SecurityGroupIds:
-        - !Ref Ec2SecurityGroupEcrTasks
-      ServiceName: !Sub com.amazonaws.${AWS::Region}.ecr.api
-      SubnetIds:
-        - !Ref Ec2SubnetPrivate1
-        - !Ref Ec2SubnetPrivate2
-      VpcEndpointType: Interface
-      VpcId: !Ref Ec2Vpc
-    Type: AWS::EC2::VPCEndpoint
+  # Ec2VpcEndpointEcrApi:
+  #   Properties:
+  #     PrivateDnsEnabled: true
+  #     SecurityGroupIds:
+  #       - !Ref Ec2SecurityGroupEcrTasks
+  #     ServiceName: !Sub com.amazonaws.${AWS::Region}.ecr.api
+  #     SubnetIds:
+  #       - !Ref Ec2SubnetPrivate1
+  #       - !Ref Ec2SubnetPrivate2
+  #     VpcEndpointType: Interface
+  #     VpcId: !Ref Ec2Vpc
+  #   Type: AWS::EC2::VPCEndpoint
 
-  Ec2VpcEndpointEcrDkr:
-    Properties:
-      PrivateDnsEnabled: true
-      SecurityGroupIds:
-        - !Ref Ec2SecurityGroupEcrTasks
-      ServiceName: !Sub com.amazonaws.${AWS::Region}.ecr.dkr
-      SubnetIds:
-        - !Ref Ec2SubnetPrivate1
-        - !Ref Ec2SubnetPrivate2
-      VpcEndpointType: Interface
-      VpcId: !Ref Ec2Vpc
-    Type: AWS::EC2::VPCEndpoint
+  # Ec2VpcEndpointEcrDkr:
+  #   Properties:
+  #     PrivateDnsEnabled: true
+  #     SecurityGroupIds:
+  #       - !Ref Ec2SecurityGroupEcrTasks
+  #     ServiceName: !Sub com.amazonaws.${AWS::Region}.ecr.dkr
+  #     SubnetIds:
+  #       - !Ref Ec2SubnetPrivate1
+  #       - !Ref Ec2SubnetPrivate2
+  #     VpcEndpointType: Interface
+  #     VpcId: !Ref Ec2Vpc
+  #   Type: AWS::EC2::VPCEndpoint
 
-  Ec2VpcEndpointLogs:
-    Properties:
-      PrivateDnsEnabled: true
-      SecurityGroupIds:
-        - !Ref Ec2SecurityGroupEcrTasks
-      ServiceName: !Sub com.amazonaws.${AWS::Region}.logs
-      SubnetIds:
-        - !Ref Ec2SubnetPrivate1
-        - !Ref Ec2SubnetPrivate2
-      VpcEndpointType: Interface
-      VpcId: !Ref Ec2Vpc
-    Type: AWS::EC2::VPCEndpoint
+  # Ec2VpcEndpointLogs:
+  #   Properties:
+  #     PrivateDnsEnabled: true
+  #     SecurityGroupIds:
+  #       - !Ref Ec2SecurityGroupEcrTasks
+  #     ServiceName: !Sub com.amazonaws.${AWS::Region}.logs
+  #     SubnetIds:
+  #       - !Ref Ec2SubnetPrivate1
+  #       - !Ref Ec2SubnetPrivate2
+  #     VpcEndpointType: Interface
+  #     VpcId: !Ref Ec2Vpc
+  #   Type: AWS::EC2::VPCEndpoint
 
-  Ec2VpcEndpointS3:
-    Properties:
-      RouteTableIds:
-        - !Ref Ec2RouteTablePrivate
-      ServiceName: !Sub com.amazonaws.${AWS::Region}.s3
-      VpcEndpointType: Gateway
-      VpcId: !Ref Ec2Vpc
-    Type: AWS::EC2::VPCEndpoint
+  # Ec2VpcEndpointS3:
+  #   Properties:
+  #     RouteTableIds:
+  #       - !Ref Ec2RouteTablePrivate
+  #     ServiceName: !Sub com.amazonaws.${AWS::Region}.s3
+  #     VpcEndpointType: Gateway
+  #     VpcId: !Ref Ec2Vpc
+  #   Type: AWS::EC2::VPCEndpoint
 
 # -----------------------------------------------------------------------------
 # Outputs

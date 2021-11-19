@@ -198,32 +198,32 @@ Mappings:
 
   Constants:
     Images:
-      # ApiServer: public.ecr.aws/senzing/senzing-poc-server:1.0.5
-      # BusyBox: public.ecr.aws/senzing/busybox:1.34.0
-      # G2Config: public.ecr.aws/senzing/g2configtool:1.4.4
-      # InitContainer: public.ecr.aws/senzing/init-container:1.6.14
-      # Jupyter: public.ecr.aws/senzing/jupyter:1.3.0
-      # Redoer: public.ecr.aws/senzing/redoer-with-data:1.4.1
-      # Sshd: public.ecr.aws/senzing/sshd:1.2.5
-      # StreamLoader: public.ecr.aws/senzing/stream-loader-with-data:1.9.1
-      # StreamProducer: public.ecr.aws/senzing/stream-producer:1.6.2
-      # Swagger: public.ecr.aws/senzing/swagger-ui:v3.51.0
-      # WebApp: public.ecr.aws/senzing/entity-search-web-app:2.3.3
-      # Xterm: public.ecr.aws/senzing/xterm:1.2.3
-      # Yum: public.ecr.aws/senzing/yum:1.1.6
-      ApiServer: 513176624027.dkr.ecr.us-east-1.amazonaws.com/senzing-poc-server:1.0.5
-      BusyBox: 513176624027.dkr.ecr.us-east-1.amazonaws.com/busybox:1.34.0
-      G2Config: 513176624027.dkr.ecr.us-east-1.amazonaws.com/g2configtool:1.4.4
-      InitContainer: 513176624027.dkr.ecr.us-east-1.amazonaws.com/init-container:1.6.14
-      Jupyter: 513176624027.dkr.ecr.us-east-1.amazonaws.com/jupyter:1.3.0
-      Redoer: 513176624027.dkr.ecr.us-east-1.amazonaws.com/redoer-with-data:1.4.1
-      Sshd: 513176624027.dkr.ecr.us-east-1.amazonaws.com/sshd:1.2.5
-      StreamLoader: 513176624027.dkr.ecr.us-east-1.amazonaws.com/stream-loader-with-data:1.9.2
-      StreamProducer: 513176624027.dkr.ecr.us-east-1.amazonaws.com/stream-producer:1.6.2
-      Swagger: 513176624027.dkr.ecr.us-east-1.amazonaws.com/swagger-ui:v3.51.0
-      WebApp: 513176624027.dkr.ecr.us-east-1.amazonaws.com/entity-search-web-app:2.3.3
-      Xterm: 513176624027.dkr.ecr.us-east-1.amazonaws.com/xterm:1.2.3
-      Yum: 513176624027.dkr.ecr.us-east-1.amazonaws.com/yum:1.1.6
+      ApiServer: public.ecr.aws/senzing/senzing-poc-server:1.0.5
+      BusyBox: public.ecr.aws/senzing/busybox:1.34.0
+      G2Config: public.ecr.aws/senzing/g2configtool:1.4.4
+      InitContainer: public.ecr.aws/senzing/init-container:1.6.14
+      Jupyter: public.ecr.aws/senzing/jupyter:1.3.0
+      Redoer: public.ecr.aws/senzing/redoer-with-data:1.4.1
+      Sshd: public.ecr.aws/senzing/sshd:1.2.5
+      StreamLoader: public.ecr.aws/senzing/stream-loader-with-data:1.9.1
+      StreamProducer: public.ecr.aws/senzing/stream-producer:1.6.2
+      Swagger: public.ecr.aws/senzing/swagger-ui:v3.51.0
+      WebApp: public.ecr.aws/senzing/entity-search-web-app:2.3.3
+      Xterm: public.ecr.aws/senzing/xterm:1.2.3
+      Yum: public.ecr.aws/senzing/yum:1.1.6
+      # ApiServer: 513176624027.dkr.ecr.us-east-1.amazonaws.com/senzing-poc-server:1.0.5
+      # BusyBox: 513176624027.dkr.ecr.us-east-1.amazonaws.com/busybox:1.34.0
+      # G2Config: 513176624027.dkr.ecr.us-east-1.amazonaws.com/g2configtool:1.4.4
+      # InitContainer: 513176624027.dkr.ecr.us-east-1.amazonaws.com/init-container:1.6.14
+      # Jupyter: 513176624027.dkr.ecr.us-east-1.amazonaws.com/jupyter:1.3.0
+      # Redoer: 513176624027.dkr.ecr.us-east-1.amazonaws.com/redoer-with-data:1.4.1
+      # Sshd: 513176624027.dkr.ecr.us-east-1.amazonaws.com/sshd:1.2.5
+      # StreamLoader: 513176624027.dkr.ecr.us-east-1.amazonaws.com/stream-loader-with-data:1.9.2
+      # StreamProducer: 513176624027.dkr.ecr.us-east-1.amazonaws.com/stream-producer:1.6.2
+      # Swagger: 513176624027.dkr.ecr.us-east-1.amazonaws.com/swagger-ui:v3.51.0
+      # WebApp: 513176624027.dkr.ecr.us-east-1.amazonaws.com/entity-search-web-app:2.3.3
+      # Xterm: 513176624027.dkr.ecr.us-east-1.amazonaws.com/xterm:1.2.3
+      # Yum: 513176624027.dkr.ecr.us-east-1.amazonaws.com/yum:1.1.6
     Run:
       ApiServer: Yes
       Jupyter: No

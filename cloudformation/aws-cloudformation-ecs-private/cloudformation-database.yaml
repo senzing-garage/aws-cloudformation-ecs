@@ -127,8 +127,8 @@ Mappings:
       Name: G2
       Username: senzing
     Images:
-      # PostgresClient: public.ecr.aws/senzing/postgresql-client:1.1.2
-      PostgresClient: 513176624027.dkr.ecr.us-east-1.amazonaws.com/postgresql-client:1.1.2
+      PostgresClient: public.ecr.aws/senzing/postgresql-client:1.1.2
+      # PostgresClient: 513176624027.dkr.ecr.us-east-1.amazonaws.com/postgresql-client:1.1.2
     Stack:
       Name: database-cluster
 
