@@ -51,7 +51,7 @@ Metadata:
           The security of this deployment is your responsibility.
           To acknowledge your understanding and acceptance of the foregoing, type “I AGREE”.
       TaskSecurityGroupId:
-        default: 'Required: Choose a security group'
+        default: 'Required: Choose a security group that allows internet egress'
       VpcCidrBlock:
         default: 'Required:  VPC CIDR block'
       VpcId:

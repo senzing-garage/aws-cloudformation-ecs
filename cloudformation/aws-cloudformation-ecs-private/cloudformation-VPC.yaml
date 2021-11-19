@@ -151,6 +151,9 @@ Resources:
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-ec2-security-group.html
 # AWS Console: https://console.aws.amazon.com/vpc/home?#SecurityGroups > Search for {stack}
 
+#  This security group is here to support the ECR VPC endpoints should one want to use
+#  them.  You'd need to uncomment the 443 ingress and the VPC endpoints later in this file.
+
   Ec2SecurityGroupEcrTasks:
     Properties:
       GroupDescription: !Sub "${AWS::StackName} - ECR tasks open ports."
@@ -297,6 +300,10 @@ Resources:
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-vpcendpoint.html
 # https://aws.amazon.com/blogs/compute/setting-up-aws-privatelink-for-amazon-ecs-and-amazon-ecr/
+
+#  These VPC endpoints are unnecessary when there is an internet gateway for egress
+#  However, if such an egress isn't available, these VPC endpoints will allow
+#  access to a private ECR.  See the README for more information.
 
   # Ec2VpcEndpointEcrApi:
   #   Properties:
