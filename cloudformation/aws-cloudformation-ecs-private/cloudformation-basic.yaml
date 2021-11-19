@@ -7,9 +7,9 @@ AWSTemplateFormatVersion: 2010-09-09
 #     aws cloudformation validate-template: https://awscli.amazonaws.com/v2/documentation/api/latest/reference/cloudformation/validate-template.html
 
 Description: >-
-  Senzing aws-cloudformation-ecs-senzing-stack-basic: 1.2.3
+  Senzing aws-cloudformation-ecs-senzing-stack-basic: 1.0.0
   For more information see
-  https://github.com/Senzing/aws-cloudformation-ecs-senzing-stack-basic
+  https://github.com/Senzing/aws-cloudformation-ecs/cloudformation/aws-cloudformation-ecs-private
 
 # -----------------------------------------------------------------------------
 # Metadata
@@ -37,7 +37,6 @@ Metadata:
           default: Security
         Parameters:
           - CognitoAdminEmail
-          # - CidrInbound
       -
         Label:
           default: Security responsibility
@@ -49,8 +48,6 @@ Metadata:
           Required: If you accept the Senzing End User License Agreement at
           https://senzing.com/end-user-license-agreement,
           enter 'I_ACCEPT_THE_SENZING_EULA'.
-      # CidrInbound:
-      #   default: 'Required: Provide the permitted IP address block allowed to connect using CIDR notation.'
       CognitoAdminEmail:
         default: 'Required: Provide the email address for the administrative user.'
       DatabaseStack:
@@ -83,16 +80,6 @@ Parameters:
     Default: '_'
     Description: 'Help: https://hub.senzing.com/aws-cloudformation-ecs-senzing-stack-basic/#accepteula'
     Type: String
-
-
-  # CidrInbound:
-  #   AllowedPattern: '(?:\d{1,3}\.){3}\d{1,3}(?:/\d\d?)?'
-  #   ConstraintDescription: Inbound CIDR must be in the format n.n.n.n/n
-  #   MinLength: 9
-  #   MaxLength: 18
-  #   Default: '10.0.0.0/32'
-  #   Description: 'Help: https://hub.senzing.com/aws-cloudformation-ecs-senzing-stack-basic/#cidrinbound'
-  #   Type: String
 
 
   CognitoAdminEmail:
@@ -144,15 +131,6 @@ Parameters:
 # -----------------------------------------------------------------------------
 
 Rules:
-
-  # ConfirmCidrInbound:
-  #   Assertions:
-  #     - Assert: !Not
-  #         - !Equals
-  #           - !Ref CidrInbound
-  #           - '10.0.0.0/32'
-  #       AssertDescription: 'Inbound CIDR must be in the format n.n.n.n/n'
-
 
   ConfirmCognitoAdminEmail:
     Assertions:
@@ -1188,71 +1166,6 @@ Resources:
 
 # -- Cloud, subnets, routing --------------------------------------------------
 
-# https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-subnet.html
-# AWS Console: https://console.aws.amazon.com/vpc/home?#subnets > Search for {stack}
-
-  # Ec2SubnetPublic1:
-  #   Properties:
-  #     AvailabilityZone: !Select
-  #         - '0'
-  #         - !GetAZs
-  #           Ref: AWS::Region
-  #     CidrBlock: !Select
-  #       - '0'
-  #       - Fn::Split:
-  #         - ", "
-  #         - Fn::GetAtt: LambdaRunnerSubnets.Subnets
-  #     Tags:
-  #       - Key: Name
-  #         Value: !Sub "${AWS::StackName}-ec2-subnet-public-1"
-  #     VpcId:
-  #       Fn::ImportValue:
-  #         Fn::Sub: '${DatabaseStack}-ec2-VpcId'
-  #   Type: AWS::EC2::Subnet
-
-
-  # Ec2SubnetPublic2:
-  #   Properties:
-  #     AvailabilityZone: !Select
-  #         - '1'
-  #         - !GetAZs
-  #           Ref: AWS::Region
-  #     CidrBlock: !Select
-  #       - '1'
-  #       - Fn::Split:
-  #         - ", "
-  #         - Fn::GetAtt: LambdaRunnerSubnets.Subnets
-  #     Tags:
-  #       - Key: Name
-  #         Value: !Sub "${AWS::StackName}-ec2-subnet-public-2"
-  #     VpcId:
-  #       Fn::ImportValue:
-  #         Fn::Sub: '${DatabaseStack}-ec2-VpcId'
-  #   Type: AWS::EC2::Subnet
-
-# https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-ec2-eip.html
-# AWS Console: https://console.aws.amazon.com/vpc/home?#Addresses: > Search for {stack}
-
-  # Ec2Eip:
-  #   Properties:
-  #     Domain: vpc
-  #     Tags:
-  #       - Key: Name
-  #         Value: !Sub "${AWS::StackName}-ec2-eip"
-  #   Type: AWS::EC2::EIP
-
-# https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-natgateway.html
-# AWS Console: https://console.aws.amazon.com/vpc/home?#NatGateways: > Search for {stack}
-
-  # Ec2NatGateway:
-  #   Properties:
-  #     AllocationId: !GetAtt Ec2Eip.AllocationId
-  #     SubnetId: !Ref Ec2SubnetPublic1
-  #     Tags:
-  #       - Key: Name
-  #         Value: !Sub "${AWS::StackName}-ec2-nat-gateway"
-  #   Type: AWS::EC2::NatGateway
-
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-ec2-security-group.html
 # AWS Console: https://console.aws.amazon.com/vpc/home?#SecurityGroups > Search for {stack}
 
@@ -1299,24 +1212,6 @@ Resources:
     Type: AWS::EC2::SecurityGroup
 
 
-  # Ec2SecurityGroupLoadBalancerPublic:
-  #   Condition: IfUsingWeb
-  #   Properties:
-  #     GroupDescription: !Sub "${AWS::StackName} - Public load balancer open ports."
-  #     SecurityGroupEgress:
-  #       -
-  #         CidrIp: 0.0.0.0/0
-  #         Description: All
-  #         IpProtocol: '-1'
-  #     Tags:
-  #       - Key: Name
-  #         Value: !Sub "${AWS::StackName}-ec2-security-group-alb-public"
-  #     VpcId:
-  #       Fn::ImportValue:
-  #         Fn::Sub: '${DatabaseStack}-ec2-VpcId'
-  #   Type: AWS::EC2::SecurityGroup
-
-
   Ec2SecurityGroupSshd:
     Condition: IfUsingSshd
     Properties:
@@ -1334,20 +1229,6 @@ Resources:
           Fn::Sub: '${DatabaseStack}-ec2-VpcId'
     Type: AWS::EC2::SecurityGroup
 
-# https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-ec2-security-group-ingress.html
-# AWS Console: https://console.aws.amazon.com/vpc/home?#SecurityGroups: > Search for {stack}-ec2-security-group-alb-public > Inbound rules
-
-  # Ec2SecurityGroupIngressApiServerPublic:
-  #   Condition: IfUsingApiServer
-  #   Properties:
-  #     Description: Allow Health Check on Container 8250 from ALB
-  #     FromPort: 8250
-  #     GroupId: !GetAtt Ec2SecurityGroupLoadBalancerPublic.GroupId
-  #     IpProtocol: tcp
-  #     SourceSecurityGroupId: !GetAtt Ec2SecurityGroupLoadBalancerPublic.GroupId
-  #     ToPort: 8250
-  #   Type: AWS::EC2::SecurityGroupIngress
-
 
   Ec2SecurityGroupIngressApiServerPrivate:
     Condition: IfUsingApiServer
@@ -1359,34 +1240,6 @@ Resources:
       SourceSecurityGroupId: !GetAtt Ec2SecurityGroupLoadBalancerPrivate.GroupId
       ToPort: 8250
     Type: AWS::EC2::SecurityGroupIngress
-
-
-  # Ec2SecurityGroupIngressApiServerPrivate:
-  #   Condition: IfUsingApiServer
-  #   Properties:
-  #     CidrIp:
-  #       Fn::ImportValue:
-  #         Fn::Sub: '${DatabaseStack}-ec2-VpcId-cidrblock'
-  #     Description: Senzing API server
-  #     FromPort: 8250
-  #     GroupId:
-  #       Fn::ImportValue:
-  #         Fn::Sub: '${DatabaseStack}-ec2-security-group-internal'
-  #     IpProtocol: tcp
-  #     ToPort: 8250
-  #   Type: AWS::EC2::SecurityGroupIngress
-
-
-  # Ec2SecurityGroupIngressHttps:
-  #   Condition: IfUsingWeb
-  #   Properties:
-  #     CidrIp: !Ref CidrInbound
-  #     Description: HTTPS
-  #     FromPort: 443
-  #     GroupId: !GetAtt Ec2SecurityGroupLoadBalancerPublic.GroupId
-  #     IpProtocol: tcp
-  #     ToPort: 443
-  #   Type: AWS::EC2::SecurityGroupIngress
 
 
   Ec2SecurityGroupIngressHttps:
@@ -1429,17 +1282,6 @@ Resources:
       ToPort: 2049
     Type: AWS::EC2::SecurityGroupIngress
 
-
-  # Ec2SecurityGroupIngressSsh:
-  #   Condition: IfUsingSshd
-  #   Properties:
-  #     CidrIp: !Ref CidrInbound
-  #     Description: SSH
-  #     FromPort: 22
-  #     GroupId: !Ref Ec2SecurityGroupSshd
-  #     IpProtocol: tcp
-  #     ToPort: 22
-  #   Type: AWS::EC2::SecurityGroupIngress
 
   Ec2SecurityGroupIngressSsh:
     Condition: IfUsingSshd
@@ -1501,84 +1343,6 @@ Resources:
       SourceSecurityGroupId: !GetAtt Ec2SecurityGroupLoadBalancerPrivate.GroupId
       ToPort: 5000
     Type: AWS::EC2::SecurityGroupIngress
-
-# https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-route-table.html
-# AWS Console: https://console.aws.amazon.com/vpc/home?#RouteTables > Search for {stack}
-
-  # Ec2RouteTablePrivate:
-  #   Properties:
-  #     Tags:
-  #       - Key: Name
-  #         Value: !Sub "${AWS::StackName}-ec2-route-table-private"
-  #     VpcId:
-  #       Fn::ImportValue:
-  #         Fn::Sub: '${DatabaseStack}-ec2-VpcId'
-  #   Type: AWS::EC2::RouteTable
-
-
-  # Ec2RouteTablePublic:
-  #   Properties:
-  #     Tags:
-  #       - Key: Name
-  #         Value: !Sub "${AWS::StackName}-ec2-route-table-public"
-  #     VpcId:
-  #       Fn::ImportValue:
-  #         Fn::Sub: '${DatabaseStack}-ec2-VpcId'
-  #   Type: AWS::EC2::RouteTable
-
-# https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-route.html
-# AWS Console: https://console.aws.amazon.com/vpc/home?#RouteTables > {name} > "Routes" tab
-
-  # Ec2RoutePrivate:
-  #   Properties:
-  #     DestinationCidrBlock: 0.0.0.0/0
-  #     NatGatewayId: !Ref Ec2NatGateway
-  #     RouteTableId: !Ref Ec2RouteTablePrivate
-  #   Type: AWS::EC2::Route
-
-
-  # Ec2RoutePublic:
-  #   Properties:
-  #     DestinationCidrBlock: 0.0.0.0/0
-  #     GatewayId:
-  #       Fn::ImportValue:
-  #         Fn::Sub: '${DatabaseStack}-ec2-internet-gateway'
-  #     RouteTableId: !Ref Ec2RouteTablePublic
-  #   Type: AWS::EC2::Route
-
-# https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-subnet-route-table-assoc.html
-# AWS Console: https://console.aws.amazon.com/vpc/home?#RouteTables > {name} > "Subnet Associations" tab
-
-  # Ec2SubnetRouteTableAssociationPrivate1:
-  #   Properties:
-  #     RouteTableId: !Ref Ec2RouteTablePrivate
-  #     SubnetId:
-  #       Fn::ImportValue:
-  #         Fn::Sub: '${DatabaseStack}-subnet-private-1'
-  #   Type: AWS::EC2::SubnetRouteTableAssociation
-
-
-  # Ec2SubnetRouteTableAssociationPrivate2:
-  #   Properties:
-  #     RouteTableId: !Ref Ec2RouteTablePrivate
-  #     SubnetId:
-  #       Fn::ImportValue:
-  #         Fn::Sub: '${DatabaseStack}-subnet-private-2'
-  #   Type: AWS::EC2::SubnetRouteTableAssociation
-
-
-  # Ec2SubnetRouteTableAssociationPublic1:
-  #   Properties:
-  #     RouteTableId: !Ref Ec2RouteTablePublic
-  #     SubnetId: !Ref Ec2SubnetPublic1
-  #   Type: AWS::EC2::SubnetRouteTableAssociation
-
-
-  # Ec2SubnetRouteTableAssociationPublic2:
-  #   Properties:
-  #     RouteTableId: !Ref Ec2RouteTablePublic
-  #     SubnetId: !Ref Ec2SubnetPublic2
-  #   Type: AWS::EC2::SubnetRouteTableAssociation
 
 # -- Elastic File System ------------------------------------------------------
 
@@ -1913,9 +1677,6 @@ Resources:
 
   LambdaFunctionRandomString:
     Condition: IfUsingSshd
-    # DependsOn:
-    #  - Ec2SubnetRouteTableAssociationPrivate1
-    #  - Ec2SubnetRouteTableAssociationPrivate2
     Properties:
       Code:
         ZipFile: |
@@ -1960,9 +1721,6 @@ Resources:
 
 
   LambdaFunctionRunTask:
-    # DependsOn:
-    #  - Ec2SubnetRouteTableAssociationPrivate1
-    #  - Ec2SubnetRouteTableAssociationPrivate2
     Properties:
       Code:
         ZipFile: |
@@ -2029,9 +1787,6 @@ Resources:
 
 
   LambdaFunctionRunTaskAndWait:
-    # DependsOn:
-    #  - Ec2SubnetRouteTableAssociationPrivate1
-    #  - Ec2SubnetRouteTableAssociationPrivate2
     Properties:
       Code:
         ZipFile: |
@@ -2285,9 +2040,6 @@ Resources:
 
 
   LambdaFunctionWaitForEfs:
-    # DependsOn:
-    #  - Ec2SubnetRouteTableAssociationPrivate1
-    #  - Ec2SubnetRouteTableAssociationPrivate2
     Properties:
       Code:
         ZipFile: |
@@ -2636,28 +2388,6 @@ Resources:
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
 
 
-  # LoadBalancerPublic:
-  #   Condition: IfUsingWeb
-  #   DependsOn:
-  #     IamServerCertificate
-  #   Properties:
-  #     Name: !Sub
-  #       - "${StackNameAsLower}-alb-public"
-  #       - StackNameAsLower: !GetAtt LambdaRunnerStackNameAsLower.OutputString
-  #     Scheme: internet-facing
-  #     SecurityGroups:
-  #       - !Ref Ec2SecurityGroupLoadBalancerPrivate
-  #     Subnets:
-  #       - !Ref Ec2SubnetPublic1
-  #       - !Ref Ec2SubnetPublic2
-  #     Tags:
-  #       - Key: Name
-  #         Value: !Sub
-  #           - "${StackNameAsLower}-alb-public"
-  #           - StackNameAsLower: !GetAtt LambdaRunnerStackNameAsLower.OutputString
-  #     Type: application
-  #   Type: AWS::ElasticLoadBalancingV2::LoadBalancer
-
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-elasticloadbalancingv2-targetgroup.html
 # AWS Console: https://console.aws.amazon.com/ec2/v2/home?#TargetGroups: > Search for {stack}
 
@@ -2692,41 +2422,10 @@ Resources:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
 
 
-  # TargetGroupApiServerPublic:
-  #   Condition: IfUsingApiServer
-  #   DependsOn:
-  #    - LoadBalancerPublic
-  #   Properties:
-  #     HealthCheckIntervalSeconds: 80
-  #     HealthCheckPath: '/api/heartbeat'
-  #     HealthCheckProtocol: HTTP
-  #     HealthCheckTimeoutSeconds: 50
-  #     HealthyThresholdCount: 2
-  #     Matcher:
-  #       HttpCode: 200-299
-  #     Name: !Sub "${AWS::StackName}-tg-api-public"
-  #     Port: 8250
-  #     Protocol: HTTP
-  #     Tags:
-  #       - Key: Name
-  #         Value: !Sub "${AWS::StackName}-target-group-api-server-public"
-  #     TargetGroupAttributes:
-  #       - Key: deregistration_delay.timeout_seconds
-  #         Value: '60'
-  #       - Key: slow_start.duration_seconds
-  #         Value: '120'
-  #     TargetType: ip
-  #     UnhealthyThresholdCount: 5
-  #     VpcId:
-  #       Fn::ImportValue:
-  #         Fn::Sub: '${DatabaseStack}-ec2-VpcId'
-  #   Type: AWS::ElasticLoadBalancingV2::TargetGroup
-
-
   TargetGroupJupyter:
     Condition: IfRunJupyter
-    # DependsOn:
-    #  - LoadBalancerPublic
+    DependsOn:
+     - LoadBalancerPrivate
     Properties:
       HealthCheckIntervalSeconds: 80
       HealthCheckPath: '/'
@@ -2764,8 +2463,8 @@ Resources:
 
   TargetGroupSwagger:
     Condition: IfRunSwagger
-    # DependsOn:
-    #  - LoadBalancerPublic
+    DependsOn:
+     - LoadBalancerPrivate
     Properties:
       HealthCheckIntervalSeconds: 80
       HealthCheckPath: '/swagger/'
@@ -2793,8 +2492,8 @@ Resources:
 
   TargetGroupWebApp:
     Condition: IfRunWebApp
-    # DependsOn:
-    #  - LoadBalancerPublic
+    DependsOn:
+     - LoadBalancerPrivate
     Properties:
       HealthCheckIntervalSeconds: 80
       HealthCheckPath: '/app/'
@@ -2822,8 +2521,8 @@ Resources:
 
   TargetGroupWebAppWss:
     Condition: IfRunWebApp
-    # DependsOn:
-    #  - LoadBalancerPublic
+    DependsOn:
+     - LoadBalancerPrivate
     Properties:
       Matcher:
         HttpCode: 200-299
@@ -2845,8 +2544,8 @@ Resources:
 
   TargetGroupXterm:
     Condition: IfRunXterm
-    # DependsOn:
-    #  - LoadBalancerPublic
+    DependsOn:
+     - LoadBalancerPrivate
     Properties:
       HealthCheckIntervalSeconds: 80
       HealthCheckPath: '/xterm/'
@@ -4463,16 +4162,11 @@ Resources:
           ContainerPort: 8250
           ContainerName: api-server
           TargetGroupArn: !Ref TargetGroupApiServerPrivate
-        # -
-        #   ContainerPort: 8250
-        #   ContainerName: api-server
-        #   TargetGroupArn: !Ref TargetGroupApiServerPrivate
       NetworkConfiguration:
         AwsvpcConfiguration:
           AssignPublicIp: DISABLED
           SecurityGroups:
             - !Ref Ec2SecurityGroupLoadBalancerPrivate
-            # - !Ref Ec2SecurityGroupLoadBalancerPublic
           Subnets:  !Split
               - ","
               - Fn::ImportValue:
@@ -4993,18 +4687,6 @@ Outputs:
     Export:
       Name: !Sub "${AWS::StackName}-ssh-username"
     Value: root
-
-  # SubnetPublic1:
-  #   Description: 'The ID of public subnet 1. Help: https://hub.senzing.com/aws-cloudformation-ecs-senzing-stack-basic/#subnetpublic1'
-  #   Export:
-  #     Name: !Sub "${AWS::StackName}-subnet-public-1"
-  #   Value: !Ref Ec2SubnetPublic1
-
-  # SubnetPublic2:
-  #   Description: 'The ID of public subnet 2. Help: https://hub.senzing.com/aws-cloudformation-ecs-senzing-stack-basic/#subnetpublic2'
-  #   Export:
-  #     Name: !Sub "${AWS::StackName}-subnet-public-2"
-  #   Value: !Ref Ec2SubnetPublic2
 
   UrlApiServer:
     Condition: IfUsingApiServer

@@ -8,7 +8,8 @@ AWSTemplateFormatVersion: 2010-09-09
 
 Description: >-
   Senzing aws-cloudformation-VPC: 1.0.0
-  For more information see https://github.com/Senzing/aws-cloudformation-
+  For more information see
+  https://github.com/Senzing/aws-cloudformation-ecs/cloudformation/aws-cloudformation-ecs-private
 
 # -----------------------------------------------------------------------------
 # Metadata
