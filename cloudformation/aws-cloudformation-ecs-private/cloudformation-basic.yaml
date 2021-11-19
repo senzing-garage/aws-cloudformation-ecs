@@ -914,7 +914,6 @@ Resources:
 
 
   IamPolicyPassRole:
-    Condition: IfUsingWeb
     Properties:
       PolicyName: !Sub "${AWS::StackName}-iam-policy-pass-role"
       PolicyDocument:
