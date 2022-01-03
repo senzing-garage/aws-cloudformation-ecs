@@ -2792,6 +2792,10 @@ Resources:
             - |
               <html>
               <p>
+                Your Cognito user id has been created.  Please allow the creation of the
+                AWS stack to complete before logging in.
+              </p>
+              <p>
                   For first-time login to any of the links listed below, use these credentials:
                   <ul>
                       <li><b>Username:</b> {username}</li>

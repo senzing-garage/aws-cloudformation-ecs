@@ -688,7 +688,7 @@ Resources:
         - Key: Name
           Value: !Sub "${AWS::StackName}-iam-role-xterm"
     Type: AWS::IAM::Role
-  
+
   IamRoleApiGateway:
     Properties:
       AssumeRolePolicyDocument:
@@ -1061,7 +1061,7 @@ Resources:
        - !Ref IamRoleWebApp
        - !Ref IamRoleXterm
     Type: AWS::IAM::Policy
-  
+
   IamPolicyCognitoAuthorizer:
     Condition: IfUsingApiServer
     Properties:
@@ -1156,7 +1156,7 @@ Resources:
     Properties:
       LogGroupName: !Sub "/aws/lambda/${AWS::StackName}-WebSocket-Api-Gateway-Access-Logs"
     Type: AWS::Logs::LogGroup
-  
+
   LogsLogGroupHttpApiGatewayAccessLogs:
     Properties:
       LogGroupName: !Sub "/aws/lambda/${AWS::StackName}-Http-Api-Gateway-Access-Logs"
@@ -1226,7 +1226,7 @@ Resources:
       Name: !Sub "${AWS::StackName}-http-api-gateway"
       ProtocolType: HTTP
     Type: AWS::ApiGatewayV2::Api
-      
+
   AnalyzeWebSocketApiGateway:
     Condition: IfUsingApiServer
     Properties:
@@ -1235,7 +1235,7 @@ Resources:
       ProtocolType: WEBSOCKET
       RouteSelectionExpression: "$request.body.action"
     Type: AWS::ApiGatewayV2::Api
-  
+
   LoadWebSocketApiGateway:
     Condition: IfUsingApiServer
     Properties:
@@ -1259,7 +1259,7 @@ Resources:
         - - integrations
           - !Ref ApiIntegration
     Type: AWS::ApiGatewayV2::Route
-  
+
   AnalyzeConnectRoute:
     Condition: IfUsingApiServer
     Properties:
@@ -1273,7 +1273,7 @@ Resources:
         - - integrations
           - !Ref AnalyzeWebSocketIntegration
     Type: AWS::ApiGatewayV2::Route
-      
+
   AnalyzeDisconnectRoute:
     Condition: IfUsingApiServer
     Properties:
@@ -1286,7 +1286,7 @@ Resources:
         - - integrations
           - !Ref AnalyzeWebSocketIntegration
     Type: AWS::ApiGatewayV2::Route
-  
+
   LoadConnectRoute:
     Condition: IfUsingApiServer
     Properties:
@@ -1300,7 +1300,7 @@ Resources:
         - - integrations
           - !Ref LoadWebSocketIntegration
     Type: AWS::ApiGatewayV2::Route
-      
+
   LoadDisconnectRoute:
     Condition: IfUsingApiServer
     Properties:
@@ -1329,14 +1329,14 @@ Resources:
         Issuer: !Sub "https://cognito-idp.${AWS::Region}.amazonaws.com/${UserPool}"
       Name: !Sub "${AWS::StackName}-http-api-authorizer"
     Type: AWS::ApiGatewayV2::Authorizer
-  
+
   AnalyzeWebSocketAuthorizer:
     Condition: IfUsingApiServer
     Properties:
       ApiId: !Ref AnalyzeWebSocketApiGateway
       AuthorizerType: REQUEST
       AuthorizerCredentialsArn: !GetAtt IamRoleCognitoAuthorizer.Arn
-      AuthorizerUri: !Join 
+      AuthorizerUri: !Join
         - ''
         - - 'arn:aws:apigateway:'
           - !Ref 'AWS::Region'
@@ -1347,14 +1347,14 @@ Resources:
         - route.request.header.token
       Name: !Sub "${AWS::StackName}-websock-authorizer-analyze"
     Type: AWS::ApiGatewayV2::Authorizer
-  
+
   LoadWebSocketAuthorizer:
     Condition: IfUsingApiServer
     Properties:
       ApiId: !Ref LoadWebSocketApiGateway
       AuthorizerType: REQUEST
       AuthorizerCredentialsArn: !GetAtt IamRoleCognitoAuthorizer.Arn
-      AuthorizerUri: !Join 
+      AuthorizerUri: !Join
         - ''
         - - 'arn:aws:apigateway:'
           - !Ref 'AWS::Region'
@@ -1390,9 +1390,9 @@ Resources:
       ConnectionType: VPC_LINK
       IntegrationType: HTTP_PROXY
       IntegrationMethod: POST
-      IntegrationUri: !Sub "http://${NetworkLoadBalancerPrivate.DNSName}/api/bulk-data/analyze" 
+      IntegrationUri: !Sub "http://${NetworkLoadBalancerPrivate.DNSName}/api/bulk-data/analyze"
     Type: AWS::ApiGatewayV2::Integration
-  
+
   LoadWebSocketIntegration:
     Condition: IfUsingApiServer
     Properties:
@@ -1401,11 +1401,11 @@ Resources:
       ConnectionType: VPC_LINK
       IntegrationType: HTTP_PROXY
       IntegrationMethod: POST
-      IntegrationUri: !Sub "http://${NetworkLoadBalancerPrivate.DNSName}/api/bulk-data/load" 
+      IntegrationUri: !Sub "http://${NetworkLoadBalancerPrivate.DNSName}/api/bulk-data/load"
     Type: AWS::ApiGatewayV2::Integration
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-apigatewayv2-integrationresponse.html
-  
+
   AnalyzeWebSocketIntegrationResponse:
     Condition: IfUsingApiServer
     Properties:
@@ -1413,7 +1413,7 @@ Resources:
       IntegrationId: !Ref AnalyzeWebSocketIntegration
       IntegrationResponseKey: /200/
     Type: 'AWS::ApiGatewayV2::IntegrationResponse'
-  
+
   LoadWebSocketIntegrationResponse:
     Condition: IfUsingApiServer
     Properties:
@@ -1431,7 +1431,7 @@ Resources:
       RouteId: !Ref AnalyzeConnectRoute
       RouteResponseKey: $default
     Type: 'AWS::ApiGatewayV2::RouteResponse'
-  
+
   AnalyzeDisconnectRouteResponse:
     Condition: IfUsingApiServer
     Properties:
@@ -1439,7 +1439,7 @@ Resources:
       RouteId: !Ref AnalyzeDisconnectRoute
       RouteResponseKey: $default
     Type: 'AWS::ApiGatewayV2::RouteResponse'
-  
+
   LoadConnectRouteResponse:
     Condition: IfUsingApiServer
     Properties:
@@ -1469,7 +1469,7 @@ Resources:
       ApiId: !Ref AnalyzeWebSocketApiGateway
       StageName: analyze
     Type: 'AWS::ApiGatewayV2::Deployment'
-  
+
   LoadWebSocketDeployment:
     Condition: IfUsingApiServer
     DependsOn:
@@ -1525,7 +1525,7 @@ Resources:
         DataTraceEnabled: false
       StageName: analyze
     Type: 'AWS::ApiGatewayV2::Stage'
-  
+
   LoadWebSocketProdStage:
     Condition: IfUsingApiServer
     Properties:
@@ -1560,7 +1560,7 @@ Resources:
     Type: AWS::ApiGatewayV2::VpcLink
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-apigateway-vpclink.html
-  
+
   RestApiVpcLink:
     Condition: IfUsingApiServer
     Properties:
@@ -2150,6 +2150,7 @@ Resources:
       Family: aurora-postgresql10
       Parameters:
         'synchronous_commit': 'off'
+        autovacuum_max_workers: 5
       Tags:
         - Key: Name
           Value: !Sub "${AWS::StackName}-rds-db-cluster-parameter-group"
@@ -3417,7 +3418,7 @@ Resources:
             - StackNameAsLower: !GetAtt LambdaRunnerStackNameAsLower.OutputString
       Type: application
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
-  
+
   NetworkLoadBalancerPrivate:
     Condition: IfUsingWeb
     DependsOn:
@@ -3886,6 +3887,10 @@ Resources:
             - |
               <html>
               <p>
+                Your Cognito user id has been created.  Please allow the creation of the
+                AWS stack to complete before logging in.
+              </p>
+              <p>
                   For first-time login to any of the links listed below, use these credentials:
                   <ul>
                       <li><b>Username:</b> {username}</li>
@@ -3994,7 +3999,7 @@ Resources:
         - COGNITO
       UserPoolId: !Ref UserPool
     Type: AWS::Cognito::UserPoolClient
-  
+
   ApiUserPoolClient:
     Condition: IfUsingWeb
     Properties:
@@ -5868,7 +5873,7 @@ Outputs:
     Export:
       Name: !Sub "${AWS::StackName}-account-id"
     Value: !Sub "${AWS::AccountId}"
-  
+
   AnalyzeApiGatewayWebsocketUrl:
     Condition: IfUsingApiServer
     Description: 'Websocket Api Gateway Bulk Data Analyze url'
@@ -5981,7 +5986,7 @@ Outputs:
     Export:
       Name: !Sub "${AWS::StackName}-host"
     Value: !GetAtt LoadBalancerPublic.DNSName
-  
+
   LoadApiGatewayWebsocketUrl:
     Condition: IfUsingApiServer
     Description: 'Websocket Api Gateway Bulk Data Load url'
