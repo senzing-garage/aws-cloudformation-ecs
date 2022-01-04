@@ -1954,6 +1954,7 @@ Resources:
       Family: aurora-postgresql10
       Parameters:
         'synchronous_commit': 'off'
+        autovacuum_max_workers: 5
       Tags:
         - Key: Name
           Value: !Sub "${AWS::StackName}-rds-db-cluster-parameter-group"
@@ -3704,6 +3705,10 @@ Resources:
           EmailMessage: !Sub
             - |
               <html>
+              <p>
+                Your Cognito user id has been created.  Please allow the creation of the
+                AWS stack to complete before logging in.
+              </p>
               <p>
                   For first-time login to any of the links listed below, use these credentials:
                   <ul>
