@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 - removed Jupyter
+- removed flow logs
 
 ## [1.0.4] - 2021-11-19
 
