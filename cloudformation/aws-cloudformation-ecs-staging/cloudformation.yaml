@@ -53,7 +53,6 @@ Metadata:
           - RunSshdMax
           - RunStreamLoader
           - RunSwagger
-          - RunVpcFlowLogs
           - RunWebApp
           - RunXterm
       - Label:
@@ -84,8 +83,6 @@ Metadata:
         default: "Optional: Would you like to have an initial set of data imported?"
       RunSwagger:
         default: "Optional: Would you like to run Swagger service?"
-      RunVpcFlowLogs:
-        default: "Optional: Would you like to enable AWS VPC Flow Logs?"
       RunWebApp:
         default: "Optional: Would you like to run the Senzing WebApp service?"
       RunXterm:
@@ -216,14 +213,6 @@ Parameters:
       - "Yes"
     Default: "Yes"
     Description: "Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#runswagger"
-    Type: String
-
-  RunVpcFlowLogs:
-    AllowedValues:
-      - "No"
-      - "Yes"
-    Default: "No"
-    Description: "Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#runvpcflowlogs"
     Type: String
 
   RunWebApp:
@@ -402,10 +391,6 @@ Conditions:
     - !Ref RunSwagger
     - "Yes"
 
-  IfRunVpcFlowLogs: !Equals
-    - !Ref RunVpcFlowLogs
-    - "Yes"
-
   IfRunWebApp: !Equals
     - !Ref RunWebApp
     - "Yes"
@@ -532,23 +517,6 @@ Resources:
       Tags:
         - Key: Name
           Value: !Sub "${AWS::StackName}-iam-role-debug"
-    Type: AWS::IAM::Role
-
-  IamRoleFlowLog:
-    Properties:
-      AssumeRolePolicyDocument:
-        Statement:
-          - Action:
-              - sts:AssumeRole
-            Effect: Allow
-            Principal:
-              Service:
-                - vpc-flow-logs.amazonaws.com
-        Version: "2012-10-17"
-      Description: !Sub "${AWS::StackName}-iam-role-flow-log"
-      Tags:
-        - Key: Name
-          Value: !Sub "${AWS::StackName}-iam-role-flow-log"
     Type: AWS::IAM::Role
 
   IamRoleG2ConfigTool:
@@ -833,25 +801,6 @@ Resources:
         - !Ref IamRoleXterm
     Type: AWS::IAM::Policy
 
-  IamPolicyEc2FlowLogs:
-    Properties:
-      PolicyName: !Sub "${AWS::StackName}-iam-policy-logging-create-group"
-      PolicyDocument:
-        Statement:
-          - Action:
-              - logs:CreateLogGroup
-              - logs:CreateLogStream
-              - logs:DescribeLogGroups
-              - logs:DescribeLogStreams
-              - logs:PutLogEvents
-            Effect: Allow
-            Resource:
-              - "*"
-        Version: "2012-10-17"
-      Roles:
-        - !Ref IamRoleFlowLog
-    Type: AWS::IAM::Policy
-
   IamPolicyEfs:
     Properties:
       PolicyName: !Sub "${AWS::StackName}-iam-policy-lambda"
@@ -882,7 +831,6 @@ Resources:
         Version: "2012-10-17"
       Roles:
         - !Ref IamRoleApiServer
-        - !Ref IamRoleFlowLog
         - !Ref IamRoleG2ConfigTool
         - !Ref IamRoleInitEfs
         - !Ref IamRoleInitPostgres
@@ -907,7 +855,6 @@ Resources:
               - iam:PassRole
             Effect: Allow
             Resource:
-              - !GetAtt IamRoleFlowLog.Arn
               - !GetAtt IamRoleG2ConfigTool.Arn
               - !GetAtt IamRoleInitEfs.Arn
               - !GetAtt IamRoleLambda.Arn
@@ -917,7 +864,6 @@ Resources:
               - !GetAtt IamRoleInitSenzing.Arn
         Version: "2012-10-17"
       Roles:
-        - !Ref IamRoleFlowLog
         - !Ref IamRoleG2ConfigTool
         - !Ref IamRoleInitEfs
         - !Ref IamRoleLambda
@@ -1157,25 +1103,6 @@ Resources:
         - "/senzing/${StackName}/${AWS::StackName}"
         - StackName: !FindInMap [Constants, Stack, Name]
     Type: AWS::Logs::LogGroup
-
-  # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-flowlog.html
-  # https://docs.aws.amazon.com/vpc/latest/userguide/flow-logs-cwl.html
-
-  Ec2FlowLog:
-    Condition: IfRunVpcFlowLogs
-    Properties:
-      DeliverLogsPermissionArn: !GetAtt IamRoleFlowLog.Arn
-      LogGroupName: !Ref LogsLogGroupMain
-      ResourceId: !If
-        - IfCreateVpcResources
-        - !Ref Ec2Vpc
-        - !Ref VpcId
-      ResourceType: VPC
-      Tags:
-        - Key: Name
-          Value: !Sub "${AWS::StackName}-ec2-flow-log"
-      TrafficType: ALL
-    Type: AWS::EC2::FlowLog
 
   # -- Cloud, subnets, routing --------------------------------------------------
 
