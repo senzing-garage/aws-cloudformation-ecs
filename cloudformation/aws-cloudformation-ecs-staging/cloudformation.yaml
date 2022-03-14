@@ -66,9 +66,9 @@ Metadata:
           https://senzing.com/end-user-license-agreement,
           enter 'I_ACCEPT_THE_SENZING_EULA'.
       CidrInbound:
-        default: "Optional: Allowed inbound connections using CIDR notation."
+        default: "Optional: Provide the permitted IP address block allowed to connect using CIDR notation."
       CognitoAdminEmail:
-        default: "Required: Email address for initial user."
+        default: "Required: Provide the email address for the administrative user."
       RunApiServer:
         default: "Optional: Would you like to run Senzing API server?"
       RunRedoer:
@@ -107,8 +107,8 @@ Metadata:
           URL to file of JSON records to be sent to AWS SQS queue.
       SenzingLicenseAsBase64:
         default: >-
-          Required if inserting more than 100K records.
-          Senzing license as base64 encoded string.
+          The Senzing Evaluation comes with 100k free records of entity resolution.
+          If using more than 100k records, please input base 64 encoded license string.
       SenzingRecordMax:
         default: >-
           Required if initial data load requested.
@@ -148,6 +148,8 @@ Parameters:
   CidrInbound:
     AllowedPattern: '(?:\d{1,3}\.){3}\d{1,3}(?:/\d\d?)?'
     ConstraintDescription: Inbound CIDR must be in the format n.n.n.n/n
+    MinLength: 9
+    MaxLength: 18
     Default: 0.0.0.0/0
     Description: "Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#cidrinbound"
     Type: String
@@ -271,7 +273,7 @@ Parameters:
     Type: Number
 
   SenzingVersion:
-    Default: "2.8.4-21311"
+    Default: "2.8.7-22049"
     Description: "Help: https://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-staging/#senzingversion"
     Type: String
 
@@ -323,19 +325,20 @@ Mappings:
       Name: G2
       Username: senzing
     Images:
-      ApiServer: public.ecr.aws/senzing/senzing-poc-server:1.0.5
-      BusyBox: public.ecr.aws/senzing/busybox:1.34.0
+      ApiServer: public.ecr.aws/senzing/senzing-poc-server:1.2.0
+      BusyBox: public.ecr.aws/senzing/busybox:1.35.0
       G2Config: public.ecr.aws/senzing/g2configtool:1.4.4
-      InitContainer: public.ecr.aws/senzing/init-container:1.6.14
+      InitContainer: public.ecr.aws/senzing/init-container:1.7.4
       PostgresClient: public.ecr.aws/senzing/postgresql-client:1.1.2
-      Redoer: public.ecr.aws/senzing/redoer-with-data:1.4.1
-      Sshd: public.ecr.aws/senzing/sshd:1.2.5
-      StreamLoader: public.ecr.aws/senzing/stream-loader-with-data:1.9.2
-      StreamProducer: public.ecr.aws/senzing/stream-producer:1.6.2
-      Swagger: public.ecr.aws/senzing/swagger-ui:v3.51.0
-      WebApp: public.ecr.aws/senzing/entity-search-web-app:2.3.3
-      Xterm: public.ecr.aws/senzing/xterm:1.2.3
+      Redoer: public.ecr.aws/senzing/redoer-with-data:1.4.6
+      Sshd: public.ecr.aws/senzing/sshd:1.2.7
+      StreamLoader: public.ecr.aws/senzing/stream-loader-with-data:1.9.8
+      StreamProducer: public.ecr.aws/senzing/stream-producer:1.6.5
+      Swagger: public.ecr.aws/senzing/swagger-ui:v4.6.1
+      WebApp: public.ecr.aws/senzing/entity-search-web-app:2.5.0
+      Xterm: public.ecr.aws/senzing/xterm:1.2.4
       Yum: public.ecr.aws/senzing/yum:1.1.8
+
     Stack:
       Name: staging
 
@@ -4261,7 +4264,7 @@ Resources:
             - Name: SENZING_WEB_SERVER_URL
               Value: !Sub "http://${LoadBalancerPublic.DNSName}:8251/app"
             - Name: SENZING_WEB_SERVER_PROXY_LOGLEVEL
-              Value: debug
+              Value: error
             - Name: SENZING_WEB_SERVER_INTERNAL_URL
               Value: "http://localhost:8251/app"
             - Name: SENZING_WEB_SERVER_STREAM_CLIENT_URL
