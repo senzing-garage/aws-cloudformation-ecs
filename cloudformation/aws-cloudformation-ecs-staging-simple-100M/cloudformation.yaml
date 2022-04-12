@@ -1040,6 +1040,48 @@ Resources:
         - StackName: !FindInMap [Constants, Stack, Name]
     Type: AWS::Logs::LogGroup
 
+  # -- Logging Queries ----------------------------------------------
+
+  # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-logs-querydefinition.html
+
+  SenzingDebugQuery:
+    Properties:
+      LogGroupNames:
+        - !If [
+            IfUsingWeb,
+            !Ref LogsLogGroupLambdaCognitoCreateUser,
+            !Ref "AWS::NoValue",
+          ]
+        - !If [
+            IfUsingWeb,
+            !Ref LogsLogGroupLambdaGenerateCertificate,
+            !Ref "AWS::NoValue",
+          ]
+        - !Ref LogsLogGroupLambdaRandomPassword
+        - !Ref LogsLogGroupLambdaRandomString
+        - !Ref LogsLogGroupLambdaRunTask
+        - !Ref LogsLogGroupLambdaRunTaskAndWait
+        - !Ref LogsLogGroupLambdaSetRdbTimeoutAction
+        - !Ref LogsLogGroupLambdaStringToLower
+        - !Ref LogsLogGroupLambdaWaitForEfs
+      Name: !Sub "Search in ${AWS::StackName} Lambda logs"
+      QueryString: fields @timestamp, @message | sort @timestamp desc | filter @message like 'SUCCESS'
+    Type: AWS::Logs::QueryDefinition
+
+  # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-cloudwatch-dashboard.html
+  SenzingLogDashboard:
+    Properties:
+      DashboardBody: !Sub '{"widgets":[
+        {"type":"log","width":24,"height":6,"properties":{"region":"${AWS::Region}", "title": "Senzing error logs", "view": "table", "query": "SOURCE \"${LogsLogGroupMain}\" | fields @timestamp, @message | sort @timestamp desc | filter @message like /(?i)ERROR/ | display @timestamp, @message, @logStream "}},
+        {"type":"log","width":24,"height":6,"properties":{"region":"${AWS::Region}", "title": "Senzing records (15m interval)", "view": "timeSeries", "query": "SOURCE \"${LogsLogGroupMain}\" | fields @message | sort @timestamp desc | filter @message like \"senzing-50010125I G2 engine statistics\" | parse @message \"*\\\"records\\\": *,*\" as t1, match, t2 | stats sum(match) as records by bin(15m) "}},
+        {"type":"log","width":24,"height":6,"properties":{"region":"${AWS::Region}", "title": "Senzing engine stats", "view": "table", "query": "SOURCE \"${LogsLogGroupMain}\" | fields @message | sort @timestamp desc | filter @message like \"senzing-50010125I G2 engine statistics\" | parse @message \"*\\\"highContentionFeat\\\": [*],*\\\"highContentionResEnt\\\": [*],*\\\"records\\\": *,*\" as t1, highContentionFeat, t2, highContentionResEnt, t3, records, t4 | display @timestamp, records, highContentionFeat, highContentionResEnt "}},
+        {"type":"log","width":24,"height":6,"properties":{"region":"${AWS::Region}", "title": "Senzing engine stats logs", "view": "table", "query": "SOURCE \"${LogsLogGroupMain}\" | fields @message | sort @timestamp desc | filter @message like \"senzing-50010125I G2 engine statistics\" "}},
+        {"type":"log","width":24,"height":6,"properties":{"region":"${AWS::Region}", "title": "Senzing governor wait", "view": "table", "query": "SOURCE \"${LogsLogGroupMain}\" | fields @message | sort @timestamp desc | filter @message like \"senzing-50170005I Governor waiting\" "}},
+        {"type":"log","width":24,"height":6,"properties":{"region":"${AWS::Region}", "title": "Senzing GET logs", "view": "table", "query": "SOURCE \"${LogsLogGroupMain}\" | fields @timestamp, @message | sort @timestamp desc | filter @message like \"GET\" "}}
+        ]}'
+      DashboardName: !Sub "Senzing-${AWS::StackName}-Dashboard"
+    Type: AWS::CloudWatch::Dashboard
+
   # -- Cloud, subnets, routing --------------------------------------------------
 
   # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-vpc.html
@@ -4152,7 +4194,7 @@ Resources:
             - Name: SENZING_SQS_QUEUE_URL
               Value: !Sub "https://sqs.${AWS::Region}.amazonaws.com/${AWS::AccountId}/${SqsInput.QueueName}"
             - Name: SENZING_SUBCOMMAND
-              Value: sqs-withinfo
+              Value: sqs
             - Name: SENZING_THREADS_PER_PROCESS
               Value: "8"
           Essential: true
