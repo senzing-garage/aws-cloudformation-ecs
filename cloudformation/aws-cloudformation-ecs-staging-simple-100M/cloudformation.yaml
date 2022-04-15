@@ -2383,7 +2383,7 @@ Resources:
                   cfnresponse.send(event, context, result, {})
                   logger.info(response_data)
 
-      Description: Sets the RDB TimeoutAction to ForceApplyCapacityChange.
+      Description: Update database ScalingConfiguration with options not available in CFTs.
       FunctionName: !Sub "${AWS::StackName}-lambda-set-rdb-timeout-action"
       Handler: index.handler
       Role: !GetAtt IamRoleLambda.Arn
