@@ -3783,7 +3783,7 @@ Resources:
             - Name: SENZING_SQS_REDO_QUEUE_URL
               Value: !Sub "https://sqs.${AWS::Region}.amazonaws.com/${AWS::AccountId}/${SqsRedoerInput.QueueName}"
             - Name: SENZING_SUBCOMMAND
-              Value: read-from-sqs
+              Value: read-from-sqs-withinfo
             - Name: SENZING_THREADS_PER_PROCESS
               Value: "8"
           Essential: true
@@ -4093,7 +4093,7 @@ Resources:
             - Name: SENZING_SQS_QUEUE_URL
               Value: !Sub "https://sqs.${AWS::Region}.amazonaws.com/${AWS::AccountId}/${SqsInput.QueueName}"
             - Name: SENZING_SUBCOMMAND
-              Value: sqs
+              Value: sqs-withinfo
             - Name: SENZING_THREADS_PER_PROCESS
               Value: "8"
           Essential: true

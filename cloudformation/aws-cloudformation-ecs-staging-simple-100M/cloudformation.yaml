@@ -1642,7 +1642,7 @@ Resources:
         MaxCapacity: 192
         MinCapacity: 2
         #       FIXME:  Uncomment once 'SecondsBeforeTimeout' is supported.
-        #       SecondsBeforeTimeout: 30
+        #       SecondsBeforeTimeout: 60
         SecondsUntilAutoPause: 3600
       #       FIXME:  Uncomment once 'TimeoutAction' is supported.
       #       https://github.com/aws-cloudformation/aws-cloudformation-coverage-roadmap/issues/298
@@ -1684,7 +1684,7 @@ Resources:
         MaxCapacity: 192
         MinCapacity: 2
         #       FIXME:  Uncomment once 'SecondsBeforeTimeout' is supported.
-        #       SecondsBeforeTimeout: 30
+        #       SecondsBeforeTimeout: 60
         SecondsUntilAutoPause: 3600
       #       FIXME:  Uncomment once 'TimeoutAction' is supported.
       #       https://github.com/aws-cloudformation/aws-cloudformation-coverage-roadmap/issues/298
@@ -1726,7 +1726,7 @@ Resources:
         MaxCapacity: 192
         MinCapacity: 2
         #       FIXME:  Uncomment once 'SecondsBeforeTimeout' is supported.
-        #       SecondsBeforeTimeout: 30
+        #       SecondsBeforeTimeout: 60
         SecondsUntilAutoPause: 3600
       #       FIXME:  Uncomment once 'TimeoutAction' is supported.
       #       https://github.com/aws-cloudformation/aws-cloudformation-coverage-roadmap/issues/298
@@ -3891,7 +3891,7 @@ Resources:
             - Name: SENZING_SQS_REDO_QUEUE_URL
               Value: !Sub "https://sqs.${AWS::Region}.amazonaws.com/${AWS::AccountId}/${SqsRedoerInput.QueueName}"
             - Name: SENZING_SUBCOMMAND
-              Value: read-from-sqs-withinfo
+              Value: read-from-sqs
             - Name: SENZING_THREADS_PER_PROCESS
               Value: "8"
           Essential: true
@@ -4852,7 +4852,7 @@ Resources:
           PredefinedMetricType: ECSServiceAverageCPUUtilization
         ScaleInCooldown: 1200
         ScaleOutCooldown: 300
-        TargetValue: 5
+        TargetValue: 30
     Type: AWS::ApplicationAutoScaling::ScalingPolicy
 
   ApplicationAutoScalingScalingPolicyStreamLoader:
