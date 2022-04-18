@@ -150,7 +150,7 @@ Parameters:
     Type: String
 
   SenzingVersion:
-    Default: "3.0.0-22102"
+    Default: "3.0.0-22108"
     Description: "Help: https://hub.senzing.com/aws-cloudformation-ecs/aws-cloudformation-ecs-staging-simple-100M/#senzingversion"
     Type: String
 
