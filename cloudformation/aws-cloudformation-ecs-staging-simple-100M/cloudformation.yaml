@@ -150,7 +150,7 @@ Parameters:
     Type: String
 
   SenzingVersion:
-    Default: "3.0.0-22109"
+    Default: "3.0.0-22110"
     Description: "Help: https://hub.senzing.com/aws-cloudformation-ecs/aws-cloudformation-ecs-staging-simple-100M/#senzingversion"
     Type: String
 
@@ -236,7 +236,7 @@ Mappings:
       Username: senzing
     Images:
       ApiServer: docker.io/senzing/senzing-poc-server:3.0.0-b04
-      Apt: docker.io/senzing/apt-staging:1.0.7
+      Apt: docker.io/senzing/apt-staging:latest
       BusyBox: public.ecr.aws/senzing/busybox:1.35.0
       G2Config: public.ecr.aws/senzing/g2configtool:1.4.4
       InitContainer: docker.io/senzing/init-container:1.7.5
