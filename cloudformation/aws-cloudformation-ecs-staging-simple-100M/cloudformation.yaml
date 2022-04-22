@@ -246,7 +246,8 @@ Mappings:
       Sshd: docker.io/senzing/sshd:1.2.8
       StreamLoader: public.ecr.aws/senzing/stream-loader-with-data:1.10.1
       StreamProducer: public.ecr.aws/senzing/stream-producer:1.6.5
-      Swagger: docker.io/swaggerapi/swagger-ui:v4.10.3
+      # Swagger: docker.io/swaggerapi/swagger-ui:v4.10.3
+      Swagger: public.ecr.aws/senzing/swagger-ui:v4.6.1
       WebApp: docker.io/senzing/entity-search-web-app:2.6.0
       Xterm: docker.io/senzing/xterm:1.2.5
 
@@ -1071,43 +1072,45 @@ Resources:
   # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-cloudwatch-dashboard.html
   SenzingLogDashboard:
     Properties:
-      DashboardBody: !Sub '{"widgets":[
-        {"type":"log","width":24,"height":6,
-        "properties":{"title": "Senzing error logs","region":"${AWS::Region}", "view": "table",
-        "query": "SOURCE \"${LogsLogGroupMain}\" | fields @timestamp, @message | sort @timestamp desc | filter @message like /(?i)ERROR/ | display @timestamp, @message, @logStream "}},
+      DashboardBody: !Sub
+        - '{"widgets":[
+          {"type":"log","width":24,"height":6,
+          "properties":{"title": "Senzing error logs","region":"${AWS::Region}", "view": "table",
+          "query": "SOURCE \"${LogsLogGroupMain}\" | fields @timestamp, @message | sort @timestamp desc | filter @message like /(?i)ERROR/ | display @timestamp, @message, @logStream "}},
 
-        {"type":"log","width":24,"height":6,
-        "properties":{"title": "Senzing records loaded (10m interval)","region":"${AWS::Region}", "view": "timeSeries",
-        "query": "SOURCE \"${LogsLogGroupMain}\" | fields @message | sort @timestamp desc | filter @message like \"senzing-50010125I G2 engine statistics\" | parse @message \"*\\\"addedRecords\\\": *,*\" as t1, match, t2 | stats sum(match) as records by bin(10m) "}},
+          {"type":"log","width":24,"height":6,
+          "properties":{"title": "Senzing records loaded (10m interval)","region":"${AWS::Region}", "view": "timeSeries",
+          "query": "SOURCE \"${LogsLogGroupMain}\" | fields @message | sort @timestamp desc | filter @message like \"senzing-50010125I G2 engine statistics\" | parse @message \"*\\\"addedRecords\\\": *,*\" as t1, match, t2 | stats sum(match) as records by bin(10m) "}},
 
-        {"type":"log","width":24,"height":6,
-        "properties":{"title": "Senzing redos processed (10m interval)","region":"${AWS::Region}", "view": "timeSeries",
-        "query": "SOURCE \"${LogsLogGroupMain}\" | fields @message | sort @timestamp desc | filter @message like \"senzing-50010125I G2 engine statistics\" | parse @message \"*\\\"addedRecords\\\": *,*\" as t1, match, t2 | stats sum(match) as redos by bin(10m) "}},
+          {"type":"log","width":24,"height":6,
+          "properties":{"title": "Senzing redos processed (10m interval)","region":"${AWS::Region}", "view": "timeSeries",
+          "query": "SOURCE \"${LogsLogGroupMain}\" | fields @message | sort @timestamp desc | filter @message like \"senzing-50100125I G2 engine statistics\" | parse @message \"*\\\"addedRecords\\\": *,*\" as t1, match, t2 | stats sum(match) as redos by bin(10m) "}},
 
-        {"type":"metric","width":24,"height":6,
-        "properties":{"title": "Senzing Core DB Read/WriteIOPS","region":"${AWS::Region}","view": "timeSeries", "stacked": false,
-        "metrics": [
-        [ "AWS/RDS", "VolumeReadIOPs", "DBClusterIdentifier", "${AWS::StackName}-aurora-senzing-core-cluster" ],
-        [ ".", "VolumeWriteIOPs", ".", "." ]
-        ]}},
+          {"type":"metric","width":24,"height":6,
+          "properties":{"title": "Senzing Core DB Read/WriteIOPS","region":"${AWS::Region}","view": "timeSeries", "stacked": false,
+          "metrics": [
+          [ "AWS/RDS", "VolumeReadIOPs", "DBClusterIdentifier", "${StackNameAsLower}-aurora-senzing-core-cluster" ],
+          [ ".", "VolumeWriteIOPs", ".", "." ]
+          ]}},
 
-        {"type":"log","width":24,"height":6,
-        "properties":{"title": "Senzing engine stats","region":"${AWS::Region}","view": "table",
-        "query": "SOURCE \"${LogsLogGroupMain}\" | fields @message | sort @timestamp desc | filter @message like \"senzing-50010125I G2 engine statistics\" | parse @message \"*\\\"highContentionFeat\\\": [*],*\\\"highContentionResEnt\\\": [*],*\\\"records\\\": *,*\" as t1, highContentionFeat, t2, highContentionResEnt, t3, records, t4 | display @timestamp, records, highContentionFeat, highContentionResEnt "}},
+          {"type":"log","width":24,"height":6,
+          "properties":{"title": "Senzing engine stats","region":"${AWS::Region}","view": "table",
+          "query": "SOURCE \"${LogsLogGroupMain}\" | fields @message | sort @timestamp desc | filter @message like \"senzing-50010125I G2 engine statistics\" | parse @message \"*\\\"highContentionFeat\\\": [*],*\\\"highContentionResEnt\\\": [*],*\\\"records\\\": *,*\" as t1, highContentionFeat, t2, highContentionResEnt, t3, records, t4 | display @timestamp, records, highContentionFeat, highContentionResEnt "}},
 
-        {"type":"log","width":24,"height":6,
-        "properties":{"title": "Senzing engine stats logs","region":"${AWS::Region}", "view": "table",
-        "query": "SOURCE \"${LogsLogGroupMain}\" | fields @message | sort @timestamp desc | filter @message like \"senzing-50010125I G2 engine statistics\" "}},
+          {"type":"log","width":24,"height":6,
+          "properties":{"title": "Senzing engine stats logs","region":"${AWS::Region}", "view": "table",
+          "query": "SOURCE \"${LogsLogGroupMain}\" | fields @message | sort @timestamp desc | filter @message like \"senzing-50010125I G2 engine statistics\" "}},
 
-        {"type":"log","width":24,"height":6,
-        "properties":{"title": "Senzing governor wait","region":"${AWS::Region}", "view": "table",
-        "query": "SOURCE \"${LogsLogGroupMain}\" | fields @message | sort @timestamp desc | filter @message like \"senzing-50170005I Governor waiting\" "}},
+          {"type":"log","width":24,"height":6,
+          "properties":{"title": "Senzing governor wait","region":"${AWS::Region}", "view": "table",
+          "query": "SOURCE \"${LogsLogGroupMain}\" | fields @message | sort @timestamp desc | filter @message like \"senzing-50170005I Governor waiting\" "}},
 
-        {"type":"log","width":24,"height":6,
-        "properties":{"title": "Senzing GET logs","region":"${AWS::Region}", "view": "table",
-        "query": "SOURCE \"${LogsLogGroupMain}\" | fields @timestamp, @message | sort @timestamp desc | filter @message like \"GET\" "}}
+          {"type":"log","width":24,"height":6,
+          "properties":{"title": "Senzing GET logs","region":"${AWS::Region}", "view": "table",
+          "query": "SOURCE \"${LogsLogGroupMain}\" | fields @timestamp, @message | sort @timestamp desc | filter @message like \"GET\" "}}
 
-        ]}'
+          ]}'
+        - StackNameAsLower: !GetAtt LambdaRunnerStackNameAsLower.OutputString
       DashboardName: !Sub "Senzing-${AWS::StackName}-Dashboard"
     Type: AWS::CloudWatch::Dashboard
 
