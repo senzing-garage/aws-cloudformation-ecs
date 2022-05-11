@@ -5086,7 +5086,7 @@ Outputs:
     Description: "The Senzing Engine version installed. Help: https://hub.senzing.com/aws-cloudformation-ecs/aws-cloudformation-ecs-staging-simple-100M/#senzingversion"
     Export:
       Name: !Sub "${AWS::StackName}-senzing-version"
-    Value: !Sub "senzingapi-${SenzingVersion}"
+    Value: !Sub "senzingapi=${SenzingVersion}"
 
   SshPassword:
     Condition: IfUsingSshd
