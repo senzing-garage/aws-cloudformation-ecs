@@ -10,7 +10,7 @@ AWSTemplateFormatVersion: 2010-09-09
 # But tailored to run use Senzing RPMs from the staging server.
 
 Description: >-
-  Senzing aws-cloudformation-ecs-staging-simple-100M Version: 1.0.5
+  Senzing aws-cloudformation-ecs-staging-simple-100M Version: 1.0.16
   For more information see
   https://github.com/Senzing/aws-cloudformation-ecs/tree/main/cloudformation/aws-cloudformation-ecs-staging-simple-100M
 
@@ -150,7 +150,7 @@ Parameters:
     Type: String
 
   SenzingVersion:
-    Default: "3.0.0-22110"
+    Default: "3.0.0-22119"
     Description: "Help: https://hub.senzing.com/aws-cloudformation-ecs/aws-cloudformation-ecs-staging-simple-100M/#senzingversion"
     Type: String
 
@@ -235,20 +235,20 @@ Mappings:
       Name: G2
       Username: senzing
     Images:
-      ApiServer: docker.io/senzing/senzing-poc-server:3.0.0-b04
-      Apt: docker.io/senzing/apt-staging:latest
-      BusyBox: public.ecr.aws/senzing/busybox:1.35.0
-      G2Config: public.ecr.aws/senzing/g2configtool:1.4.4
-      InitContainer: docker.io/senzing/init-container:1.7.5
+      ApiServer: public.ecr.aws/senzing/senzing-poc-server:3.0.1
+      Apt: public.ecr.aws/senzing/apt:1.0.8
+      BusyBox: public.ecr.aws/senzing/busybox:1.34.1
+      G2Config: public.ecr.aws/senzing/g2configtool:1.4.5
+      InitContainer: public.ecr.aws/senzing/init-container:1.7.9
       InitDataEncryption: public.ecr.aws/senzing/data-encryption-aes256cbc-sample:1.0.1
-      PostgresClient: docker.io/senzing/postgresql-client:2.0.1
-      Redoer: public.ecr.aws/senzing/redoer-with-data:1.5.1
-      Sshd: docker.io/senzing/sshd:1.2.8
-      StreamLoader: public.ecr.aws/senzing/stream-loader-with-data:1.10.1
-      StreamProducer: docker.io/senzing/stream-producer:1.7.0
-      Swagger: docker.io/swaggerapi/swagger-ui:v4.10.3
-      WebApp: docker.io/senzing/entity-search-web-app:2.6.0
-      Xterm: docker.io/senzing/xterm:1.2.5
+      PostgresClient: public.ecr.aws/senzing/postgresql-client:2.0.2
+      Redoer: public.ecr.aws/senzing/redoer-with-data:1.5.3
+      Sshd: public.ecr.aws/senzing/sshd:1.2.12
+      StreamLoader: public.ecr.aws/senzing/stream-loader-with-data:1.10.3
+      StreamProducer: public.ecr.aws/senzing/stream-producer:1.7.1
+      Swagger: public.ecr.aws/senzing/swagger-ui:v4.10.3
+      WebApp: public.ecr.aws/senzing/entity-search-web-app:2.6.0
+      Xterm: public.ecr.aws/senzing/xterm:1.2.8
 
     Run:
       ApiServer: Yes
@@ -1075,7 +1075,7 @@ Resources:
         - '{"widgets":[
           {"type":"log","width":24,"height":6,
           "properties":{"title": "Senzing error logs","region":"${AWS::Region}", "view": "table",
-          "query": "SOURCE \"${LogsLogGroupMain}\" | fields @timestamp, @message | sort @timestamp desc | filter @message like /(?i)ERROR/ | display @timestamp, @message, @logStream "}},
+          "query": "SOURCE \"${LogsLogGroupMain}\" | fields @timestamp, @message | sort @timestamp desc | filter @message like /(?i)ERR/ | display @timestamp, @message, @logStream "}},
 
           {"type":"log","width":24,"height":6,
           "properties":{"title": "Senzing records loaded (10m interval)","region":"${AWS::Region}", "view": "timeSeries",
@@ -1086,15 +1086,19 @@ Resources:
           "query": "SOURCE \"${LogsLogGroupMain}\" | fields @message | sort @timestamp desc | filter @message like \"senzing-50100125I G2 engine statistics\" | parse @message \"*\\\"addedRecords\\\": *,*\" as t1, match, t2 | stats sum(match) as redos by bin(10m) "}},
 
           {"type":"metric","width":24,"height":6,
-          "properties":{"title": "Senzing Core DB Read/WriteIOPS","region":"${AWS::Region}","view": "timeSeries", "stacked": false,
+          "properties":{"title": "Senzing DB Read/WriteIOPS","region":"${AWS::Region}","view": "timeSeries", "stacked": false,
           "metrics": [
           [ "AWS/RDS", "VolumeReadIOPs", "DBClusterIdentifier", "${StackNameAsLower}-aurora-senzing-core-cluster" ],
+          [ ".", "VolumeWriteIOPs", ".", "." ],
+          [ "AWS/RDS", "VolumeReadIOPs", "DBClusterIdentifier", "${StackNameAsLower}-aurora-senzing-libfeat-cluster" ],
+          [ ".", "VolumeWriteIOPs", ".", "." ],
+          [ "AWS/RDS", "VolumeReadIOPs", "DBClusterIdentifier", "${StackNameAsLower}-aurora-senzing-res-cluster" ],
           [ ".", "VolumeWriteIOPs", ".", "." ]
           ]}},
 
           {"type":"log","width":24,"height":6,
           "properties":{"title": "Senzing engine stats","region":"${AWS::Region}","view": "table",
-          "query": "SOURCE \"${LogsLogGroupMain}\" | fields @message | sort @timestamp desc | filter @message like \"senzing-50010125I G2 engine statistics\" | parse @message \"*\\\"highContentionFeat\\\": [*],*\\\"highContentionResEnt\\\": [*],*\\\"records\\\": *,*\" as t1, highContentionFeat, t2, highContentionResEnt, t3, records, t4 | display @timestamp, records, highContentionFeat, highContentionResEnt "}},
+          "query": "SOURCE \"${LogsLogGroupMain}\" | fields @message | sort @timestamp desc | filter @message like \"senzing-50010125I G2 engine statistics\" | parse @message \"*\\\"addedRecords\\\": *,*\\\"highContentionFeat\\\": [*],*\\\"highContentionResEnt\\\": [*],*\\\"addedRecords\\\": *,*\" as t1, records, t2, highContentionFeat, t3, highContentionResEnt, t4 | display @timestamp, records, highContentionFeat, highContentionResEnt "}},
 
           {"type":"log","width":24,"height":6,
           "properties":{"title": "Senzing engine stats logs","region":"${AWS::Region}", "view": "table",
@@ -1985,12 +1989,12 @@ Resources:
       Code:
         # This code can be seen at https://github.com/Senzing/aws-lambda-self-signed-certificate
         S3Bucket: !Sub "senzing-public-${AWS::Region}"
-        S3Key: aws-lambda-self-signed-certificate/self-signed-certificate.zip
+        S3Key: "aws-lambda-self-signed-certificate/self-signed-certificate-1.0.2.zip"
       Description: Generate Public/Private key pair.
       FunctionName: !Sub "${AWS::StackName}-lambda-generate-certificate"
       Handler: self_signed_certificate.handler
       Role: !GetAtt IamRoleLambda.Arn
-      Runtime: python3.6
+      Runtime: python3.8
       Tags:
         - Key: Name
           Value: !Sub "${AWS::StackName}-lambda-generate-certificate"
@@ -5133,6 +5137,18 @@ Outputs:
     Condition: IfUsingApiServer
     Description: "URL for API Server's heartbeat. Help: https://hub.senzing.com/aws-cloudformation-ecs/aws-cloudformation-ecs-staging-simple-100M/#urlapiserverheartbeat"
     Value: !Sub "https://${LoadBalancerPublic.DNSName}/api/heartbeat/"
+
+  UrlPrivateApiServer:
+    Condition: IfUsingApiServer
+    Description: "Private URL for API Server. Help: https://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#urlprivateapiserver"
+    Export:
+      Name: !Sub "${AWS::StackName}-private-url-api-server"
+    Value: !Sub "http://${LoadBalancerPrivate.DNSName}:8250/api/"
+
+  UrlPrivateApiServerHeartbeat:
+    Condition: IfUsingApiServer
+    Description: "Private URL for API Server's heartbeat. Help: https://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#urlprivateapiserverheartbeat"
+    Value: !Sub "http://${LoadBalancerPrivate.DNSName}:8250/api/heartbeat/"
 
   UrlSwagger:
     Condition: IfRunSwagger
