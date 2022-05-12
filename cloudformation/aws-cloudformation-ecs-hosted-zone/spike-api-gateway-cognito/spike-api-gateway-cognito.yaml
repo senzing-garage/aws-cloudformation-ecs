@@ -503,7 +503,7 @@ Resources:
           Environment:
             -
               Name: URL
-              Value: "https://raw.githubusercontent.com/Senzing/senzing-rest-api-specification/master/senzing-rest-api.yaml"
+              Value: "https://raw.githubusercontent.com/Senzing/senzing-rest-api-specification/main/senzing-rest-api.yaml"
             -
               Name: BASE_URL
               Value: /swagger
