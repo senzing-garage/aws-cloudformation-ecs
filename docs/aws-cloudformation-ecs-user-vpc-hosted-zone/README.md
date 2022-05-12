@@ -456,7 +456,7 @@ Technical information on AWS Cloudformation parameters can be seen at
 1. **Type:** String
 1. **Allowed pattern:**  A URL starting with `http://` or `https://`.
 1. **Example:** `https://www.example.com/my/records.json`
-1. **Default:** `https://s3.amazonaws.com/public-read-access/TestDataSets/SenzingTruthSet/truth-set.json`
+1. **Default:** `https://s3.amazonaws.com/public-read-access/TestDataSets/SenzingTruthSet/truth-set-3.0.0.jsonl`
 
 ### SenzingLicenseAsBase64
 
