@@ -4320,7 +4320,7 @@ Resources:
             - Name: BASE_URL
               Value: /swagger
             - Name: URL
-              Value: "https://raw.githubusercontent.com/Senzing/senzing-rest-api-specification/master/senzing-rest-api.yaml"
+              Value: "https://raw.githubusercontent.com/Senzing/senzing-rest-api-specification/main/senzing-rest-api.yaml"
           Essential: true
           Image: !FindInMap [Constants, Images, Swagger]
           LogConfiguration:
