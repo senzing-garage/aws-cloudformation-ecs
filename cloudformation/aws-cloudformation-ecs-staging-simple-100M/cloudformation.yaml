@@ -2936,7 +2936,7 @@ Resources:
   LoadBalancerPrivate:
     Properties:
       Name: !Sub
-        - "${StackNameAsLower}-alb-private"
+        - "${StackNameAsLower}-alb-pvt"
         - StackNameAsLower: !GetAtt LambdaRunnerStackNameAsLower.OutputString
       Scheme: internal
       SecurityGroups:
@@ -2947,7 +2947,7 @@ Resources:
       Tags:
         - Key: Name
           Value: !Sub
-            - "${StackNameAsLower}-alb-private"
+            - "${StackNameAsLower}-alb-pvt"
             - StackNameAsLower: !GetAtt LambdaRunnerStackNameAsLower.OutputString
       Type: application
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
@@ -2988,12 +2988,12 @@ Resources:
       HealthyThresholdCount: 2
       Matcher:
         HttpCode: 200-299
-      Name: !Sub "${AWS::StackName}-tg-api-private"
+      Name: !Sub "${AWS::StackName}-tg-api-pvt"
       Port: 8250
       Protocol: HTTP
       Tags:
         - Key: Name
-          Value: !Sub "${AWS::StackName}-target-group-api-server-private"
+          Value: !Sub "${AWS::StackName}-tg-api-pvt"
       TargetGroupAttributes:
         - Key: deregistration_delay.timeout_seconds
           Value: "60"
@@ -3016,12 +3016,12 @@ Resources:
       HealthyThresholdCount: 2
       Matcher:
         HttpCode: 200-299
-      Name: !Sub "${AWS::StackName}-tg-api-public"
+      Name: !Sub "${AWS::StackName}-tg-api-pub"
       Port: 8250
       Protocol: HTTP
       Tags:
         - Key: Name
-          Value: !Sub "${AWS::StackName}-target-group-api-server-public"
+          Value: !Sub "${AWS::StackName}-tg-api-pub"
       TargetGroupAttributes:
         - Key: deregistration_delay.timeout_seconds
           Value: "60"
@@ -3091,12 +3091,12 @@ Resources:
     Properties:
       Matcher:
         HttpCode: 200-299
-      Name: !Sub "${AWS::StackName}-tg-web-app-wss"
+      Name: !Sub "${AWS::StackName}-tg-web-wss"
       Port: 8255
       Protocol: HTTP
       Tags:
         - Key: Name
-          Value: !Sub "${AWS::StackName}-target-group-web-app-wss"
+          Value: !Sub "${AWS::StackName}-tg-web-wss"
       TargetGroupAttributes:
         - Key: deregistration_delay.timeout_seconds
           Value: "60"
