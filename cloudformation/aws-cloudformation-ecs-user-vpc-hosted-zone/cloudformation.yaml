@@ -2206,7 +2206,11 @@ Resources:
                   if event['RequestType'] in ['Create', 'Update']:
                       properties = event.get('ResourceProperties', {})
                       length = int(properties.get('Length', 0))
-                      response_data["RandomString"] = ''.join(random.choices(string.ascii_letters + string.digits, k=length))
+                      lower_case = bool(properties.get('LowerCase', False))
+                      if lower_case:
+                        response_data["RandomString"] = ''.join(random.choices(string.ascii_lowercase + string.digits, k=length))
+                      else:
+                        response_data["RandomString"] = ''.join(random.choices(string.ascii_letters + string.digits, k=length))
               except Exception as e:
                   logger.error(e)
                   traceback.print_exc()
@@ -2886,6 +2890,16 @@ Resources:
           Value: !Sub "${AWS::StackName}-lambda-runner-stream-producer"
     Type: Custom::LambdaRunnerStreamProducer
 
+  LambdaRunnerUserPoolDomainSuffix:
+    Properties:
+      Length: 8
+      LowerCase: True
+      ServiceToken: !GetAtt LambdaFunctionRandomString.Arn
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-lambda-runner-user-domain-suffix"
+    Type: Custom::LambdaRunnerUserPoolDomainSuffix
+
   LambdaRunnerWaitForEfs:
     Properties:
       ClusterId: !Ref EcsCluster
@@ -3417,7 +3431,10 @@ Resources:
   UserPoolDomain: # Provides Cognito Login Page
     Condition: IfUsingWeb
     Properties:
-      Domain: !GetAtt LambdaRunnerStackNameAsLower.OutputString
+      Domain: !Join
+        - "-"
+        - - !GetAtt LambdaRunnerStackNameAsLower.OutputString
+          - !GetAtt LambdaRunnerUserPoolDomainSuffix.RandomString
       UserPoolId: !Ref UserPool
     Type: AWS::Cognito::UserPoolDomain
 
