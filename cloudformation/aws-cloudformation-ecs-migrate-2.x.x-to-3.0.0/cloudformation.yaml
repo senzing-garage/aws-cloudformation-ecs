@@ -4183,6 +4183,37 @@ Outputs:
       Name: !Sub "${AWS::StackName}-host"
     Value: !GetAtt LoadBalancerPublic.DNSName
 
+  ImageVersions:
+    Description: "List of Docker images used in this stack."
+    Export:
+      Name: !Sub "${AWS::StackName}-image-versions"
+    Value: !Join
+      - ""
+      - - "ApiServer:"
+        - !FindInMap [Constants, Images, ApiServer]
+        - ", Apt:"
+        - !FindInMap [Constants, Images, Apt]
+        - ", BusyBox:"
+        - !FindInMap [Constants, Images, BusyBox]
+        - ", G2Config:"
+        - !FindInMap [Constants, Images, G2Config]
+        - ", InitContainer:"
+        - !FindInMap [Constants, Images, InitContainer]
+        - ", Redoer:"
+        - !FindInMap [Constants, Images, Redoer]
+        - ", Sshd:"
+        - !FindInMap [Constants, Images, Sshd]
+        - ", StreamLoader:"
+        - !FindInMap [Constants, Images, StreamLoader]
+        - ", StreamProducer:"
+        - !FindInMap [Constants, Images, StreamProducer]
+        - ", Swagger:"
+        - !FindInMap [Constants, Images, Swagger]
+        - ", WebApp:"
+        - !FindInMap [Constants, Images, WebApp]
+        - ", Xterm:"
+        - !FindInMap [Constants, Images, Xterm]
+
   QueueDeadLetter:
     Condition: IfUsingQueues
     Description: "URL of the dead-letter queue. Help: https://hub.senzing.com/aws-cloudformation-ecs/cloudformation/aws-cloudformation-ecs-migrate-2.x.x-to-3.0.0/#queuedeadletter"
