@@ -1,0 +1,12 @@
+[pylint]
+disable=
+    import-error,
+    invalid-name,
+    missing-module-docstring,
+    trailing-newlines,
+good-names=
+    template-python
+ignore=
+    __init__.py,
+notes=
+    FIXME,
