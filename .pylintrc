@@ -1,5 +1,6 @@
 [pylint]
 disable=
+    import-error,
     invalid-name,
     missing-module-docstring,
     trailing-newlines,
