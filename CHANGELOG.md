@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- added SecondsBeforeTimeout setting
+-
+
 ## [1.0.6] - 2022-06-13
 
 ### Updated in 1.0.6

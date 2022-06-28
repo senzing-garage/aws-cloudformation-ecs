@@ -2408,7 +2408,8 @@ Resources:
                               DBClusterIdentifier = cluster_id,
                               ScalingConfiguration = {
                                   'SecondsBeforeTimeout': 60,
-                                  'TimeoutAction': 'ForceApplyCapacityChange'
+                                  'TimeoutAction': 'ForceApplyCapacityChange',
+                                  'SecondsBeforeTimeout': 60
                               },
                           )
                       else:
