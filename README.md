@@ -22,6 +22,17 @@ other templates require pre-existing AWS Resources.
     1. Route53
         1. [AWS Route53 Hosted Zone console](https://console.aws.amazon.com/route53/v2/hostedzones#)
 
+## Warning
+
+1. :warning: **Warning:**
+   This Cloudformation deployment will accrue AWS costs.
+   With appropriate permissions, the
+   [AWS Cost Explorer](https://aws.amazon.com/aws-cost-management/aws-cost-explorer/)
+   can help evaluate costs.
+1. :warning: **Warning:**
+   This Cloudformation deployment only runs in
+   [supported AWS Regions](https://github.com/Senzing/knowledge-base/blob/main/lists/aws-supported-regions.md).
+
 ## Details
 
 1. [aws-cloudformation-ecs-certificates](cloudformation/aws-cloudformation-ecs-certificates)
