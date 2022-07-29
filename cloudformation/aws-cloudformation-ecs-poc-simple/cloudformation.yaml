@@ -5,14 +5,11 @@ AWSTemplateFormatVersion: 2010-09-09
 #     Lint: https://github.com/aws-cloudformation/cfn-python-lint
 #     Nag: https://github.com/stelligent/cfn_nag
 #     aws cloudformation validate-template: https://awscli.amazonaws.com/v2/documentation/api/latest/reference/cloudformation/validate-template.html
-# This cloudformation template should be nearly identical to
-#   https://github.com/Senzing/aws-cloudformation-ecs-poc-simple
-# But tailored to run use Senzing RPMs from the staging server.
 
 Description: >-
-  Senzing aws-cloudformation-ecs-staging-simple-100M Version: 1.0.16
+  Senzing aws-cloudformation-ecs-poc-simple Version: 1.0.17
   For more information see
-  https://github.com/Senzing/aws-cloudformation-ecs/tree/main/cloudformation/aws-cloudformation-ecs-staging-simple-100M
+  https://github.com/Senzing/aws-cloudformation-ecs-poc-simple
 
 # -----------------------------------------------------------------------------
 # Metadata
@@ -25,16 +22,13 @@ Metadata:
       - Label:
           default: Senzing installation
         Parameters:
-          - SenzingVersion
           - AcceptEula
-          - RecordMax
           - SenzingLicenseAsBase64
       - Label:
           default: Security
         Parameters:
           - CognitoAdminEmail
           - CidrInbound
-          - RunDataEncryption
       - Label:
           default: "Optional: Initial data load"
         Parameters:
@@ -53,12 +47,8 @@ Metadata:
         default: "Optional: Provide the permitted IP address block allowed to connect using CIDR notation."
       CognitoAdminEmail:
         default: "Required: Provide the email address for the administrative user."
-      RecordMax:
-        default: "Required: Number of records to insert."
       RunStreamProducer:
         default: "Optional: Would you like to have an initial set of data imported?"
-      RunDataEncryption:
-        default: "Optional: Would you like to run with data encryption enabled?"
       SecurityResponsibility:
         default: >-
           Required: A default deployment of this template is for demonstration only.
@@ -69,10 +59,6 @@ Metadata:
         default: >-
           The Senzing Evaluation comes with 100k free records of entity resolution.
           If using more than 100k records, please input base 64 encoded license string.
-      SenzingVersion:
-        default: >-
-          Version of Senzing to deploy.
-          Format:  M.m.P-YYddd
 
 # -----------------------------------------------------------------------------
 # Parameters
@@ -86,7 +72,7 @@ Parameters:
     AllowedPattern: ".+|^I_ACCEPT_THE_SENZING_EULA$"
     ConstraintDescription: AcceptEula parameter must be 'I_ACCEPT_THE_SENZING_EULA'
     Default: "_"
-    Description: "Help: https://hub.senzing.com/aws-cloudformation-ecs/aws-cloudformation-ecs-staging-simple-100M/#accepteula"
+    Description: "Help: https://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#accepteula"
     Type: String
 
   CidrInbound:
@@ -95,28 +81,14 @@ Parameters:
     MinLength: 9
     MaxLength: 18
     Default: 0.0.0.0/0
-    Description: "Help: https://hub.senzing.com/aws-cloudformation-ecs/aws-cloudformation-ecs-staging-simple-100M/#cidrinbound"
+    Description: "Help: https://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#cidrinbound"
     Type: String
 
   CognitoAdminEmail:
     AllowedPattern: '.+|^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$'
     ConstraintDescription: Entering initial user email address is required to proceed
     Default: "_"
-    Description: "Help: https://hub.senzing.com/aws-cloudformation-ecs/aws-cloudformation-ecs-staging-simple-100M/#cognitoadminemail"
-    Type: String
-
-  RecordMax:
-    AllowedValues:
-      - "1M"
-      - "5M"
-      - "10M"
-      - "20M"
-      - "25M"
-      - "50M"
-      - "75M"
-      - "100M"
-    Default: "10M"
-    Description: "Help: https://hub.senzing.com/aws-cloudformation-ecs/aws-cloudformation-ecs-staging-simple-100M/#recordmax"
+    Description: "Help: https://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#cognitoadminemail"
     Type: String
 
   RunStreamProducer:
@@ -124,34 +96,21 @@ Parameters:
       - "No"
       - "Yes"
     Default: "Yes"
-    Description: "Help: https://hub.senzing.com/aws-cloudformation-ecs/aws-cloudformation-ecs-staging-simple-100M/#runstreamproducer"
-    Type: String
-
-  RunDataEncryption:
-    AllowedValues:
-      - "No"
-      - "Yes"
-    Default: "No"
-    Description: "Help: https://hub.senzing.com/aws-cloudformation-ecs/aws-cloudformation-ecs-staging-simple-100M/#rundataencryption"
+    Description: "Help: https://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#runstreamproducer"
     Type: String
 
   SecurityResponsibility:
     AllowedPattern: ".+|^I AGREE$"
     ConstraintDescription: SecurityResponsibility parameter must be 'I AGREE'
     Default: "_"
-    Description: "Help: https://hub.senzing.com/aws-cloudformation-ecs/aws-cloudformation-ecs-staging-simple-100M/#securityresponsibility"
+    Description: "Help: https://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#securityresponsibility"
     Type: String
 
   SenzingLicenseAsBase64:
     #   AllowedPattern: ' ^$|[^-A-Za-z0-9+\/=\s]|=[^=]|={3,}$'
-    ConstraintDescription: "Must contain only Base64 characters. see https://hub.senzing.com/aws-cloudformation-ecs/aws-cloudformation-ecs-staging-simple-100M/#senzinglicenseasbase64"
-    Default: "_"
-    Description: "Help: https://hub.senzing.com/aws-cloudformation-ecs/aws-cloudformation-ecs-staging-simple-100M/#senzinglicenseasbase64"
-    Type: String
-
-  SenzingVersion:
-    Default: "3.2.0-22201"
-    Description: "Help: https://hub.senzing.com/aws-cloudformation-ecs/aws-cloudformation-ecs-staging-simple-100M/#senzingversion"
+    ConstraintDescription: "Must contain only Base64 characters. see https://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#senzinglicenseasbase64"
+    Default: " "
+    Description: "Help: https://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#senzinglicenseasbase64"
     Type: String
 
 # -----------------------------------------------------------------------------
@@ -187,60 +146,22 @@ Rules:
           - "I AGREE"
         AssertDescription: 'Understanding responsibility and entering "I AGREE" is required to proceed.'
 
-  ConfirmSenzingLicenseAsBase64:
-    Assertions:
-      - Assert: !Not
-          - !Equals
-            - !Ref SenzingLicenseAsBase64
-            - "_"
-        AssertDescription: "Senzing license in base64 format is required."
-
 # -----------------------------------------------------------------------------
 # Mappings
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/mappings-section-structure.html
 # -----------------------------------------------------------------------------
 
 Mappings:
-  DataEncryptionMap:
-    "Yes":
-      value: '
-        "DATA_ENCRYPTION": {
-        "ENCRYPTION_PLUGIN_NAME": "g2EncryptDataAES256CBC",
-        "ENCRYPTION_KEY": "68402346802394406802620602396369",
-        "ENCRYPTION_INITIALIZATION_VECTOR": "6432072349624624"
-        },'
-    "No":
-      value: ""
-
-  RecordMaxMap:
-    "1M":
-      value: "1000000"
-    "5M":
-      value: "5000000"
-    "10M":
-      value: "10000000"
-    "20M":
-      value: "20000000"
-    "25M":
-      value: "25000000"
-    "50M":
-      value: "50000000"
-    "75M":
-      value: "75000000"
-    "100M":
-      value: "100000000"
-
   Constants:
     Database:
       Name: G2
       Username: senzing
     Images:
       ApiServer: public.ecr.aws/senzing/senzing-poc-server:3.0.2
-      Apt: docker.io/senzing/apt-staging:latest
+      Apt: public.ecr.aws/senzing/apt:1.0.9
       BusyBox: public.ecr.aws/senzing/busybox:1.34.1
       G2Config: public.ecr.aws/senzing/g2configtool:1.4.6
       InitContainer: public.ecr.aws/senzing/init-container:1.7.11
-      InitDataEncryption: public.ecr.aws/senzing/data-encryption-aes256cbc-sample:1.0.2
       PostgresClient: public.ecr.aws/senzing/postgresql-client:2.1.0
       Redoer: public.ecr.aws/senzing/redoer-with-data:1.5.4
       Sshd: public.ecr.aws/senzing/sshd:1.3.0
@@ -258,15 +179,16 @@ Mappings:
       Swagger: Yes
       WebApp: Yes
       Xterm: Yes
+    Senzing:
+      Version: senzingapi=3.1.0-22152
     Stack:
-      Name: staging-simple-100M
+      Name: poc-simple
     StreamProducer:
       DataSource: TEST
       EntityType: GENERIC
-      InputUrl: https://public-read-access.s3.amazonaws.com/TestDataSets/test-dataset-100m.json.gz
+      InputUrl: https://s3.amazonaws.com/public-read-access/TestDataSets/SenzingTruthSet/truth-set-3.0.0.jsonl
+      RecordMax: 0
       RecordMin: 0
-
-  # NOTE: The CIDRs for subnets may collide with existing subnets.  The values may be altered.
 
   VpcCidrs:
     vpc:
@@ -289,10 +211,6 @@ Conditions:
   IfRunApiServer: !Equals
     - !FindInMap [Constants, Run, ApiServer]
     - Yes
-
-  IfRunDataEncryption: !Equals
-    - !Ref RunDataEncryption
-    - "Yes"
 
   IfRunRedoer: !Equals
     - !FindInMap [Constants, Run, Redoer]
@@ -378,7 +296,6 @@ Resources:
                   "BACKEND": "HYBRID",
                   "CONNECTION":"postgresql://${DatabaseUsername}:${DatabasePassword}@${DatabaseHostCore}:${DatabasePortCore}:${DatabaseName}"
               },
-              ${DataEncryption}
               "C1": {
                   "CLUSTER_SIZE": "1",
                   "DB_1": "postgresql://${DatabaseUsername}:${DatabasePassword}@${DatabaseHostRes}:${DatabasePortRes}:${DatabaseName}"
@@ -405,8 +322,6 @@ Resources:
           DatabasePortCore: !GetAtt RdsDbClusterCore.Endpoint.Port
           DatabasePortRes: !GetAtt RdsDbClusterRes.Endpoint.Port
           DatabaseUsername: !FindInMap [Constants, Database, Username]
-          DataEncryption:
-            !FindInMap [DataEncryptionMap, !Ref RunDataEncryption, value]
     Type: AWS::SSM::Parameter
 
   # -- Iam -----------------------------------------------------------------
@@ -1017,11 +932,6 @@ Resources:
       LogGroupName: !Sub "/aws/lambda/${AWS::StackName}-lambda-set-rdb-timeout-action"
     Type: AWS::Logs::LogGroup
 
-  LogsLogGroupLambdaRunStreamProducerTasks:
-    Properties:
-      LogGroupName: !Sub "/aws/lambda/${AWS::StackName}-lambda-run-stream-producer-tasks"
-    Type: AWS::Logs::LogGroup
-
   LogsLogGroupLambdaStringToLower:
     Properties:
       LogGroupName: !Sub "/aws/lambda/${AWS::StackName}-lambda-string-to-lower"
@@ -1115,11 +1025,6 @@ Resources:
         - StackNameAsLower: !GetAtt LambdaRunnerStackNameAsLower.OutputString
       DashboardName: !Sub "Senzing-${AWS::StackName}-Dashboard"
     Type: AWS::CloudWatch::Dashboard
-
-  # -- Cloud, subnets, routing --------------------------------------------------
-
-  # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-vpc.html
-  # AWS Console: https://console.aws.amazon.com/vpc/home?#vpcs > Search for {stack}
 
   Ec2Vpc:
     Properties:
@@ -1675,8 +1580,6 @@ Resources:
         AutoPause: true
         MaxCapacity: 192
         MinCapacity: 2
-        #       FIXME:  Uncomment once 'SecondsBeforeTimeout' is supported.
-        #       SecondsBeforeTimeout: 60
         SecondsUntilAutoPause: 3600
       #       FIXME:  Uncomment once 'TimeoutAction' is supported.
       #       https://github.com/aws-cloudformation/aws-cloudformation-coverage-roadmap/issues/298
@@ -1717,8 +1620,6 @@ Resources:
         AutoPause: true
         MaxCapacity: 192
         MinCapacity: 2
-        #       FIXME:  Uncomment once 'SecondsBeforeTimeout' is supported.
-        #       SecondsBeforeTimeout: 60
         SecondsUntilAutoPause: 3600
       #       FIXME:  Uncomment once 'TimeoutAction' is supported.
       #       https://github.com/aws-cloudformation/aws-cloudformation-coverage-roadmap/issues/298
@@ -1759,8 +1660,6 @@ Resources:
         AutoPause: true
         MaxCapacity: 192
         MinCapacity: 2
-        #       FIXME:  Uncomment once 'SecondsBeforeTimeout' is supported.
-        #       SecondsBeforeTimeout: 60
         SecondsUntilAutoPause: 3600
       #       FIXME:  Uncomment once 'TimeoutAction' is supported.
       #       https://github.com/aws-cloudformation/aws-cloudformation-coverage-roadmap/issues/298
@@ -1797,7 +1696,7 @@ Resources:
       Tags:
         - Key: Name
           Value: !Sub "${AWS::StackName}-sqs-input"
-      VisibilityTimeout: 14400
+      VisibilityTimeout: 300
     Type: AWS::SQS::Queue
 
   SqsDeadLetter:
@@ -1863,7 +1762,7 @@ Resources:
       Tags:
         - Key: Name
           Value: !Sub "${AWS::StackName}-sqs-redoer-input"
-      VisibilityTimeout: 14400
+      VisibilityTimeout: 300
     Type: AWS::SQS::Queue
 
   SqsRedoerOutput:
@@ -2101,117 +2000,6 @@ Resources:
       Timeout: 600
     Type: AWS::Lambda::Function
 
-  LambdaFunctionRunStreamProducerTasks:
-    Condition: IfRunStreamProducer
-    DependsOn:
-      - LambdaRunnerG2ConfigTool
-      - LambdaRunnerWaitForEfs
-      - SqsInput
-    Properties:
-      Code:
-        ZipFile: |
-          #!/usr/bin/env python3
-
-          import boto3
-          import cfnresponse
-          import datetime
-          import json
-          import logging
-          import traceback
-          from json import JSONEncoder
-
-          logger = logging.getLogger()
-          logger.setLevel(logging.INFO)
-
-          class DateTimeEncoder(JSONEncoder):
-              def default(self, obj):
-                  if isinstance(obj, (datetime.date, datetime.datetime)):
-                      return obj.isoformat()
-
-          def handler(event, context):
-              result = cfnresponse.SUCCESS
-              response = {}
-              try:
-                  logger.info("Event: {0}".format(json.dumps(event)))
-                  if event['RequestType'] in ['Create', 'Update']:
-                      properties = event.get('ResourceProperties', {})
-                      run_task_parameters = properties.get('RunTaskParameters', {})
-
-                      # Change strings to integers.
-
-                      numbers = [
-                          "count",
-                          "recordMax",
-                          "recordMin"
-                      ]
-                      for number in numbers:
-                          if number in run_task_parameters:
-                              run_task_parameters[number] = int(run_task_parameters[number])
-
-                      # Make AWS ECS request to start multiple producers.
-                      #  the stride is the number of records each producer
-                      #  should produce
-                      stride = 10_000_000
-                      max = run_task_parameters.pop("recordMax")
-                      start = run_task_parameters.pop("recordMin")
-                      if max - start < stride:
-                          end = max
-                      else:
-                          end = start + stride
-                      logger.info(f"init SENZING_RECORD_MIN: {start} SENZING_RECORD_MAX: {end} total records: {max}")
-                      done = False
-                      while not done:
-                        logger.info(f"SENZING_RECORD_MIN: {start} SENZING_RECORD_MAX: {end}")
-                        run_task_parameters["overrides"] = {
-                            'containerOverrides': [
-                              {
-                                'name' : "producer",
-                                'environment': [
-                                  {
-                                    'name': 'SENZING_RECORD_MAX',
-                                    'value': f'{end}'
-                                  },
-                                  {
-                                    'name': 'SENZING_RECORD_MIN',
-                                    'value': f'{start}'
-                                  },
-                                ],
-                              }
-                            ]
-                          }
-                        logger.info(f"run_task_parameters: {run_task_parameters}")
-                        ecs = boto3.client('ecs')
-                        response = ecs.run_task(**run_task_parameters)
-                        logger.info(f"run_task response: {response}")
-                        # calculate parameters for the next task
-                        start = end + 1
-                        if end == max :
-                            done = True
-                        elif (end + stride) > max :
-                            end = max
-                        else :
-                            end += stride
-
-                  logger.info("Response: {0}".format(json.dumps(response, cls=DateTimeEncoder)))
-
-              except Exception as e:
-                  logger.error(e)
-                  traceback.print_exc()
-                  result = cfnresponse.FAILED
-              finally:
-                  cfnresponse.send(event, context, result, {})
-
-      Description: Runs stream producer tasks.
-      FunctionName: !Sub "${AWS::StackName}-lambda-run-stream-producer-tasks"
-      Handler: index.handler
-      Role: !GetAtt IamRoleLambda.Arn
-      Runtime: python3.8
-      Tags:
-        - Key: Name
-          Value: !Sub "${AWS::StackName}-lambda-run-stream-producer-tasks"
-      Timeout: 30
-    Type: AWS::Lambda::Function
-
   LambdaFunctionRunTask:
     DependsOn:
       - Ec2SubnetRouteTableAssociationPrivate1
@@ -2407,7 +2195,6 @@ Resources:
                           response_data = client.modify_db_cluster(
                               DBClusterIdentifier = cluster_id,
                               ScalingConfiguration = {
-                                  'SecondsBeforeTimeout': 60,
                                   'TimeoutAction': 'ForceApplyCapacityChange',
                                   'SecondsBeforeTimeout': 60
                               },
@@ -2422,7 +2209,7 @@ Resources:
                   cfnresponse.send(event, context, result, {})
                   logger.info(response_data)
 
-      Description: Update database ScalingConfiguration with options not available in CFTs.
+      Description: Sets the RDB TimeoutAction to ForceApplyCapacityChange.
       FunctionName: !Sub "${AWS::StackName}-lambda-set-rdb-timeout-action"
       Handler: index.handler
       Role: !GetAtt IamRoleLambda.Arn
@@ -2618,36 +2405,6 @@ Resources:
           Value: !Sub "${AWS::StackName}-lambda-runner-generate-certificate"
     Type: Custom::LambdaRunnerGenerateCertificate
 
-  LambdaRunnerInitDataEncryption:
-    DependsOn:
-      - LambdaRunnerInitEfs
-      - LambdaRunnerInstallSenzing
-    Properties:
-      ClusterId: !Ref EcsCluster
-      RunTaskParameters:
-        # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/ecs.html#ECS.Client.run_task
-        cluster: !Ref EcsCluster
-        count: 1
-        launchType: FARGATE
-        networkConfiguration:
-          awsvpcConfiguration:
-            assignPublicIp: DISABLED
-            securityGroups:
-              - !Ref Ec2SecurityGroupLambdaRunner
-            subnets:
-              - !Ref Ec2SubnetPrivate1
-              - !Ref Ec2SubnetPrivate2
-        platformVersion: 1.4.0
-        tags:
-          - key: Name
-            value: !Sub "${AWS::StackName}-lambda-runner-init-data-encryption-run-task-parameters"
-        taskDefinition: !Ref EcsTaskDefinitionInitDataEncryption
-      ServiceToken: !GetAtt LambdaFunctionRunTaskAndWait.Arn
-      Tags:
-        - Key: Name
-          Value: !Sub "${AWS::StackName}-lambda-runner-init-data-encryption"
-    Type: Custom::LambdaRunnerInitDataEncryption
-
   LambdaRunnerInitEfs:
     DependsOn:
       - LambdaRunnerWaitForEfs
@@ -2705,6 +2462,35 @@ Resources:
         - Key: Name
           Value: !Sub "${AWS::StackName}-lambda-runner-install-senzing"
     Type: Custom::LambdaRunnerInstallSenzing
+
+  LambdaRunnerInitPostgresConfiguration:
+    DependsOn:
+      - LambdaRunnerInitPostgresCore
+    Properties:
+      ClusterId: !Ref EcsCluster
+      RunTaskParameters:
+        # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/ecs.html#ECS.Client.run_task
+        cluster: !Ref EcsCluster
+        count: 1
+        launchType: FARGATE
+        networkConfiguration:
+          awsvpcConfiguration:
+            assignPublicIp: DISABLED
+            securityGroups:
+              - !Ref Ec2SecurityGroupLambdaRunner
+            subnets:
+              - !Ref Ec2SubnetPrivate1
+              - !Ref Ec2SubnetPrivate2
+        platformVersion: 1.4.0
+        tags:
+          - key: Name
+            value: !Sub "${AWS::StackName}-lambda-runner-init-postgres-configuration-run-task-parameters"
+        taskDefinition: !Ref EcsTaskDefinitionInitPostgresConfiguration
+      ServiceToken: !GetAtt LambdaFunctionRunTaskAndWait.Arn
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-lambda-runner-init-postgres-configuration"
+    Type: Custom::LambdaRunnerInitPostgresConfiguration
 
   LambdaRunnerInitPostgresCore:
     DependsOn:
@@ -2799,7 +2585,6 @@ Resources:
       - LambdaRunnerInitPostgresCore
       - LambdaRunnerInitPostgresLibfeat
       - LambdaRunnerInitPostgresRes
-      - LambdaRunnerInitDataEncryption
     Properties:
       ClusterId: !Ref EcsCluster
       RunTaskParameters:
@@ -2888,8 +2673,6 @@ Resources:
         # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/ecs.html#ECS.Client.run_task
         cluster: !Ref EcsCluster
         count: 1
-        recordMax: !FindInMap [RecordMaxMap, !Ref RecordMax, value]
-        recordMin: !FindInMap [Constants, StreamProducer, RecordMin]
         launchType: FARGATE
         networkConfiguration:
           awsvpcConfiguration:
@@ -2904,7 +2687,7 @@ Resources:
           - key: Name
             value: !Sub "${AWS::StackName}-lambda-runner-stream-producer-run-task-parameters"
         taskDefinition: !Ref EcsTaskDefinitionStreamProducer
-      ServiceToken: !GetAtt LambdaFunctionRunStreamProducerTasks.Arn
+      ServiceToken: !GetAtt LambdaFunctionRunTask.Arn
       Tags:
         - Key: Name
           Value: !Sub "${AWS::StackName}-lambda-runner-stream-producer"
@@ -2924,6 +2707,7 @@ Resources:
     Properties:
       ClusterId: !Ref EcsCluster
       DescribeParameters:
+        # MountTargetId: !Ref EfsMountTarget1
         FileSystemId: !Ref EfsFileSystem
       ServiceToken: !GetAtt LambdaFunctionWaitForEfs.Arn
       Tags:
@@ -3376,7 +3160,7 @@ Resources:
               </p>
               <p>
                   For more information on the
-                  <a href="https://github.com/Senzing/aws-cloudformation-ecs/tree/main/cloudformation/aws-cloudformation-ecs-staging-simple-100M">Senzing simple test install with selectable test data quantity</a>
+                  <a href="https://github.com/Senzing/aws-cloudformation-ecs-poc-simple">Senzing simple proof-of-concept</a>
                   "${AWS::StackName}"
                   AWS Cloudformation,
                   contact ${Contact}.
@@ -3598,48 +3382,6 @@ Resources:
             RootDirectory: /g2
     Type: AWS::ECS::TaskDefinition
 
-  EcsTaskDefinitionInitDataEncryption:
-    Properties:
-      ContainerDefinitions:
-        - Command:
-            - "cp"
-            - "/results/libg2EncryptDataAES256CBC.so"
-            - "/opt/senzing/g2/lib/libg2EncryptDataAES256CBC.so"
-          Essential: true
-          Image: !FindInMap [Constants, Images, InitDataEncryption]
-          LogConfiguration:
-            LogDriver: awslogs
-            Options:
-              awslogs-group: !Ref LogsLogGroupMain
-              awslogs-region: !Ref AWS::Region
-              awslogs-stream-prefix: job
-          MountPoints:
-            - SourceVolume: senzing-g2-dir
-              ContainerPath: /opt/senzing/g2
-              ReadOnly: false
-          Name: initdataencryption
-          Privileged: false
-          ReadonlyRootFilesystem: false
-          User: "0"
-      Cpu: "512"
-      ExecutionRoleArn: !GetAtt IamRoleInitSenzing.Arn
-      Family: !Sub "${AWS::StackName}-task-definition-init-data-encryption"
-      Memory: "4096"
-      NetworkMode: awsvpc
-      RequiresCompatibilities:
-        - FARGATE
-      Tags:
-        - Key: Name
-          Value: !Sub "${AWS::StackName}-ecs-task-definition-init-data-encryption"
-      Volumes:
-        - Name: senzing-g2-dir
-          EFSVolumeConfiguration:
-            AuthorizationConfig: {}
-            FilesystemId:
-              Ref: EfsFileSystem
-            RootDirectory: /g2
-    Type: AWS::ECS::TaskDefinition
-
   EcsTaskDefinitionInitEfs:
     Properties:
       ContainerDefinitions:
@@ -3691,6 +3433,41 @@ Resources:
             FilesystemId:
               Ref: EfsFileSystem
             RootDirectory: "/"
+    Type: AWS::ECS::TaskDefinition
+
+  EcsTaskDefinitionInitPostgresConfiguration:
+    Properties:
+      ContainerDefinitions:
+        - Environment:
+            - Name: SENZING_DATABASE_URL
+              Value: !Sub
+                - "postgresql://${DatabaseUsername}:${DatabasePassword}@${RdsDbClusterCore.Endpoint.Address}:${RdsDbClusterCore.Endpoint.Port}/${DatabaseName}"
+                - DatabaseUsername: !FindInMap [Constants, Database, Username]
+                  DatabasePassword: !GetAtt LambdaRunnerDbPassword.RandomString
+                  DatabaseName: !FindInMap [Constants, Database, Name]
+            - Name: SENZING_SQL_FILE
+              Value: /app/insert-senzing-configuration.sql
+          Essential: true
+          Image: !FindInMap [Constants, Images, PostgresClient]
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: !Ref LogsLogGroupMain
+              awslogs-region: !Ref AWS::Region
+              awslogs-stream-prefix: job
+          Name: postgresinit
+          Privileged: false
+          ReadonlyRootFilesystem: false
+      Cpu: "512"
+      ExecutionRoleArn: !GetAtt IamRoleInitPostgres.Arn
+      Family: !Sub "${AWS::StackName}-task-definition-init-postgres-configuration"
+      Memory: "1024"
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-ecs-task-definition-init-postgres-configuration"
     Type: AWS::ECS::TaskDefinition
 
   EcsTaskDefinitionInitPostgresCore:
@@ -3804,9 +3581,12 @@ Resources:
         - Environment:
             - Name: SENZING_ENGINE_CONFIGURATION_JSON
               Value: !GetAtt SsmParameterSenzingEngineConfigurationJson.Value
+            - Name: SENZING_SUBCOMMAND
+              Value: initialize-files
             - Name: SENZING_G2CONFIG_GTC
               Value: |
-                addDataSource CUSTOMER
+                addDataSource CUSTOMERS
+                addDataSource REFERENCE
                 addDataSource WATCHLIST
                 save
             - Name: SENZING_LICENSE_BASE64_ENCODED
@@ -3870,7 +3650,7 @@ Resources:
         - Command:
             - "-y"
             - "install"
-            - !Sub "senzingapi=${SenzingVersion}"
+            - !FindInMap [Constants, Senzing, Version]
           Environment:
             - Name: SENZING_ACCEPT_EULA
               Value: !Ref AcceptEula
@@ -3945,7 +3725,7 @@ Resources:
             - Name: SENZING_SUBCOMMAND
               Value: read-from-sqs
             - Name: SENZING_THREADS_PER_PROCESS
-              Value: "20"
+              Value: "8"
           Essential: true
           Image: !FindInMap [Constants, Images, Redoer]
           LogConfiguration:
@@ -3970,7 +3750,7 @@ Resources:
       Cpu: "4096"
       ExecutionRoleArn: !GetAtt IamRoleRedoer.Arn
       Family: !Sub "${AWS::StackName}-task-definition-redoer-loader"
-      Memory: "30720"
+      Memory: "16384"
       NetworkMode: awsvpc
       RequiresCompatibilities:
         - FARGATE
@@ -4014,8 +3794,6 @@ Resources:
               Value: info
             - Name: SENZING_MONITORING_PERIOD_IN_SECONDS
               Value: "600"
-            - Name: SENZING_QUEUE_MAX_SIZE
-              Value: "100"
             - Name: SENZING_REDO_SLEEP_TIME_IN_SECONDS
               Value: "10"
             - Name: SENZING_SQS_REDO_QUEUE_URL
@@ -4257,7 +4035,7 @@ Resources:
             - Name: SENZING_SUBCOMMAND
               Value: sqs
             - Name: SENZING_THREADS_PER_PROCESS
-              Value: "20"
+              Value: "8"
           Essential: true
           Image: !FindInMap [Constants, Images, StreamLoader]
           LogConfiguration:
@@ -4279,10 +4057,10 @@ Resources:
           Name: stream-loader
           Privileged: false
           ReadonlyRootFilesystem: false
-      Cpu: "4096"
+      Cpu: "2048"
       ExecutionRoleArn: !GetAtt IamRoleStreamLoader.Arn
       Family: !Sub "${AWS::StackName}-task-definition-stream-loader"
-      Memory: "30720"
+      Memory: "12288"
       NetworkMode: awsvpc
       RequiresCompatibilities:
         - FARGATE
@@ -4327,7 +4105,7 @@ Resources:
             - Name: SENZING_READ_QUEUE_MAXSIZE
               Value: "200"
             - Name: SENZING_RECORD_MAX
-              Value: !FindInMap [RecordMaxMap, !Ref RecordMax, value]
+              Value: !FindInMap [Constants, StreamProducer, RecordMax]
             - Name: SENZING_RECORD_MIN
               Value: !FindInMap [Constants, StreamProducer, RecordMin]
             - Name: SENZING_RECORD_MONITOR
@@ -4335,7 +4113,7 @@ Resources:
             - Name: SENZING_SQS_QUEUE_URL
               Value: !Sub "https://sqs.${AWS::Region}.amazonaws.com/${AWS::AccountId}/${SqsInput.QueueName}"
             - Name: SENZING_SUBCOMMAND
-              Value: gzipped-json-to-sqs-batch
+              Value: json-to-sqs
             - Name: SENZING_THREADS_PER_PRINT
               Value: "30"
           Essential: true
@@ -4906,7 +4684,7 @@ Resources:
           PredefinedMetricType: ECSServiceAverageCPUUtilization
         ScaleInCooldown: 1200
         ScaleOutCooldown: 300
-        TargetValue: 30
+        TargetValue: 20
     Type: AWS::ApplicationAutoScaling::ScalingPolicy
 
   ApplicationAutoScalingScalingPolicyStreamLoader:
@@ -4920,7 +4698,7 @@ Resources:
           PredefinedMetricType: ECSServiceAverageCPUUtilization
         ScaleInCooldown: 1200
         ScaleOutCooldown: 300
-        TargetValue: 50
+        TargetValue: 30
     Type: AWS::ApplicationAutoScaling::ScalingPolicy
 
   ApplicationAutoScalingScalingPolicyWebApp:
@@ -4947,112 +4725,105 @@ Outputs:
 
   0penFirst:
     Condition: IfRunWebApp
-    Description: "URL for Senzing Web App. Help: https://hub.senzing.com/aws-cloudformation-ecs/aws-cloudformation-ecs-staging-simple-100M/#0penfirst"
+    Description: "URL for Senzing Web App. Help: https://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#0penfirst"
     Export:
       Name: !Sub "${AWS::StackName}-open-first"
     Value: !Sub "https://${LoadBalancerPublic.DNSName}/app/"
 
   AccountID:
-    Description: "The accountID Help: https://hub.senzing.com/aws-cloudformation-ecs/aws-cloudformation-ecs-staging-simple-100M/#accountid"
+    Description: "The accountID Help: https://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#accountid"
     Export:
       Name: !Sub "${AWS::StackName}-account-id"
     Value: !Sub "${AWS::AccountId}"
 
   CertificateArn:
     Condition: IfUsingWeb
-    Description: "ARN of the SSL certificate. Help: https://hub.senzing.com/aws-cloudformation-ecs/aws-cloudformation-ecs-staging-simple-100M/#certificatearn"
+    Description: "ARN of the SSL certificate. Help: https://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#certificatearn"
     Export:
       Name: !Sub "${AWS::StackName}-certificate-arn"
     Value: !GetAtt IamServerCertificate.Arn
 
   DatabaseHostCore:
-    Description: "The connection endpoint for the DB cluster. Help: https://hub.senzing.com/aws-cloudformation-ecs/aws-cloudformation-ecs-staging-simple-100M/#databasehostcore"
+    Description: "The connection endpoint for the DB cluster. Help: https://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#databasehostcore"
     Export:
       Name: !Sub "${AWS::StackName}-database-host-core"
     Value: !GetAtt RdsDbClusterCore.Endpoint.Address
 
   DatabaseHostLibfeat:
-    Description: "The connection endpoint for the DB cluster. Help: https://hub.senzing.com/aws-cloudformation-ecs/aws-cloudformation-ecs-staging-simple-100M/#databasehostlibfeat"
+    Description: "The connection endpoint for the DB cluster. Help: https://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#databasehostlibfeat"
     Export:
       Name: !Sub "${AWS::StackName}-database-host-libfeat"
     Value: !GetAtt RdsDbClusterLibfeat.Endpoint.Address
 
   DatabaseHostRes:
-    Description: "The connection endpoint for the DB cluster. Help: https://hub.senzing.com/aws-cloudformation-ecs/aws-cloudformation-ecs-staging-simple-100M/#databasehostres"
+    Description: "The connection endpoint for the DB cluster. Help: https://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#databasehostres"
     Export:
       Name: !Sub "${AWS::StackName}-database-host-res"
     Value: !GetAtt RdsDbClusterRes.Endpoint.Address
 
   DatabaseName:
-    Description: "The name of the database. Help: https://hub.senzing.com/aws-cloudformation-ecs/aws-cloudformation-ecs-staging-simple-100M/#databasename"
+    Description: "The name of the database. Help: https://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#databasename"
     Export:
       Name: !Sub "${AWS::StackName}-database-name"
     Value: !FindInMap [Constants, Database, Name]
 
   DatabasePassword:
-    Description: "The randomly generated password for the database. Help: https://hub.senzing.com/aws-cloudformation-ecs/aws-cloudformation-ecs-staging-simple-100M/#databasepassword"
+    Description: "The randomly generated password for the database. Help: https://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#databasepassword"
     Export:
       Name: !Sub "${AWS::StackName}-database-password"
     Value: !GetAtt LambdaRunnerDbPassword.RandomString
 
   DatabasePortCore:
-    Description: "The port number that will accept connections on this DB cluster. Help: https://hub.senzing.com/aws-cloudformation-ecs/aws-cloudformation-ecs-staging-simple-100M/#databaseportcore"
+    Description: "The port number that will accept connections on this DB cluster. Help: https://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#databaseportcore"
     Export:
       Name: !Sub "${AWS::StackName}-database-port-core"
     Value: !GetAtt RdsDbClusterCore.Endpoint.Port
 
   DatabasePortLibfeat:
-    Description: "The port number that will accept connections on this DB cluster. Help: https://hub.senzing.com/aws-cloudformation-ecs/aws-cloudformation-ecs-staging-simple-100M/#databaseportlibfeat"
+    Description: "The port number that will accept connections on this DB cluster. Help: https://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#databaseportlibfeat"
     Export:
       Name: !Sub "${AWS::StackName}-database-port-libfeat"
     Value: !GetAtt RdsDbClusterLibfeat.Endpoint.Port
 
   DatabasePortRes:
-    Description: "The port number that will accept connections on this DB cluster. Help: https://hub.senzing.com/aws-cloudformation-ecs/aws-cloudformation-ecs-staging-simple-100M/#databaseportres"
+    Description: "The port number that will accept connections on this DB cluster. Help: https://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#databaseportres"
     Export:
       Name: !Sub "${AWS::StackName}-database-port-res"
     Value: !GetAtt RdsDbClusterRes.Endpoint.Port
 
   DatabaseUsername:
-    Description: "The administrative user name. Help: https://hub.senzing.com/aws-cloudformation-ecs/aws-cloudformation-ecs-staging-simple-100M/#databaseusername"
+    Description: "The administrative user name. Help: https://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#databaseusername"
     Export:
       Name: !Sub "${AWS::StackName}-database-username"
     Value: !FindInMap [Constants, Database, Username]
 
-  DataEncryption:
-    Condition: IfRunDataEncryption
-    Description: "test data encryption parameter"
-    Export:
-      Name: "DataEncryption"
-    Value: !FindInMap [DataEncryptionMap, !Ref RunDataEncryption, value]
-
   Ec2InternetGateway:
-    Description: "Internet Gateway. Help: https://hub.senzing.com/aws-cloudformation-ecs/aws-cloudformation-ecs-staging-simple-100M/#ec2internetgateway"
+    Description: "Internet Gateway. Help: https://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#ec2internetgateway"
     Export:
       Name: !Sub "${AWS::StackName}-ec2-internet-gateway"
     Value: !Ref Ec2InternetGateway
 
   Ec2SecurityGroupInternal:
-    Description: "The ID of the VPC. Help: https://hub.senzing.com/aws-cloudformation-ecs/aws-cloudformation-ecs-staging-simple-100M/#ec2securitygroupinternal"
+    Description: "The ID of the VPC. Help: https://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#ec2securitygroupinternal"
     Export:
       Name: !Sub "${AWS::StackName}-ec2-security-group-internal"
     Value: !Ref Ec2SecurityGroupInternal
 
   Ec2Vpc:
-    Description: "The ID of the VPC. Help: https://hub.senzing.com/aws-cloudformation-ecs/aws-cloudformation-ecs-staging-simple-100M/#ec2vpc"
+    Description: "The ID of the VPC. Help: https://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#ec2vpc"
     Export:
       Name: !Sub "${AWS::StackName}-ec2-VpcId"
     Value: !Ref Ec2Vpc
 
   Ec2VpcCidrBlock:
-    Description: "The CidrBloc of the VPC. Help: https://hub.senzing.com/aws-cloudformation-ecs/aws-cloudformation-ecs-staging-simple-100M/#ec2vpccidrblock"
+    Description: "The CidrBloc of the VPC. Help: https://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#ec2vpccidrblock"
     Export:
       Name: !Sub "${AWS::StackName}-ec2-VpcId-cidrblock"
     Value: !GetAtt Ec2Vpc.CidrBlock
 
   Host:
     Condition: IfUsingWeb
-    Description: "Host name of public services. Help: https://hub.senzing.com/aws-cloudformation-ecs/aws-cloudformation-ecs-staging-simple-100M/#host"
+    Description: "Host name of public services. Help: https://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#host"
     Export:
       Name: !Sub "${AWS::StackName}-host"
     Value: !GetAtt LoadBalancerPublic.DNSName
@@ -5092,100 +4863,100 @@ Outputs:
 
   QueueDeadLetter:
     Condition: IfUsingQueues
-    Description: "URL of the dead-letter queue. Help: https://hub.senzing.com/aws-cloudformation-ecs/aws-cloudformation-ecs-staging-simple-100M/#queuedeadletter"
+    Description: "URL of the dead-letter queue. Help: https://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#queuedeadletter"
     Export:
       Name: !Sub "${AWS::StackName}-sqs-deadletter"
     Value: !Ref SqsDeadLetter
 
   QueueInput:
     Condition: IfUsingQueues
-    Description: "URL of the queue of records to be ingested into Senzing. Help: https://hub.senzing.com/aws-cloudformation-ecs/aws-cloudformation-ecs-staging-simple-100M/#queueinput"
+    Description: "URL of the queue of records to be ingested into Senzing. Help: https://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#queueinput"
     Export:
       Name: !Sub "${AWS::StackName}-sqs-input"
     Value: !Ref SqsInput
 
   QueueOutput:
     Condition: IfUsingQueues
-    Description: "URL of the queue with info records. Help: https://hub.senzing.com/aws-cloudformation-ecs/aws-cloudformation-ecs-staging-simple-100M/#queueoutput"
+    Description: "URL of the queue with info records. Help: https://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#queueoutput"
     Export:
       Name: !Sub "${AWS::StackName}-sqs-output"
     Value: !Ref SqsOutput
 
   QueueRedoerDeadLetter:
     Condition: IfUsingRedoQueues
-    Description: "URL of the redoer dead-letter queue. Help: https://hub.senzing.com/aws-cloudformation-ecs/aws-cloudformation-ecs-staging-simple-100M/#queueredoerdeadletter"
+    Description: "URL of the redoer dead-letter queue. Help: https://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#queueredoerdeadletter"
     Export:
       Name: !Sub "${AWS::StackName}-sqs-redoer-deadletter"
     Value: !Ref SqsRedoerDeadLetter
 
   QueueRedoerInput:
     Condition: IfUsingRedoQueues
-    Description: "URL of the queue holding redo records to be processed. Help: https://hub.senzing.com/aws-cloudformation-ecs/aws-cloudformation-ecs-staging-simple-100M/#queueredoerinput"
+    Description: "URL of the queue holding redo records to be processed. Help: https://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#queueredoerinput"
     Export:
       Name: !Sub "${AWS::StackName}-sqs-redoer-input"
     Value: !Ref SqsRedoerInput
 
   QueueRedoerOutput:
     Condition: IfUsingRedoQueues
-    Description: "URL of the queue with redoer info records. Help: https://hub.senzing.com/aws-cloudformation-ecs/aws-cloudformation-ecs-staging-simple-100M/#queueredoeroutput"
+    Description: "URL of the queue with redoer info records. Help: https://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#queueredoeroutput"
     Export:
       Name: !Sub "${AWS::StackName}-sqs-redoer-output"
     Value: !Ref SqsRedoerOutput
 
   SenzingVersion:
-    Description: "The Senzing Engine version installed. Help: https://hub.senzing.com/aws-cloudformation-ecs/aws-cloudformation-ecs-staging-simple-100M/#senzingversion"
+    Description: "The Senzing Engine version installed. Help: https://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#senzingversion"
     Export:
       Name: !Sub "${AWS::StackName}-senzing-version"
-    Value: !Sub "senzingapi=${SenzingVersion}"
+    Value: !FindInMap [Constants, Senzing, Version]
 
   SshPassword:
     Condition: IfUsingSshd
-    Description: "The randomly generated password for SSH access. Help: https://hub.senzing.com/aws-cloudformation-ecs/aws-cloudformation-ecs-staging-simple-100M/#sshpassword"
+    Description: "The randomly generated password for SSH access. Help: https://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#sshpassword"
     Export:
       Name: !Sub "${AWS::StackName}-ssh-password"
     Value: !GetAtt LambdaRunnerSshPassword.RandomString
 
   SshUsername:
     Condition: IfUsingSshd
-    Description: "The username for SSH access. Help: https://hub.senzing.com/aws-cloudformation-ecs/aws-cloudformation-ecs-staging-simple-100M/#sshusername"
+    Description: "The username for SSH access. Help: https://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#sshusername"
     Export:
       Name: !Sub "${AWS::StackName}-ssh-username"
     Value: root
 
   SubnetPrivate1:
-    Description: "The ID of private subnet 1. Help: https://hub.senzing.com/aws-cloudformation-ecs/aws-cloudformation-ecs-staging-simple-100M/#subnetprivate1"
+    Description: "The ID of private subnet 1. Help: https://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#subnetprivate1"
     Export:
       Name: !Sub "${AWS::StackName}-subnet-private-1"
     Value: !Ref Ec2SubnetPrivate1
 
   SubnetPrivate2:
-    Description: "The ID of private subnet 2. Help: https://hub.senzing.com/aws-cloudformation-ecs/aws-cloudformation-ecs-staging-simple-100M/#subnetprivate2"
+    Description: "The ID of private subnet 2. Help: https://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#subnetprivate2"
     Export:
       Name: !Sub "${AWS::StackName}-subnet-private-2"
     Value: !Ref Ec2SubnetPrivate2
 
   SubnetPublic1:
-    Description: "The ID of public subnet 1. Help: https://hub.senzing.com/aws-cloudformation-ecs/aws-cloudformation-ecs-staging-simple-100M/#subnetpublic1"
+    Description: "The ID of public subnet 1. Help: https://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#subnetpublic1"
     Export:
       Name: !Sub "${AWS::StackName}-subnet-public-1"
     Value: !Ref Ec2SubnetPublic1
 
   SubnetPublic2:
-    Description: "The ID of public subnet 2. Help: https://hub.senzing.com/aws-cloudformation-ecs/aws-cloudformation-ecs-staging-simple-100M/#subnetpublic2"
+    Description: "The ID of public subnet 2. Help: https://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#subnetpublic2"
     Export:
       Name: !Sub "${AWS::StackName}-subnet-public-2"
     Value: !Ref Ec2SubnetPublic2
 
   UrlApiServer:
     Condition: IfUsingApiServer
-    Description: "URL for API Server. Help: https://hub.senzing.com/aws-cloudformation-ecs/aws-cloudformation-ecs-staging-simple-100M/#urlapiserver"
+    Description: "URL for API Server. Help: https://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#urlapiserver"
     Export:
       Name: !Sub "${AWS::StackName}-url-api-server"
     Value: !Sub "https://${LoadBalancerPublic.DNSName}/api/"
 
   UrlApiServerHeartbeat:
     Condition: IfUsingApiServer
-    Description: "URL for API Server's heartbeat. Help: https://hub.senzing.com/aws-cloudformation-ecs/aws-cloudformation-ecs-staging-simple-100M/#urlapiserverheartbeat"
+    Description: "URL for API Server's heartbeat. Help: https://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#urlapiserverheartbeat"
     Value: !Sub "https://${LoadBalancerPublic.DNSName}/api/heartbeat/"
 
   UrlPrivateApiServer:
@@ -5202,42 +4973,42 @@ Outputs:
 
   UrlSwagger:
     Condition: IfRunSwagger
-    Description: "URL for Swagger. Help: https://hub.senzing.com/aws-cloudformation-ecs/aws-cloudformation-ecs-staging-simple-100M/#urlswagger"
+    Description: "URL for Swagger. Help: https://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#urlswagger"
     Export:
       Name: !Sub "${AWS::StackName}-url-swagger"
     Value: !Sub "https://${LoadBalancerPublic.DNSName}/swagger/"
 
   UrlWebApp:
     Condition: IfRunWebApp
-    Description: "URL for Senzing Web App. Help: https://hub.senzing.com/aws-cloudformation-ecs/aws-cloudformation-ecs-staging-simple-100M/#urlwebapp"
+    Description: "URL for Senzing Web App. Help: https://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#urlwebapp"
     Export:
       Name: !Sub "${AWS::StackName}-url-webapp"
     Value: !Sub "https://${LoadBalancerPublic.DNSName}/app/"
 
   UrlXterm:
     Condition: IfRunXterm
-    Description: "URL for Senzing XTerm. Help: https://hub.senzing.com/aws-cloudformation-ecs/aws-cloudformation-ecs-staging-simple-100M/#urlxterm"
+    Description: "URL for Senzing XTerm. Help: https://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#urlxterm"
     Export:
       Name: !Sub "${AWS::StackName}-url-xterm"
     Value: !Sub "https://${LoadBalancerPublic.DNSName}/xterm/"
 
   UserInitPassword:
     Condition: IfUsingWeb
-    Description: "One time password for web access. Help: https://hub.senzing.com/aws-cloudformation-ecs/aws-cloudformation-ecs-staging-simple-100M/#userinitpassword"
+    Description: "One time password for web access. Help: https://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#userinitpassword"
     Export:
       Name: !Sub "${AWS::StackName}-user-init-password"
     Value: !GetAtt LambdaRunnerWebPassword.RandomPassword
 
   UserName:
     Condition: IfUsingWeb
-    Description: "Username for web access. Help: https://hub.senzing.com/aws-cloudformation-ecs/aws-cloudformation-ecs-staging-simple-100M/#username"
+    Description: "Username for web access. Help: https://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#username"
     Export:
       Name: !Sub "${AWS::StackName}-user-name"
     Value: !Ref CognitoAdminEmail
 
   UserPool:
     Condition: IfUsingWeb
-    Description: "Username for web access. Help: https://hub.senzing.com/aws-cloudformation-ecs/aws-cloudformation-ecs-staging-simple-100M/#userpool"
+    Description: "Username for web access. Help: https://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#userpool"
     Export:
       Name: !Sub "${AWS::StackName}-user-pool"
     Value: !Sub "https://console.aws.amazon.com/cognito/users/#/pool/${UserPool}/users"
