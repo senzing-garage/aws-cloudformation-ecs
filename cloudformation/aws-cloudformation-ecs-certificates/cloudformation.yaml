@@ -4792,10 +4792,11 @@ Outputs:
       Name: !Sub "${AWS::StackName}-host"
     Value: !GetAtt LoadBalancerPublic.DNSName
 
-  ImageVersions:
-    Description: "List of Docker images used in this stack."
+  # output lengths are limited to 1024, so we chop up the image list
+  ImageVersionsPart1:
+    Description: "List of Docker images used in this stack, part 1."
     Export:
-      Name: !Sub "${AWS::StackName}-image-versions"
+      Name: !Sub "${AWS::StackName}-image-versions-part-1"
     Value: !Join
       - ""
       - - "ApiServer:"
@@ -4808,11 +4809,16 @@ Outputs:
         - !FindInMap [Constants, Images, G2Config]
         - ", InitContainer:"
         - !FindInMap [Constants, Images, InitContainer]
-        - ", PostgresClient:"
-        - !FindInMap [Constants, Images, PostgresClient]
         - ", Redoer:"
         - !FindInMap [Constants, Images, Redoer]
-        - ", Sshd:"
+
+  ImageVersionsPart2:
+    Description: "List of Docker images used in this stack, part 2."
+    Export:
+      Name: !Sub "${AWS::StackName}-image-versions-part-2"
+    Value: !Join
+      - ""
+      - - "Sshd:"
         - !FindInMap [Constants, Images, Sshd]
         - ", StreamLoader:"
         - !FindInMap [Constants, Images, StreamLoader]
