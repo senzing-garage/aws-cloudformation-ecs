@@ -1559,7 +1559,7 @@ Resources:
   RdsDbClusterParameterGroup:
     Properties:
       Description: !Sub "${AWS::StackName}-rds-db-cluster-parameter-group-description"
-      Family: aurora-postgresql10
+      Family: aurora-postgresql11
       Parameters:
         "synchronous_commit": "off"
         autovacuum_max_workers: 5
@@ -1591,7 +1591,7 @@ Resources:
       EnableHttpEndpoint: true
       Engine: aurora-postgresql
       EngineMode: serverless
-      EngineVersion: "10.12"
+      EngineVersion: "11.13"
       MasterUsername: !FindInMap [Constants, Database, Username]
       MasterUserPassword: !GetAtt LambdaRunnerDbPassword.RandomString
       ScalingConfiguration:
@@ -1631,7 +1631,7 @@ Resources:
       EnableHttpEndpoint: true
       Engine: aurora-postgresql
       EngineMode: serverless
-      EngineVersion: "10.12"
+      EngineVersion: "11.13"
       MasterUsername: !FindInMap [Constants, Database, Username]
       MasterUserPassword: !GetAtt LambdaRunnerDbPassword.RandomString
       ScalingConfiguration:
@@ -1671,7 +1671,7 @@ Resources:
       EnableHttpEndpoint: true
       Engine: aurora-postgresql
       EngineMode: serverless
-      EngineVersion: "10.12"
+      EngineVersion: "11.13"
       MasterUsername: !FindInMap [Constants, Database, Username]
       MasterUserPassword: !GetAtt LambdaRunnerDbPassword.RandomString
       ScalingConfiguration:
