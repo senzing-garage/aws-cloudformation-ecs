@@ -7,7 +7,7 @@ AWSTemplateFormatVersion: 2010-09-09
 #     aws cloudformation validate-template: https://awscli.amazonaws.com/v2/documentation/api/latest/reference/cloudformation/validate-template.html
 
 Description: >-
-  Senzing aws-cloudformation-ecs-poc-simple Version: 1.0.17
+  Senzing aws-cloudformation-ecs-poc-simple Version: 1.0.18
   For more information see
   https://github.com/Senzing/aws-cloudformation-ecs-poc-simple
 
@@ -157,16 +157,16 @@ Mappings:
       Name: G2
       Username: senzing
     Images:
-      ApiServer: docker.io/senzing/senzing-poc-server:staging
-      InitPostgresql: docker.io/senzing/init-postgresql:staging
-      Redoer: docker.io/senzing/redoer:staging
-      SenzingApiTools: docker.io/senzing/senzingapi-tools:staging
-      Sshd: docker.io/senzing/sshd:staging
-      StreamLoader: docker.io/senzing/stream-loader:staging
-      StreamProducer: public.ecr.aws/senzing/stream-producer:1.7.2
-      Swagger: public.ecr.aws/senzing/swagger-ui:v4.12.0
-      WebApp: public.ecr.aws/senzing/entity-search-web-app:2.6.0
-      Xterm: docker.io/senzing/xterm:staging
+      ApiServer: public.ecr.aws/senzing/senzing-poc-server:3.2.2
+      InitPostgresql: public.ecr.aws/senzing/init-postgresql:1.0.3
+      Redoer: public.ecr.aws/senzing/redoer:2.1.0
+      SenzingApiTools: public.ecr.aws/senzing/senzingapi-tools:3.2.0
+      Sshd: public.ecr.aws/senzing/sshd:1.4.0
+      StreamLoader: public.ecr.aws/senzing/stream-loader:2.1.0
+      StreamProducer: public.ecr.aws/senzing/stream-producer:1.7.3
+      Swagger: public.ecr.aws/senzing/swagger-ui:v4.13.2
+      WebApp: public.ecr.aws/senzing/entity-search-web-app:2.7.1
+      Xterm: public.ecr.aws/senzing/xterm:1.4.1
     Run:
       ApiServer: Yes
       Redoer: Yes
@@ -904,6 +904,11 @@ Resources:
       DashboardName: !Sub "Senzing-${AWS::StackName}-Dashboard"
     Type: AWS::CloudWatch::Dashboard
 
+  # -- Cloud, subnets, routing --------------------------------------------------
+
+  # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-vpc.html
+  # AWS Console: https://console.aws.amazon.com/vpc/home?#vpcs > Search for {stack}
+
   Ec2Vpc:
     Properties:
       CidrBlock: !FindInMap
@@ -1420,6 +1425,8 @@ Resources:
         AutoPause: true
         MaxCapacity: 192
         MinCapacity: 2
+        #       FIXME:  Uncomment once 'SecondsBeforeTimeout' is supported.
+        #       SecondsBeforeTimeout: 60
         SecondsUntilAutoPause: 3600
       #       FIXME:  Uncomment once 'TimeoutAction' is supported.
       #       https://github.com/aws-cloudformation/aws-cloudformation-coverage-roadmap/issues/298
@@ -1460,6 +1467,8 @@ Resources:
         AutoPause: true
         MaxCapacity: 192
         MinCapacity: 2
+        #       FIXME:  Uncomment once 'SecondsBeforeTimeout' is supported.
+        #       SecondsBeforeTimeout: 60
         SecondsUntilAutoPause: 3600
       #       FIXME:  Uncomment once 'TimeoutAction' is supported.
       #       https://github.com/aws-cloudformation/aws-cloudformation-coverage-roadmap/issues/298
@@ -1500,6 +1509,8 @@ Resources:
         AutoPause: true
         MaxCapacity: 192
         MinCapacity: 2
+        #       FIXME:  Uncomment once 'SecondsBeforeTimeout' is supported.
+        #       SecondsBeforeTimeout: 60
         SecondsUntilAutoPause: 3600
       #       FIXME:  Uncomment once 'TimeoutAction' is supported.
       #       https://github.com/aws-cloudformation/aws-cloudformation-coverage-roadmap/issues/298
@@ -2148,6 +2159,7 @@ Resources:
                           response_data = client.modify_db_cluster(
                               DBClusterIdentifier = cluster_id,
                               ScalingConfiguration = {
+                                  'SecondsBeforeTimeout': 60,
                                   'TimeoutAction': 'ForceApplyCapacityChange',
                                   'SecondsBeforeTimeout': 60
                               },
@@ -2162,7 +2174,7 @@ Resources:
                   cfnresponse.send(event, context, result, {})
                   logger.info(response_data)
 
-      Description: Sets the RDB TimeoutAction to ForceApplyCapacityChange.
+      Description: Update database ScalingConfiguration with options not available in CFTs.
       FunctionName: !Sub "${AWS::StackName}-lambda-set-rdb-timeout-action"
       Handler: index.handler
       Role: !GetAtt IamRoleLambda.Arn
@@ -3068,7 +3080,6 @@ Resources:
           Value: !Sub "${AWS::StackName}-ecs-task-definition-init-postgres-configuration"
     Type: AWS::ECS::TaskDefinition
 
-
   EcsTaskDefinitionRedoerLoader:
     Condition: IfRunRedoer
     Properties:
@@ -3095,7 +3106,7 @@ Resources:
             - Name: SENZING_SUBCOMMAND
               Value: read-from-sqs
             - Name: SENZING_THREADS_PER_PROCESS
-              Value: "8"
+              Value: "20"
           Essential: true
           Image: !FindInMap [Constants, Images, Redoer]
           LogConfiguration:
@@ -3110,7 +3121,7 @@ Resources:
       Cpu: "4096"
       ExecutionRoleArn: !GetAtt IamRoleRedoer.Arn
       Family: !Sub "${AWS::StackName}-task-definition-redoer-loader"
-      Memory: "16384"
+      Memory: "30720"
       NetworkMode: awsvpc
       RequiresCompatibilities:
         - FARGATE
@@ -3135,6 +3146,8 @@ Resources:
               Value: info
             - Name: SENZING_MONITORING_PERIOD_IN_SECONDS
               Value: "600"
+            - Name: SENZING_QUEUE_MAX_SIZE
+              Value: "100"
             - Name: SENZING_REDO_SLEEP_TIME_IN_SECONDS
               Value: "10"
             - Name: SENZING_SQS_REDO_QUEUE_URL
@@ -3271,7 +3284,7 @@ Resources:
             - Name: SENZING_SUBCOMMAND
               Value: sqs
             - Name: SENZING_THREADS_PER_PROCESS
-              Value: "8"
+              Value: "20"
           Essential: true
           Image: !FindInMap [Constants, Images, StreamLoader]
           LogConfiguration:
@@ -3283,10 +3296,10 @@ Resources:
           Name: stream-loader
           Privileged: false
           ReadonlyRootFilesystem: false
-      Cpu: "2048"
+      Cpu: "4096"
       ExecutionRoleArn: !GetAtt IamRoleStreamLoader.Arn
       Family: !Sub "${AWS::StackName}-task-definition-stream-loader"
-      Memory: "12288"
+      Memory: "30720"
       NetworkMode: awsvpc
       RequiresCompatibilities:
         - FARGATE
@@ -3830,7 +3843,7 @@ Resources:
           PredefinedMetricType: ECSServiceAverageCPUUtilization
         ScaleInCooldown: 1200
         ScaleOutCooldown: 300
-        TargetValue: 20
+        TargetValue: 30
     Type: AWS::ApplicationAutoScaling::ScalingPolicy
 
   ApplicationAutoScalingScalingPolicyStreamLoader:
@@ -3844,7 +3857,7 @@ Resources:
           PredefinedMetricType: ECSServiceAverageCPUUtilization
         ScaleInCooldown: 1200
         ScaleOutCooldown: 300
-        TargetValue: 30
+        TargetValue: 50
     Type: AWS::ApplicationAutoScaling::ScalingPolicy
 
   ApplicationAutoScalingScalingPolicyWebApp:
