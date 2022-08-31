@@ -8,8 +8,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-- added SecondsBeforeTimeout setting
 -
+
+## [1.1.0] - 2022-08-29
+
+### Changed in 1.1.0
+
+- added SecondsBeforeTimeout setting
+- converted to new images
+- updated database version
+- remove efs, apt, init container, and senzing install
 
 ## [1.0.17] - 2022-06-08
 
