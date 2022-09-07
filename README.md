@@ -1,5 +1,15 @@
 # aws-cloudformation-ecs
 
+## :no_entry: Deprecated
+
+This repository contains deprecated AWS Cloudformation Templates (CFTs).
+The CFTs will not be maintained.
+
+Although the Cloudformation Templates are deprecated and "archived", this repository will remain active.
+There may be future CFTs that will be deprecated and added to this repository.
+
+[![No Maintenance Intended](http://unmaintained.tech/badge.svg)](http://unmaintained.tech/)
+
 ## Synopsis
 
 In the demonstration Cloudformation templates,
