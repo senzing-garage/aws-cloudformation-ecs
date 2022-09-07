@@ -6,10 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 [markdownlint](https://dlaa.me/markdownlint/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.1.0] - 2022-09-07
 
+### Changed in 1.1.0
+
+- Changed status of repository to be deprecated and unmaintained
 - added SecondsBeforeTimeout setting
--
 
 ## [1.0.6] - 2022-06-13
 
