@@ -30,7 +30,7 @@ against a 2.x.x database to prepare it for a 3.0.0 installation.
             1. Input your Base64 license, as needed.
         1. In **Identify existing resources**
             1. Enter the stack name of the previously deployed 2.x.x
-               [aws-cloudformation-database-cluster](https://github.com/Senzing/aws-cloudformation-database-cluster)
+               [aws-cloudformation-database-cluster](https://github.com/senzing-garage/aws-cloudformation-database-cluster)
                Cloudformation stack
                Example:  `senzing-db`
         1. In **Security**

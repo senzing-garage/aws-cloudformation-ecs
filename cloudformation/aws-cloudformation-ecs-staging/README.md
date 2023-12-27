@@ -19,7 +19,7 @@ The `aws-cloudformation-ecs / staging-test` is used for testing a version of Sen
     1. In **Specify template**
         1. Select ":radio_button: Upload a template file".
         1. Click "Choose file" button.
-        1. Select the [staging-test/cloudformation.yaml](https://github.com/Senzing/aws-cloudformation-ecs/blob/main/cloudformation/staging-test/cloudformation.yaml) file on your local system.
+        1. Select the [staging-test/cloudformation.yaml](https://github.com/senzing-garage/aws-cloudformation-ecs/blob/main/cloudformation/staging-test/cloudformation.yaml) file on your local system.
            Example: `~/senzing.git/aws-cloudformation-ecs/cloudformation/staging-test/cloudformation.yaml`
     1. In lower-right, click on "Next" button.
 1. In **Specify stack details**

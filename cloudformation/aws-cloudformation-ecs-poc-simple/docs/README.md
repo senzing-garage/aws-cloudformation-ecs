@@ -39,17 +39,17 @@ Arrows represent data flow.
 
 This docker formation brings up the following docker containers:
 
-1. *[senzing/entity-web-search-app](https://github.com/Senzing/entity-search-web-app)*
-1. *[senzing/jupyter](https://github.com/Senzing/docker-jupyter)*
-1. *[senzing/redoer](https://github.com/Senzing/redoer)*
-1. *[senzing/senzing-api-server](https://github.com/Senzing/senzing-api-server)*
-1. *[senzing/sshd](https://github.com/Senzing/docker-sshd)*
-1. *[senzing/stream-loader](https://github.com/Senzing/stream-loader)*
-1. *[senzing/stream-producer](https://github.com/Senzing/stream-producer)*
-1. *[senzing/xterm](https://github.com/Senzing/docker-xterm)*
+1. *[senzing/entity-web-search-app](https://github.com/senzing-garage/entity-search-web-app)*
+1. *[senzing/jupyter](https://github.com/senzing-garage/docker-jupyter)*
+1. *[senzing/redoer](https://github.com/senzing-garage/redoer)*
+1. *[senzing/senzing-api-server](https://github.com/senzing-garage/senzing-api-server)*
+1. *[senzing/sshd](https://github.com/senzing-garage/docker-sshd)*
+1. *[senzing/stream-loader](https://github.com/senzing-garage/stream-loader)*
+1. *[senzing/stream-producer](https://github.com/senzing-garage/stream-producer)*
+1. *[senzing/xterm](https://github.com/senzing-garage/docker-xterm)*
 
 GitHub repository for
-[aws-cloudformation-ecs-poc-simple](https://github.com/Senzing/aws-cloudformation-ecs-poc-simple).
+[aws-cloudformation-ecs-poc-simple](https://github.com/senzing-garage/aws-cloudformation-ecs-poc-simple).
 
 ### Contents
 
@@ -66,12 +66,12 @@ GitHub repository for
 
 At [Senzing](http://senzing.com),
 we strive to create GitHub documentation in a
-"[don't make me think](https://github.com/Senzing/knowledge-base/blob/main/WHATIS/dont-make-me-think.md)" style.
+"[don't make me think](https://github.com/senzing-garage/knowledge-base/blob/main/WHATIS/dont-make-me-think.md)" style.
 For the most part, instructions are copy and paste.
 Whenever thinking is needed, it's marked with a "thinking" icon :thinking:.
 Whenever customization is needed, it's marked with a "pencil" icon :pencil2:.
 If the instructions are not clear, please let us know by opening a new
-[Documentation issue](https://github.com/Senzing/aws-cloudformation-ecs-poc-simple/issues/new?template=documentation_request.md)
+[Documentation issue](https://github.com/senzing-garage/aws-cloudformation-ecs-poc-simple/issues/new?template=documentation_request.md)
 describing where we can improve.   Now on with the show...
 
 ### Legend
@@ -87,7 +87,7 @@ describing where we can improve.   Now on with the show...
 - **Space:** This repository and demonstration require 6 GB free disk space.
 - **Time:** Budget 40 minutes to get the demonstration up-and-running.
 - **Background knowledge:** This repository assumes a working knowledge of:
-  - [AWS Cloudformation](https://github.com/Senzing/knowledge-base/blob/main/WHATIS/aws-cloudformation.md)
+  - [AWS Cloudformation](https://github.com/senzing-garage/knowledge-base/blob/main/WHATIS/aws-cloudformation.md)
 
 ## Demonstrate using AWS Console
 
@@ -135,16 +135,16 @@ describing where we can improve.   Now on with the show...
 
 ## Additional topics
 
-1. [How to load AWS Cloudformation queue](https://github.com/Senzing/knowledge-base/blob/main/HOWTO/load-aws-cloudformation-queue.md)
-1. [How to set AWS RDS force-scaling-capacity](https://github.com/Senzing/knowledge-base/blob/main/HOWTO/set-aws-rds-force-scaling-capacity.md)
-1. [How to migrate Senzing in AWS Cloudformation](https://github.com/Senzing/knowledge-base/blob/main/HOWTO/migrate-senzing-in-cloudformation.md)
-1. [How to update Senzing license](https://github.com/Senzing/knowledge-base/blob/main/HOWTO/update-senzing-license.md)
-1. [How to migrate an AWS RDS database](https://github.com/Senzing/knowledge-base/blob/main/HOWTO/migrate-aws-rds-database.md)
+1. [How to load AWS Cloudformation queue](https://github.com/senzing-garage/knowledge-base/blob/main/HOWTO/load-aws-cloudformation-queue.md)
+1. [How to set AWS RDS force-scaling-capacity](https://github.com/senzing-garage/knowledge-base/blob/main/HOWTO/set-aws-rds-force-scaling-capacity.md)
+1. [How to migrate Senzing in AWS Cloudformation](https://github.com/senzing-garage/knowledge-base/blob/main/HOWTO/migrate-senzing-in-cloudformation.md)
+1. [How to update Senzing license](https://github.com/senzing-garage/knowledge-base/blob/main/HOWTO/update-senzing-license.md)
+1. [How to migrate an AWS RDS database](https://github.com/senzing-garage/knowledge-base/blob/main/HOWTO/migrate-aws-rds-database.md)
 
 ### Review AWS Cloudformation
 
 The AWS resources created by the
-[cloudformation.yaml](https://github.com/Senzing/aws-cloudformation-ecs-poc-simple/blob/main/cloudformation.yaml)
+[cloudformation.yaml](https://github.com/senzing-garage/aws-cloudformation-ecs-poc-simple/blob/main/cloudformation.yaml)
 template can be see in the [AWS Management Console](https://console.aws.amazon.com).
 
 1. CloudFormation
@@ -209,7 +209,7 @@ Technical information on AWS Cloudformation parameters can be seen at
    This step is intentionally tricky to ensure that you make a conscious effort to accept the EULA.
 1. **Required:** Yes
 1. **Type:** String
-1. **Allowed values:** See [SENZING_ACCEPT_EULA](https://github.com/Senzing/knowledge-base/blob/main/lists/environment-variables.md#senzing_accept_eula).
+1. **Allowed values:** See [SENZING_ACCEPT_EULA](https://github.com/senzing-garage/knowledge-base/blob/main/lists/environment-variables.md#senzing_accept_eula).
 1. **Default:** None
 
 ### CidrInbound
@@ -273,7 +273,7 @@ Technical information on AWS Cloudformation parameters can be seen at
    and HTTPS (using a self-signed certificate) for encrypted network traffic
    to expose services through a single, internet-facing AWS Elastic Load Balancer.
    With exception of the
-   [senzing/sshd](https://github.com/Senzing/docker-sshd) container,
+   [senzing/sshd](https://github.com/senzing-garage/docker-sshd) container,
    no tasks in the AWS Elastic Container Service (ECS) have public IP addresses.
 
    To enable additional security measures for the deployment in your specific environment,
@@ -532,14 +532,14 @@ Technical information on AWS Cloudformation parameters can be seen at
 
 1. **Synopsis:**
    A URL showing how to reach the
-   [Senzing API Server](https://github.com/Senzing/senzing-api-server)
+   [Senzing API Server](https://github.com/senzing-garage/senzing-api-server)
    directly.
 
 ### UrlApiServerHeartbeat
 
 1. **Synopsis:**
    A URL showing how to reach the
-   [Senzing API Server](https://github.com/Senzing/senzing-api-server)
+   [Senzing API Server](https://github.com/senzing-garage/senzing-api-server)
    directly.
    The `/heartbeat` URI path simply demonstrates that the API server is responding.
    For more URIs, see
@@ -549,20 +549,20 @@ Technical information on AWS Cloudformation parameters can be seen at
 
 1. **Synopsis:**
    A URL showing how to reach the
-   [Senzing Jupyter notebooks](https://github.com/Senzing/docker-jupyter).
+   [Senzing Jupyter notebooks](https://github.com/senzing-garage/docker-jupyter).
 
 ### UrlPrivateApiServer
 
 1. **Synopsis:**
    A URL showing how to reach the
-   [Senzing API Server](https://github.com/Senzing/senzing-api-server)
+   [Senzing API Server](https://github.com/senzing-garage/senzing-api-server)
    directly from within the same VPC.
 
 ### UrlPrivateApiServerHeartbeat
 
 1. **Synopsis:**
    A URL showing how to reach the
-   [Senzing API Server](https://github.com/Senzing/senzing-api-server)
+   [Senzing API Server](https://github.com/senzing-garage/senzing-api-server)
    directly from within the same VPC.
    The `/heartbeat` URI path simply demonstrates that the API server is responding.
    For more URIs, see
@@ -588,13 +588,13 @@ Technical information on AWS Cloudformation parameters can be seen at
 
 1. **Synopsis:**
    A URL showing how to reach the
-   [Senzing Entity Search Web App](https://github.com/Senzing/entity-search-web-app).
+   [Senzing Entity Search Web App](https://github.com/senzing-garage/entity-search-web-app).
 
 ### UrlXterm
 
 1. **Synopsis:**
    A URL showing how to reach the
-   [Senzing Xterm](https://github.com/Senzing/docker-xterm).
+   [Senzing Xterm](https://github.com/senzing-garage/docker-xterm).
 1. **Usage:**
    From this Linux terminal, `G2Command.py`, `G2Explorer.py`, `G2ConfigTool.py`,
    can be run.

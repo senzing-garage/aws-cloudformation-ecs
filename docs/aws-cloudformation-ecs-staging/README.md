@@ -38,15 +38,15 @@ Arrows represent data flow.
 
 This docker formation brings up the following docker containers:
 
-1. *[senzing/entity-web-search-app](https://github.com/Senzing/entity-search-web-app)*
-1. *[senzing/redoer](https://github.com/Senzing/redoer)*
-1. *[senzing/senzing-api-server](https://github.com/Senzing/senzing-api-server)*
-1. *[senzing/sshd](https://github.com/Senzing/docker-sshd)*
-1. *[senzing/stream-loader](https://github.com/Senzing/stream-loader)*
-1. *[senzing/stream-producer](https://github.com/Senzing/stream-producer)*
+1. *[senzing/entity-web-search-app](https://github.com/senzing-garage/entity-search-web-app)*
+1. *[senzing/redoer](https://github.com/senzing-garage/redoer)*
+1. *[senzing/senzing-api-server](https://github.com/senzing-garage/senzing-api-server)*
+1. *[senzing/sshd](https://github.com/senzing-garage/docker-sshd)*
+1. *[senzing/stream-loader](https://github.com/senzing-garage/stream-loader)*
+1. *[senzing/stream-producer](https://github.com/senzing-garage/stream-producer)*
 
 Help for
-[senzing-demo-full-stack](https://github.com/Senzing/aws-cloudformation-ecs/tree/main/cloudformation/senzing-demo-full-stack).
+[senzing-demo-full-stack](https://github.com/senzing-garage/aws-cloudformation-ecs/tree/main/cloudformation/senzing-demo-full-stack).
 
 ### Contents
 
@@ -61,12 +61,12 @@ Help for
 
 At [Senzing](http://senzing.com),
 we strive to create GitHub documentation in a
-"[don't make me think](https://github.com/Senzing/knowledge-base/blob/main/WHATIS/dont-make-me-think.md)" style.
+"[don't make me think](https://github.com/senzing-garage/knowledge-base/blob/main/WHATIS/dont-make-me-think.md)" style.
 For the most part, instructions are copy and paste.
 Whenever thinking is needed, it's marked with a "thinking" icon :thinking:.
 Whenever customization is needed, it's marked with a "pencil" icon :pencil2:.
 If the instructions are not clear, please let us know by opening a new
-[Documentation issue](https://github.com/Senzing/aws-cloudformation-ecs/issues/new?template=documentation_request.md)
+[Documentation issue](https://github.com/senzing-garage/aws-cloudformation-ecs/issues/new?template=documentation_request.md)
 describing where we can improve.   Now on with the show...
 
 ### Legend
@@ -82,7 +82,7 @@ describing where we can improve.   Now on with the show...
 - **Space:** This repository and demonstration require 6 GB free disk space.
 - **Time:** Budget 40 minutes to get the demonstration up-and-running.
 - **Background knowledge:** This repository assumes a working knowledge of:
-  - [AWS Cloudformation](https://github.com/Senzing/knowledge-base/blob/main/WHATIS/aws-cloudformation.md)
+  - [AWS Cloudformation](https://github.com/senzing-garage/knowledge-base/blob/main/WHATIS/aws-cloudformation.md)
 
 ## Demonstrate using AWS Console
 
@@ -132,7 +132,7 @@ Technical information on AWS Cloudformation parameters can be seen at
    This step is intentionally tricky to ensure that you make a conscious effort to accept the EULA.
 1. **Required:** Yes
 1. **Type:** String
-1. **Allowed values:** See [SENZING_ACCEPT_EULA](https://github.com/Senzing/knowledge-base/blob/main/lists/environment-variables.md#senzing_accept_eula).
+1. **Allowed values:** See [SENZING_ACCEPT_EULA](https://github.com/senzing-garage/knowledge-base/blob/main/lists/environment-variables.md#senzing_accept_eula).
 1. **Default:** None
 
 ### AcknowledgeInsecureSystem
@@ -167,7 +167,7 @@ Technical information on AWS Cloudformation parameters can be seen at
 
 1. **Synopsis:**
    Optionally, run the
-   [Senzing API server](https://github.com/Senzing/senzing-api-server)
+   [Senzing API server](https://github.com/senzing-garage/senzing-api-server)
    to create a RESTful API service to the Senzing Engine.
 1. **Required:** Yes
 1. **Type:** Boolean
@@ -179,7 +179,7 @@ Technical information on AWS Cloudformation parameters can be seen at
 
 1. **Synopsis:**
    Optionally, run the
-   [Senzing Jupyter notebooks](https://github.com/Senzing/docker-jupyter)
+   [Senzing Jupyter notebooks](https://github.com/senzing-garage/docker-jupyter)
    to view Jupyter notebooks showing Senzing code samples.
 1. **Required:** Yes
 1. **Type:** Boolean
@@ -191,7 +191,7 @@ Technical information on AWS Cloudformation parameters can be seen at
 
 1. **Synopsis:**
    Optionally, run the
-   [redoer](https://github.com/Senzing/redoer)
+   [redoer](https://github.com/senzing-garage/redoer)
    to process "redo records"
 1. **Required:** Yes
 1. **Type:** Boolean
@@ -203,7 +203,7 @@ Technical information on AWS Cloudformation parameters can be seen at
 
 1. **Synopsis:**
    Optionally, run the
-   [sshd](https://github.com/Senzing/docker-sshd)
+   [sshd](https://github.com/senzing-garage/docker-sshd)
    container that allows `ssh` and `scp` access.
    Can be used for debugging, copying files to the EFS, or the Senzing Exploratory Tools.
 1. **Required:** Yes
@@ -216,7 +216,7 @@ Technical information on AWS Cloudformation parameters can be seen at
 
 1. **Synopsis:**
    Optionally, run the
-   [stream-loader](https://github.com/Senzing/stream-loader)'
+   [stream-loader](https://github.com/senzing-garage/stream-loader)'
    which reads records from the SQS queue and sends them to the Senzing Engine.
 1. **Required:** Yes
 1. **Type:** Boolean
@@ -228,7 +228,7 @@ Technical information on AWS Cloudformation parameters can be seen at
 
 1. **Synopsis:**
    Optionally, run the
-   [stream-producer](https://github.com/Senzing/stream-producer)
+   [stream-producer](https://github.com/senzing-garage/stream-producer)
    container that fetches JSON lines from a file and pushes them to the SQS queue.
    If "Yes" is chosen,
    [SenzingInputUrl](#senzinginputurl),
@@ -248,7 +248,7 @@ Technical information on AWS Cloudformation parameters can be seen at
    Optionally, run the
    [swaggerapi/swagger-ui](https://github.com/swagger-api/swagger-ui)
    container that hosts the SwaggerUI for viewing the
-   [Senzing REST API OpenAPI document](https://github.com/Senzing/senzing-rest-api-specification).
+   [Senzing REST API OpenAPI document](https://github.com/senzing-garage/senzing-rest-api-specification).
 1. **Required:** Yes
 1. **Type:** Boolean
 1. **Allowed values:**
@@ -271,7 +271,7 @@ Technical information on AWS Cloudformation parameters can be seen at
 
 1. **Synopsis:**
    Optionally, run the
-   [entity-search-web-app](https://github.com/Senzing/entity-search-web-app)
+   [entity-search-web-app](https://github.com/senzing-garage/entity-search-web-app)
    which gives a web-based representation of data stored in the Senzing data model.
 1. **Required:** Yes
 1. **Type:** Boolean
@@ -284,7 +284,7 @@ Technical information on AWS Cloudformation parameters can be seen at
 
 1. **Synopsis:**
    Optionally, run the
-   [Senzing Xterm](https://github.com/Senzing/docker-xterm)
+   [Senzing Xterm](https://github.com/senzing-garage/docker-xterm)
    which gives a web-base terminal useful in running command line programs.
 1. **Required:** Yes
 1. **Type:** Boolean
@@ -510,7 +510,7 @@ Technical information on AWS Cloudformation parameters can be seen at
 
 1. **Synopsis:**
    The queue to which "WithInfo" results are sent by the
-   [stream-loader](https://github.com/Senzing/stream-loader)
+   [stream-loader](https://github.com/senzing-garage/stream-loader)
    after ingesting records from the [Queue](#queue).
    More information at [AWS SQS Console](https://console.aws.amazon.com/sqs/v2/home?#/queues).
 
@@ -544,13 +544,13 @@ Technical information on AWS Cloudformation parameters can be seen at
 
 1. **Synopsis:**
    A URL showing how to reach the
-   [Senzing API Server](https://github.com/Senzing/senzing-api-server).
+   [Senzing API Server](https://github.com/senzing-garage/senzing-api-server).
 
 ### UrlApiServerHeartbeat
 
 1. **Synopsis:**
    A URL showing how to reach the
-   [Senzing API Server](https://github.com/Senzing/senzing-api-server)
+   [Senzing API Server](https://github.com/senzing-garage/senzing-api-server)
    directly.
    The `/heartbeat` URI path simply demonstrates that the API server is responding.
    For more URIs, see
@@ -560,7 +560,7 @@ Technical information on AWS Cloudformation parameters can be seen at
 
 1. **Synopsis:**
    A URL showing how to reach the
-   [Senzing Jupyter notebooks](https://github.com/Senzing/docker-jupyter).
+   [Senzing Jupyter notebooks](https://github.com/senzing-garage/docker-jupyter).
 
 ### UrlSwagger
 
@@ -568,19 +568,19 @@ Technical information on AWS Cloudformation parameters can be seen at
    A URL showing how to reach the
    [swaggerapi/swagger-ui](https://github.com/swagger-api/swagger-ui)
    for viewing the
-   [Senzing REST API OpenAPI document](https://github.com/Senzing/senzing-rest-api-specification).
+   [Senzing REST API OpenAPI document](https://github.com/senzing-garage/senzing-rest-api-specification).
 
 ### UrlWebApp
 
 1. **Synopsis:**
    A URL showing how to reach the
-   [Senzing Entity Search Web App](https://github.com/Senzing/entity-search-web-app).
+   [Senzing Entity Search Web App](https://github.com/senzing-garage/entity-search-web-app).
 
 ### UrlXterm
 
 1. **Synopsis:**
    A URL showing how to reach the
-   [Senzing Xterm](https://github.com/Senzing/docker-xterm).
+   [Senzing Xterm](https://github.com/senzing-garage/docker-xterm).
 
 ### WebInitPassword
 
