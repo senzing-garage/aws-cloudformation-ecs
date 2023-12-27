@@ -65,11 +65,11 @@ Detailed instructions at
 
 ## Additional topics
 
-1. [How to load AWS Cloudformation queue](https://github.com/Senzing/knowledge-base/blob/main/HOWTO/load-aws-cloudformation-queue.md)
-1. [How to set AWS RDS force-scaling-capacity](https://github.com/Senzing/knowledge-base/blob/main/HOWTO/set-aws-rds-force-scaling-capacity.md)
-1. [How to migrate Senzing in AWS Cloudformation](https://github.com/Senzing/knowledge-base/blob/main/HOWTO/migrate-senzing-in-cloudformation.md)
-1. [How to update Senzing license](https://github.com/Senzing/knowledge-base/blob/main/HOWTO/update-senzing-license.md)
-1. [How to migrate an AWS RDS database](https://github.com/Senzing/knowledge-base/blob/main/HOWTO/migrate-aws-rds-database.md)
+1. [How to load AWS Cloudformation queue](https://github.com/senzing-garage/knowledge-base/blob/main/HOWTO/load-aws-cloudformation-queue.md)
+1. [How to set AWS RDS force-scaling-capacity](https://github.com/senzing-garage/knowledge-base/blob/main/HOWTO/set-aws-rds-force-scaling-capacity.md)
+1. [How to migrate Senzing in AWS Cloudformation](https://github.com/senzing-garage/knowledge-base/blob/main/HOWTO/migrate-senzing-in-cloudformation.md)
+1. [How to update Senzing license](https://github.com/senzing-garage/knowledge-base/blob/main/HOWTO/update-senzing-license.md)
+1. [How to migrate an AWS RDS database](https://github.com/senzing-garage/knowledge-base/blob/main/HOWTO/migrate-aws-rds-database.md)
 
 ## Behind the scenes
 

@@ -10,6 +10,18 @@ There may be future CFTs that will be deprecated and added to this repository.
 
 [![No Maintenance Intended](http://unmaintained.tech/badge.svg)](http://unmaintained.tech/)
 
+If you are beginning your journey with
+[Senzing](https://senzing.com/),
+please start with
+[Senzing Quick Start guides](https://docs.senzing.com/quickstart/).
+
+You are in the
+[Senzing Garage](https://github.com/senzing-garage)
+where projects are "tinkered" on.
+Although this GitHub repository may help you understand an approach to using Senzing,
+it's not considered to be "production ready" and is not considered to be part of the Senzing product.
+Heck, it may not even be appropriate for your application of Senzing!
+
 ## Synopsis
 
 In the demonstration Cloudformation templates,
@@ -21,7 +33,7 @@ other templates require pre-existing AWS Resources.
 
 |   | VPC | Route53 | RDS | Instructions | Launch |
 |--:|:---:|:-------:|:---:|:------------:|:------:|
-| 1 | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | [instructions](https://github.com/Senzing/aws-cloudformation-ecs-poc-simple) | [:arrow_forward:](https://console.aws.amazon.com/cloudformation/home#/stacks/new?stackName=senzing-poc&templateURL=https://s3.amazonaws.com/public-read-access/aws-cloudformation-ecs-poc-simple/cloudformation.yaml) |
+| 1 | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | [instructions](https://github.com/senzing-garage/aws-cloudformation-ecs-poc-simple) | [:arrow_forward:](https://console.aws.amazon.com/cloudformation/home#/stacks/new?stackName=senzing-poc&templateURL=https://s3.amazonaws.com/public-read-access/aws-cloudformation-ecs-poc-simple/cloudformation.yaml) |
 | 2 | :heavy_check_mark: | :x: | :heavy_check_mark: | [instructions](docs/senzing-demo-hosted-zone) | [:arrow_forward:](https://console.aws.amazon.com/cloudformation/home#/stacks/new?templateURL=https://s3.amazonaws.com/public-read-access/aws-cloudformation-ecs-hosted-zone/cloudformation.yaml) |
 | 3 | :x: | :heavy_check_mark: | :heavy_check_mark: | [instructions](docs/senzing-demo-full-stack) | [:arrow_forward:](https://console.aws.amazon.com/cloudformation/home#/stacks/new?templateURL=https://s3.amazonaws.com/public-read-access/aws-cloudformation-ecs-full-stack/cloudformation.yaml) |
 | 4 | :x: | :x: | :heavy_check_mark: | [instructions](docs/senzing-demo-user-vpc-hosted-zone) | [:arrow_forward:](https://console.aws.amazon.com/cloudformation/home#/stacks/new?templateURL=https://s3.amazonaws.com/public-read-access/aws-cloudformation-ecs-user-vpc-hosted-zone/cloudformation.yaml) |
@@ -41,7 +53,7 @@ other templates require pre-existing AWS Resources.
    can help evaluate costs.
 1. :warning: **Warning:**
    This Cloudformation deployment only runs in
-   [supported AWS Regions](https://github.com/Senzing/knowledge-base/blob/main/lists/aws-supported-regions.md).
+   [supported AWS Regions](https://github.com/senzing-garage/knowledge-base/blob/main/lists/aws-supported-regions.md).
 
 ## Details
 

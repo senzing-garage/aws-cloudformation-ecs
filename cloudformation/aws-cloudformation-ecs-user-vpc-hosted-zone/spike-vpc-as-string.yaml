@@ -8,7 +8,7 @@ AWSTemplateFormatVersion: 2010-09-09
 
 Description: >-
   Senzing aws-cloudformation-ecs/senzing-demo-user-vpc-hosted-zone Version: 0.7.4
-  For more information see https://github.com/Senzing/aws-cloudformation-ecs
+  For more information see https://github.com/senzing-garage/aws-cloudformation-ecs
 
 # -----------------------------------------------------------------------------
 # Metadata
@@ -3265,13 +3265,13 @@ Resources:
               <p>
                   <b>Links:</b>
                   <ol>
-                      <li><b><a href="https://github.com/Senzing/entity-search-web-app">Senzing Entity Search web app</a>:</b> https://${Host}/app</li>
+                      <li><b><a href="https://github.com/senzing-garage/entity-search-web-app">Senzing Entity Search web app</a>:</b> https://${Host}/app</li>
                       <br />
-                      <li><b><a href="https://github.com/Senzing/senzing-api-server">Senzing API Server</a>:</b> https://${Host}/api/heartbeat</li>
+                      <li><b><a href="https://github.com/senzing-garage/senzing-api-server">Senzing API Server</a>:</b> https://${Host}/api/heartbeat</li>
                       <br />
-                      <li><b><a href="https://github.com/Senzing/docker-xterm">Senzing XTerm</a>:</b> https://${Host}/xterm</li>
+                      <li><b><a href="https://github.com/senzing-garage/docker-xterm">Senzing XTerm</a>:</b> https://${Host}/xterm</li>
                       <br />
-                      <li><b><a href="https://github.com/Senzing/senzing-rest-api-specification">Senzing HTTP REST API</a>:</b> https://${Host}/swagger
+                      <li><b><a href="https://github.com/senzing-garage/senzing-rest-api-specification">Senzing HTTP REST API</a>:</b> https://${Host}/swagger
                           <ul>
                               <li><b>Servers:</b> <code>{protocol}://{host}:{port}{path}</code></li>
                               <li><b>Server variables</b>:
@@ -3288,7 +3288,7 @@ Resources:
               </p>
               <p>
                   For more information on the
-                  <a href="https://github.com/Senzing/aws-cloudformation-ecs-poc-simple">Senzing simple proof-of-concept</a>
+                  <a href="https://github.com/senzing-garage/aws-cloudformation-ecs-poc-simple">Senzing simple proof-of-concept</a>
                   "${AWS::StackName}"
                   AWS Cloudformation,
                   contact ${Contact}.

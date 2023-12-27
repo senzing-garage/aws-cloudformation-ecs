@@ -158,7 +158,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Improved autoscaling of redoer-loader
 - Introduction of SSHD-max ECS Task Definition
-- Compatibility with [aws-cloudformation-ecs-senzing-stack-basic](https://github.com/Senzing/aws-cloudformation-ecs-senzing-stack-basic)
+- Compatibility with [aws-cloudformation-ecs-senzing-stack-basic](https://github.com/senzing-garage/aws-cloudformation-ecs-senzing-stack-basic)
 
 ## [0.7.5] - 2021-05-10
 
